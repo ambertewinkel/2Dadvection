@@ -85,14 +85,22 @@ def implicitness_adhimex(config, fields, **kwargs):
     #thetacf = 1. - 1./(1. + 0.7*np.maximum(0., np.abs(Ccf) - 1.4)) # defined at [i,j-1/2]
 
     # Calculate Courant numbers at cell centers
-    sum_abs_vel = abs(fields.u) + abs(np.roll(fields.u,-1,0)) + abs(fields.v) + abs(np.roll(fields.v,-1,1)) # defined at [i,j]
-    Ccc = 0.5*config.dt*sum_abs_vel/(config.dx*config.dy) # defined at [i,j] (always nonnegative) # see Weller et al 2023 for definition
+    sum_abs_velarea = (abs(fields.u) + abs(np.roll(fields.u,-1,0)))*config.dy + (abs(fields.v) + abs(np.roll(fields.v,-1,1)))*config.dx # defined at [i,j]
+    fields.Ccc = 0.5*config.dt*sum_abs_velarea/(config.dx*config.dy)#0.5*config.dt*sum_abs_vel/(config.dx*config.dy) # defined at [i,j] (always nonnegative) # see Weller et al 2023 for definition
+    #doubleCcc = config.dt*sum_abs_vel/(config.dx*config.dy) # defined at [i,j] (always nonnegative) # see Weller et al 2023 for definition
+    fields.thetacc = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc - 1.4)) # defined at [i,j]
+    fields.thetafc = np.maximum(fields.thetacc, np.roll(fields.thetacc,1,0)) # defined at [i-1/2,j]
+    fields.thetacf = np.maximum(fields.thetacc, np.roll(fields.thetacc,1,1)) # defined at [i,j-1/2]
 
-    thetacc = 1. - 1./(1. + 0.7*np.maximum(0., Ccc - 1.4)) # defined at [i,j]
-    thetafc = np.maximum(thetacc, np.roll(thetacc,1,0)) # defined at [i-1/2,j]
-    thetacf = np.maximum(thetacc, np.roll(thetacc,1,1)) # defined at [i,j-1/2]
+    if config.verbose:
+        print()
+        print('min and max thetacc', min(fields.thetacc.flatten()), max(fields.thetacc.flatten()))
 
-    return thetafc, thetacf
+    # For testing purposes only: setting implicitness to 0 everywhere
+    #fields.thetafc[:,:], fields.thetacf[:,:] = 0., 0.
+
+    fields.maxCcc = np.maximum(fields.Ccc, fields.maxCcc)
+    #return fields.thetafc, fields.thetacf
 
 
 def adhimex_butcher():
@@ -127,7 +135,9 @@ def adhimex(config, fields, **kwargs):
     AEx, AIm, nstages = adhimex_butcher()
 
     # Calculate the implicitness at each cell face
-    thetafc, thetacf = implicitness_adhimex(config, fields, **kwargs)
+    #thetafc, thetacf = implicitness_adhimex(config, fields, **kwargs)
+    implicitness_adhimex(config, fields, **kwargs)
+    #thetafc[:,:], thetacf[:,:] = 1., 1. # !!! for testing purposes only
 
     # Time step
     fEx, fIm = np.zeros((nstages+1, *np.shape(fields.tracer))), np.zeros((nstages+1, *np.shape(fields.tracer)))
@@ -135,12 +145,12 @@ def adhimex(config, fields, **kwargs):
     for ik in range(nstages):#+1):
         # Calculate the field at stage k          
         rhs_k = fields.tracer + config.dt*(np.dot(np.rollaxis(fEx[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm[:ik,:],0,3), AIm[ik,:ik])) # defined at [i,j]
-        matrix = partial(adhimex_matrix_func, config=config, fields=fields, thetafc=thetafc, thetacf=thetacf, alpha=AIm[ik,ik])
+        matrix = partial(adhimex_matrix_func, config=config, fields=fields, thetafc=fields.thetafc, thetacf=fields.thetacf, alpha=AIm[ik,ik])
         field_k = gcrk_matrixfree(matrix, rhs_k, field_k, kiter=10, jiter=10) # I need to store the intermediate RK stages
 
-        fEx[ik,:] = flux_divergence(config, fields, field_k, 1.-thetafc, 1.-thetacf)
-        fIm[ik,:] = flux_divergence(config, fields, field_k, thetafc, thetacf)
-        
+        fEx[ik,:] = flux_divergence(config, fields, field_k, 1.-fields.thetafc, 1.-fields.thetacf)
+        fIm[ik,:] = flux_divergence(config, fields, field_k, fields.thetafc, fields.thetacf)
+
         # Calculate the flux based on the field at stage k
         #flx_k[ik,:] = uf[it]*fluxfn(field_k) # [i] at i-1/2
         #fEx[ik,:] = -ddx((1 - beta[it])*flx_k[ik,:], np.roll((1 - beta[it])*flx_k[ik,:],-1), dxc)
@@ -194,15 +204,16 @@ def adhimex_matrix_func(psi, config, fields, thetafc, thetacf, alpha):
 def adhimex_bkp(config, fields, **kwargs):
 
     # Calculate the implicitness at each cell face
-    thetafc, thetacf = implicitness_adhimex(config, fields, **kwargs)
+    #thetafc, thetacf = implicitness_adhimex(config, fields, **kwargs)
+    implicitness_adhimex(config, fields, **kwargs)
 
     # Overwriting the explicit fluxes used just now with the implicit part
     psi_BS_fc = -1./20.*np.roll(fields.tracer,-1,0) + 9./20.*fields.tracer + 47./60.*np.roll(fields.tracer,1,0) - 13./60.*np.roll(fields.tracer,2,0) + 1./30.*np.roll(fields.tracer,3,0) # backward in space (upwind if u>0) flux at face in x direction
     psi_FS_fc = -1./20.*np.roll(fields.tracer,2,0) + 9./20.*np.roll(fields.tracer,1,0) + 47./60.*fields.tracer - 13./60.*np.roll(fields.tracer,-1,0) + 1./30.*np.roll(fields.tracer,-2,0) # forward in space (upwind if u<0) flux at face in x direction
     psi_BS_cf = -1./20.*np.roll(fields.tracer,-1,1) + 9./20.*fields.tracer + 47./60.*np.roll(fields.tracer,1,1) - 13./60.*np.roll(fields.tracer,2,1) + 1./30.*np.roll(fields.tracer,3,1) # backward in space (upwind if v>0) flux at face in y direction
     psi_FS_cf = -1./20.*np.roll(fields.tracer,2,1) + 9./20.*np.roll(fields.tracer,1,1) + 47./60.*fields.tracer - 13./60.*np.roll(fields.tracer,-1,1) + 1./30.*np.roll(fields.tracer,-2,1) # forward in space (upwind if v<0) flux at face in y direction
-    fields.flxx = (1. - thetafc)*(np.maximum(0., fields.u) * psi_BS_fc + np.minimum(0., fields.u) * psi_FS_fc) # defined at [i-1/2,j] # !!! very similar to explicit flux calc. Perhaps put in one function and call twice?
-    fields.flxy = (1. - thetacf)*(np.maximum(0., fields.v) * psi_BS_cf + np.minimum(0., fields.v) * psi_FS_cf) # defined at [i,j-1/2]
+    fields.flxx = (1. - fields.thetafc)*(np.maximum(0., fields.u) * psi_BS_fc + np.minimum(0., fields.u) * psi_FS_fc) # defined at [i-1/2,j] # !!! very similar to explicit flux calc. Perhaps put in one function and call twice?
+    fields.flxy = (1. - fields.thetacf)*(np.maximum(0., fields.v) * psi_BS_cf + np.minimum(0., fields.v) * psi_FS_cf) # defined at [i,j-1/2]
 
     # Calculate RHS (explicit) upwind fluxes at cell faces
     rhs = fields.tracer + config.dt/config.dx*(fields.flxx - np.roll(fields.flxx,-1,0)) + config.dt/config.dy*(fields.flxy - np.roll(fields.flxy,-1,1)) # defined at [i,j]
@@ -211,7 +222,7 @@ def adhimex_bkp(config, fields, **kwargs):
     solver = config.solver # numpy, gcrk_matrix, gcrk_matrixfree # not sure if numpy is possible with a 4D matrix.
  
     if solver == 'gcrk_matrixfree':
-        matrix = partial(adhimex_matrix_func, config=config, fields=fields, thetafc=thetafc, thetacf=thetacf)
+        matrix = partial(adhimex_matrix_func, config=config, fields=fields, thetafc=fields.thetafc, thetacf=fields.thetacf)
         fields.tracer = gcrk_matrixfree(matrix, rhs, fields.tracer, kiter=10, jiter=10) # !!! field_k and implement the intermediate RK stages
     else:
         raise ValueError(f"Unknown solver {solver}")

@@ -1,0 +1,25 @@
+# !!! needs adjusting. See Chen et al 2017
+
+scheme: adhimex
+
+nx: 40 #20 #40 #20 #40
+ny: 40 #20 #40 #20 #40
+xmin: -500. #0.
+xmax: 500. #1000.
+ymin: -500. #0.
+ymax: 500. #1000.
+BC_x: periodic
+BC_y: periodic
+grid_setting: uniform
+
+dt: 2.
+nt: 1 
+starttime: 0.
+
+velocity_setting: solid_body_rotation
+
+initial_tracer: gaussian_blob #constant
+constant_tracer: 1. # kg m-3
+
+filename: swift
+verbose: True

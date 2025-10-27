@@ -11,7 +11,7 @@ def initial_tracer(config, fields):
 
 
 def constant(config, fields):
-    fields.tracer = config.constant_tracer
+    fields.tracer = np.full(fields.xcc.shape, config.constant_tracer)
 
 
 def sine_xy(config, fields):
@@ -75,4 +75,38 @@ def cosine_bell_y(config, fields):
     # Apply cosine bell formula
     fields.tracer = np.where(r < radius, 0.5 * (1 + np.cos(np.pi * r / radius)), 0)
 
-    
+#def slotted_cylinder_swift(config,):
+def sine_swift(config, fields):
+    Lx = config.xmax - config.xmin
+    Ly = config.ymax - config.ymin
+    fields.tracer = config.mref + config.mmag*np.sin(2.*np.pi*fields.xcc/Lx)*np.sin(2.*np.pi*fields.ycc/Ly)
+
+
+def square_wave_x(config, fields):
+    Lx = config.xmax - config.xmin
+    fields.tracer[:,:] = 0.
+    fields.tracer[np.where((fields.xcc >= 0.25*Lx) & (fields.xcc <= 0.75*Lx))] = 1.
+
+
+def square_wave_y(config, fields):
+    Ly = config.ymax - config.ymin
+    fields.tracer[:,:] = 0.
+    fields.tracer[np.where((fields.ycc >= 0.25*Ly) & (fields.ycc <= 0.75*Ly))] = 1.
+
+
+def square_wave_xy(config, fields):
+    Lx = abs(config.xmax) + abs(config.xmin)
+    Ly = abs(config.ymax) + abs(config.ymin)
+    center_x = 0.5 * (config.xmax + config.xmin)
+    center_y = 0.5 * (config.ymax + config.ymin)
+    fields.tracer[:,:] = 0.
+    fields.tracer[np.where((fields.xcc >= center_x - 0.25*Lx) & (fields.xcc <= center_x + 0.25*Lx) & (fields.ycc >= center_y - 0.25*Ly) & (fields.ycc <= center_y + 0.25*Ly))] = 1.
+
+
+def square_wave_xy_displaced(config, fields):
+    Lx = abs(config.xmax) + abs(config.xmin)
+    Ly = abs(config.ymax) + abs(config.ymin)
+    center_x = 0.5 * (config.xmax + config.xmin)-0.3*Lx
+    center_y = 0.5 * (config.ymax + config.ymin)+0.3*Ly
+    fields.tracer[:,:] = 0.
+    fields.tracer[np.where((fields.xcc >= center_x - 0.25*Lx) & (fields.xcc <= center_x + 0.25*Lx) & (fields.ycc >= center_y - 0.25*Ly) & (fields.ycc <= center_y + 0.25*Ly))] = 1.

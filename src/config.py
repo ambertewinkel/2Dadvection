@@ -39,7 +39,11 @@ class Config:
     constant_tracer: float = 1.
     constant_u: float = 1.
     constant_v: float = 1.
-    
+
+    mref: float = 0.5 # kg kg-1
+    mmag: float = 0.5 # kg kg-1
+    u0: float = 10. # m s-1    
+    T: float = 100. # s, SWIFT period of oscillation
 
     def __post_init__(self):
         self.dx = (self.xmax - self.xmin) / self.nx

@@ -1,0 +1,29 @@
+
+scheme: adhimex
+
+nx: 40 #20 #40 #20 #40
+ny: 40 #20 #40 #20 #40
+xmin: -500. #0.
+xmax: 500. #1000.
+ymin: -500. #0.
+ymax: 500. #1000.
+BC_x: periodic
+BC_y: periodic
+grid_setting: uniform
+
+dt: 2. #1 #2 #1. #2. # s
+nt: 50 #50 #50 #19 #50 #100 #100 #50 #32 #50
+starttime: 0.
+
+velocity_setting: swift_nondiv
+
+initial_tracer: square_wave_xy #sine_swift #constant
+constant_tracer: 1. # kg m-3
+
+mref: 0.5 # kg kg-1
+mmag: 0.5 # kg kg-1
+u0: 10. # m s-1
+T: 100. # s
+
+filename: swift_squarexy
+verbose: True
