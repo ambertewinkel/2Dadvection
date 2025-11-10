@@ -1,8 +1,8 @@
 
 scheme: adhimex
 
-nx: 100 #128 #100 #64 #40 #20 #40 #20 #40
-ny: 100 #128 #100 #80 #64 #40 #20 #40 #20 #40
+nx: 100 #64 #40 #20 #40 #20 #40
+ny: 100 #80 #64 #40 #20 #40 #20 #40
 xmin: -500. #0.
 xmax: 500. #1000.
 ymin: -500. #0.
@@ -12,7 +12,7 @@ BC_y: periodic
 grid_setting: uniform
 
 dt: 0.5 #1. #2. #2. #1 #2 #1. #2. # s
-nt: 2 #200 #100 #50 #100 #50 #19 #50 #100 #100 #50 #32 #50
+nt: 200 #100 #50 #100 #50 #19 #50 #100 #100 #50 #32 #50
 starttime: 0.
 
 velocity_setting: swift_nondiv
@@ -28,4 +28,4 @@ T: 100. # s
 filename: swift
 verbose: True
 animate: True
-outputdir: nt1_swiftnondivadhimex
+outputdir: test_animation_swiftnondivadhimex

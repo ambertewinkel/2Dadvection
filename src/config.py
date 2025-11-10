@@ -34,6 +34,8 @@ class Config:
     initial_tracer: str
     filename: str
     verbose: bool
+    outputdir: str
+    animate: bool
 
     solver: str = 'gcrk_matrixfree' # numpy, gcrk_matrix, gcrk_matrixfree
     constant_tracer: float = 1.
