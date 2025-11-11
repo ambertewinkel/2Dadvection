@@ -125,8 +125,14 @@ def swift_nondiv_try(config, fields, it):
 
 
 def solid_body_rotation(config, fields, it): # Chen, Weller et al 2017
-    pass
+    xc = 0.5 * (config.xmax + config.xmin)
+    yc = 0.5 * (config.ymax + config.ymin)
+    A = 5.*np.pi/3000. # s (angular velocity = 2A)
 
+    psi = A*((fields.xff - xc)**2 + (fields.yff - yc)**2)
+
+    velocities_from_streamfunction(config, fields, psi)
+    
 
 def velocities_from_streamfunction(config, fields, psi):
     """Deriving the u and v velocity components from the streamfunction psi.

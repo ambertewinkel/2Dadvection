@@ -110,3 +110,13 @@ def square_wave_xy_displaced(config, fields):
     center_y = 0.5 * (config.ymax + config.ymin)+0.3*Ly
     fields.tracer[:,:] = 0.
     fields.tracer[np.where((fields.xcc >= center_x - 0.25*Lx) & (fields.xcc <= center_x + 0.25*Lx) & (fields.ycc >= center_y - 0.25*Ly) & (fields.ycc <= center_y + 0.25*Ly))] = 1.
+
+
+def gaussian_chenetal2017(config, fields):
+    xc = 0.5 * (config.xmax + config.xmin)
+    yc = 0.5 * (config.ymax + config.ymin)
+    rcphi = 2500. # m
+    rphi = 500. # m
+    x_phi = xc
+    y_phi = yc + rcphi
+    fields.tracer = np.exp(-0.5*((fields.xcc - x_phi)**2 + (fields.ycc - y_phi)**2)/(rphi*rphi)) # [i,j] at i,j

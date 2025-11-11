@@ -12,8 +12,8 @@ BC_x: periodic
 BC_y: periodic
 grid_setting: uniform
 
-dt: 6. # s
-nt: 100
+dt: 3. # s
+nt: 200
 starttime: 0.
 
 velocity_setting: solid_body_rotation
