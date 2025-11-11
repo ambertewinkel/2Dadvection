@@ -16,6 +16,21 @@ def time_stepping(config, fields, **kwargs):
     for it in range(config.nt):
         # Update velocity fields
         testcases.velocity.velocity(config, fields, it) # !!! when nonconstant, I need to make sure to take the half level velocity for second-order accuracy
+        #plt.contourf(fields.xfc, fields.yfc, fields.u)
+        #plt.colorbar()
+        #plt.title(f'u velocity at t= {str((it+1)*config.dt)} from {config.velocity_setting}')
+        #plt.savefig('./output/' + config.outputdir + f'/plots/u_velocity_{config.velocity_setting}.png', dpi=150)
+        #plt.close()
+        #plt.contourf(fields.xcf, fields.ycf, fields.v)
+        #plt.colorbar()
+        #plt.title(f'v velocity at t= {str((it+1)*config.dt)} from {config.velocity_setting}')
+        #plt.savefig('./output/' + config.outputdir + f'/plots/v_velocity_{config.velocity_setting}.png', dpi=150)
+        #plt.close()
+
+        #plt.contourf(fields.xcc, fields.ycc, config.dx)
+        #plt.title('dx')
+        #plt.colorbar()
+        #plt.show()
 
         # Call the advection scheme
         scheme(config, fields)

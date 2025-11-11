@@ -9,6 +9,8 @@ fieldnames_nodes_xy =   [
                       "ycf", # y coordinates: cell centers in x, cell faces in y
                       "xfc",
                       "yfc",
+                      "xff", # x coordinates: cell corners (faces in x, faces in y) -> i,j defined at [i-1/2,j-1/2], i.e., bottom left corner of cell
+                      "yff", # y coordinates: cell corners (faces in x, faces in y) -> i,j defined at [i-1/2,j-1/2], i.e., bottom left corner of cell
                       "u", # defined at faces in x, centers in y # defined at [i-1/2,j]
                       "v", # defined at centers in x, faces in y # defined at [i,j-1/2]
                       "flxx", # defined at faces in x, centers in y # defined at [i-1/2,j]          

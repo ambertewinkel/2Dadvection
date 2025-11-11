@@ -1,5 +1,5 @@
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 def velocity(config, fields, it):
     # Define velocity fields at time step it
@@ -44,6 +44,39 @@ def swift_nondiv(config, fields, it):
     ##fields.v = -config.u0*np.sin(2.*np.pi*(fields.xfc/Lx + 0.5))*np.sin(np.pi*(fields.yfc/Ly + 0.5))*np.sin(np.pi*(fields.yfc/Ly + 0.5))*np.cos(np.pi*(it+0.5)*config.dt/config.T) + config.u0
 
 
+def swift_nondiv_streamfunction(config, fields, it):
+    # Non-divergent velocity field at half time levels using the streamfunction
+
+    Lx = config.xmax - config.xmin
+    Ly = config.ymax - config.ymin
+
+    if Lx != Ly:
+        raise ValueError("SWIFT nondiv velocity is only nondivergent for square domains (Lx=Ly).")
+    
+    coeff = 0.5*Lx - config.u0*(it + 0.5)*config.dt # using one coeff assumes Lx=Ly
+
+    psi = - config.u0*Lx/np.pi*np.sin(np.pi*(fields.xff + coeff)/Lx)*np.sin(np.pi*(fields.xff + coeff)/Lx)*np.sin(np.pi*(fields.yff + coeff)/Ly)*np.sin(np.pi*(fields.yff + coeff)/Ly)*np.cos(np.pi*(it + 0.5)*config.dt/config.T) # assumes Lx=Ly
+
+    velocities_from_streamfunction(config, fields, psi)
+
+    fields.u += config.u0
+    fields.v += config.u0
+
+
+def swift_nondiv_double_streamfunction(config, fields, it):
+
+    Lx = config.xmax - config.xmin
+    Ly = config.ymax - config.ymin
+
+    coeff = 0.5*Lx - config.u0*(it + 0.5)*config.dt # using one coeff assumes Lx=Ly
+    
+    psi = - 2.*config.u0*Lx/np.pi*np.sin(np.pi*(fields.xff + coeff)/Lx)*np.sin(np.pi*(fields.xff + coeff)/Lx)*np.sin(np.pi*(fields.yff + coeff)/Ly)*np.sin(np.pi*(fields.yff + coeff)/Ly)*np.cos(np.pi*(it + 0.5)*config.dt/config.T) # assumes Lx=Ly
+
+    velocities_from_streamfunction(config, fields, psi)
+
+    fields.u += config.u0
+    fields.v += config.u0
+
 
 def swift_nondiv_double(config, fields, it):
     # Non-divergent velocity field at half time levels
@@ -64,9 +97,6 @@ def swift_nondiv_double(config, fields, it):
     
     ##fields.u = config.u0*np.sin(np.pi*(fields.xfc/Lx + 0.5))*np.sin(np.pi*(fields.xfc/Lx + 0.5))*np.sin(2.*np.pi*(fields.yfc/Ly + 0.5))*np.cos(np.pi*(it+0.5)*config.dt/config.T) + config.u0
     ##fields.v = -config.u0*np.sin(2.*np.pi*(fields.xfc/Lx + 0.5))*np.sin(np.pi*(fields.yfc/Ly + 0.5))*np.sin(np.pi*(fields.yfc/Ly + 0.5))*np.cos(np.pi*(it+0.5)*config.dt/config.T) + config.u0
-
-
-
 
 
 def swift_nondiv_try(config, fields, it):
@@ -96,3 +126,14 @@ def swift_nondiv_try(config, fields, it):
 
 def solid_body_rotation(config, fields, it): # Chen, Weller et al 2017
     pass
+
+
+def velocities_from_streamfunction(config, fields, psi):
+    """Deriving the u and v velocity components from the streamfunction psi.
+    psi[i,j] is defined at i-1/2, j-1/2 -> bottom left cell corner"""
+
+    fields.u = - (np.roll(psi, -1, axis=1) - psi)/config.dy #(np.roll(psi, -1, axis=1) - psi)/config.dy
+    fields.v = (np.roll(psi, -1, axis=0) - psi)/config.dx
+
+    div = (np.roll(fields.u, -1, axis=0) - fields.u)/config.dx + (np.roll(fields.v, -1, axis=1) - fields.v)/config.dy
+    print('Max divergence in space =', np.max(np.abs(div)))

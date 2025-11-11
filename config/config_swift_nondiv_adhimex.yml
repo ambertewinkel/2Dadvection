@@ -12,10 +12,10 @@ BC_y: periodic
 grid_setting: uniform
 
 dt: 0.5 #1. #2. #2. #1 #2 #1. #2. # s
-nt: 2 #200 #100 #50 #100 #50 #19 #50 #100 #100 #50 #32 #50
+nt: 200 #1 #2 #200 #100 #50 #100 #50 #19 #50 #100 #100 #50 #32 #50
 starttime: 0.
 
-velocity_setting: swift_nondiv
+velocity_setting: swift_nondiv_streamfunction
 
 initial_tracer: sine_swift #constant
 constant_tracer: 1. # kg m-3
@@ -28,4 +28,4 @@ T: 100. # s
 filename: swift
 verbose: True
 animate: True
-outputdir: nt1_swiftnondivadhimex
+outputdir: test_streamfunction_swiftnondivadhimex
