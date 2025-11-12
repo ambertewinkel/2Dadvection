@@ -1,8 +1,8 @@
 
 scheme: adhimex
 
-nx: 50 #100 #128 #100 #64 #40 #20 #40 #20 #40
-ny: 50 #100 #128 #100 #80 #64 #40 #20 #40 #20 #40
+nx: 25 #100 #128 #100 #64 #40 #20 #40 #20 #40
+ny: 25 #100 #128 #100 #80 #64 #40 #20 #40 #20 #40
 xmin: 0. #-500. #0.
 xmax: 1. #500. #1000.
 ymin: 0. #-500. #0.
@@ -11,8 +11,8 @@ BC_x: periodic
 BC_y: periodic
 grid_setting: uniform
 
-dt: 1. #2 #0.5 #1. #2. #2. #1 #2 #1. #2. # s
-nt: 100 #50 #200 #1 #2 #200 #100 #50 #100 #50 #19 #50 #100 #100 #50 #32 #50
+dt: 2 #0.5 #1. #2. #2. #1 #2 #1. #2. # s
+nt: 50 #200 #1 #2 #200 #100 #50 #100 #50 #19 #50 #100 #100 #50 #32 #50
 starttime: 0.
 
 velocity_setting: swift_nondiv_streamfunction
@@ -31,4 +31,4 @@ T: 100. # s
 filename: swift
 verbose: True
 animate: True
-outputdir: test_blosseydurran_swiftnondivadhimex_50
+outputdir: test_blosseydurran_swiftnondivadhimex

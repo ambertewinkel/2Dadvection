@@ -2,8 +2,8 @@
 
 scheme: adhimex
 
-nx: 100
-ny: 100
+nx: 50
+ny: 50
 xmin: 0. # m
 xmax: 10000. # m
 ymin: 0. # m
@@ -12,8 +12,8 @@ BC_x: periodic
 BC_y: periodic
 grid_setting: uniform
 
-dt: 1. #6. # s
-nt: 600 #100
+dt: 10. #6. # s
+nt: 60 #100
 starttime: 0.
 
 velocity_setting: solid_body_rotation

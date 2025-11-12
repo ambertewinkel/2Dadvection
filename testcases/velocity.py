@@ -55,9 +55,9 @@ def swift_nondiv_streamfunction(config, fields, it):
     
     coeff = 0.5*Lx - config.u0*(it + 0.5)*config.dt # using one coeff assumes Lx=Ly
 
-    psi = - config.u0*Lx/np.pi*np.sin(np.pi*(fields.xff + coeff)/Lx)*np.sin(np.pi*(fields.xff + coeff)/Lx)*np.sin(np.pi*(fields.yff + coeff)/Ly)*np.sin(np.pi*(fields.yff + coeff)/Ly)*np.cos(np.pi*(it + 0.5)*config.dt/config.T) # assumes Lx=Ly
+    fields.psi = - config.u0*Lx/np.pi*np.sin(np.pi*(fields.xff + coeff)/Lx)*np.sin(np.pi*(fields.xff + coeff)/Lx)*np.sin(np.pi*(fields.yff + coeff)/Ly)*np.sin(np.pi*(fields.yff + coeff)/Ly)*np.cos(np.pi*(it + 0.5)*config.dt/config.T) # assumes Lx=Ly
 
-    velocities_from_streamfunction(config, fields, psi)
+    velocities_from_streamfunction(config, fields)
 
     fields.u += config.u0
     fields.v += config.u0
@@ -70,9 +70,9 @@ def swift_nondiv_double_streamfunction(config, fields, it):
 
     coeff = 0.5*Lx - config.u0*(it + 0.5)*config.dt # using one coeff assumes Lx=Ly
     
-    psi = - 2.*config.u0*Lx/np.pi*np.sin(np.pi*(fields.xff + coeff)/Lx)*np.sin(np.pi*(fields.xff + coeff)/Lx)*np.sin(np.pi*(fields.yff + coeff)/Ly)*np.sin(np.pi*(fields.yff + coeff)/Ly)*np.cos(np.pi*(it + 0.5)*config.dt/config.T) # assumes Lx=Ly
+    fields.psi = - 2.*config.u0*Lx/np.pi*np.sin(np.pi*(fields.xff + coeff)/Lx)*np.sin(np.pi*(fields.xff + coeff)/Lx)*np.sin(np.pi*(fields.yff + coeff)/Ly)*np.sin(np.pi*(fields.yff + coeff)/Ly)*np.cos(np.pi*(it + 0.5)*config.dt/config.T) # assumes Lx=Ly
 
-    velocities_from_streamfunction(config, fields, psi)
+    velocities_from_streamfunction(config, fields)
 
     fields.u += config.u0
     fields.v += config.u0
@@ -129,17 +129,77 @@ def solid_body_rotation(config, fields, it): # Chen, Weller et al 2017
     yc = 0.5 * (config.ymax + config.ymin)
     A = 5.*np.pi/3000. # s (angular velocity = 2A)
 
-    psi = A*((fields.xff - xc)**2 + (fields.yff - yc)**2)
+    fields.psi = A*((fields.xff - xc)**2 + (fields.yff - yc)**2)
 
-    velocities_from_streamfunction(config, fields, psi)
+    velocities_from_streamfunction(config, fields)
+
+
+def blossey_durran(config, fields, it): # blossey durran 2008
+    xc = 0.5 * (config.xmax + config.xmin)
+    yc = 0.5 * (config.ymax + config.ymin)
+
+    r = np.sqrt((fields.xff - xc)**2 + (fields.yff - yc)**2)
+    t = (it + 0.5)*config.dt
+
+    fields.psi = 4.*np.pi/config.T*(0.5*r*r + np.cos(2.*np.pi*t/config.T)*(0.5*r*r + np.log(1. - 16.*r*r + 256.*r*r*r*r)/96. - np.log(1. + 16.*r*r)/48. - np.sqrt(3.)/48.*np.arctan((-1. + 32.*r*r)/np.sqrt(3.))))
+
+    velocities_from_streamfunction(config, fields)
+
+
+def new_blossey_durran(config, fields, it): # blossey durran 2008
+    #xc = 0.5 * (config.xmax + config.xmin)
+    #yc = 0.5 * (config.ymax + config.ymin)
+#
+    #r = np.sqrt((fields.xff - xc)**2 + (fields.yff - yc)**2)
+    #t = (it + 0.5)*config.dt
+#
+    #psi = 4.*np.pi/config.T*np.cos(2.*np.pi*0.5*config.T/config.T)*(0.5*r*r + np.log(1. - 16.*r*r + 256.*r*r*r*r)/96. - np.log(1. + 16.*r*r)/48. - np.sqrt(3.)/48.*np.arctan((-1. + 32.*r*r)/np.sqrt(3.)))
+#
+    #velocities_from_streamfunction(config, fields, psi)
     
+    xc = 0.5 * (config.xmax + config.xmin)
+    yc = 0.5 * (config.ymax + config.ymin)
 
-def velocities_from_streamfunction(config, fields, psi):
+    r = np.sqrt((fields.xff - xc)**2 + (fields.yff - yc)**2)
+    t = (it + 0.5)*config.dt
+
+    fields.psi = np.cos(2.*np.pi*t/config.T)*(-4.*np.pi/config.T*(np.log(1. - 16.*r*r + 256.*r*r*r*r)/96. - np.log(1. + 16.*r*r)/48. - np.sqrt(3.)/48.*np.arctan((-1. + 32.*r*r)/np.sqrt(3.))) - np.pi*np.pi/(8.*np.sqrt(3)*config.T))
+
+    velocities_from_streamfunction(config, fields)
+
+
+def new_blossey_durran_plusmean(config, fields, it): # blossey durran 2008
+    #xc = 0.5 * (config.xmax + config.xmin)
+    #yc = 0.5 * (config.ymax + config.ymin)
+#
+    #r = np.sqrt((fields.xff - xc)**2 + (fields.yff - yc)**2)
+    #t = (it + 0.5)*config.dt
+#
+    #psi = 4.*np.pi/config.T*np.cos(2.*np.pi*0.5*config.T/config.T)*(0.5*r*r + np.log(1. - 16.*r*r + 256.*r*r*r*r)/96. - np.log(1. + 16.*r*r)/48. - np.sqrt(3.)/48.*np.arctan((-1. + 32.*r*r)/np.sqrt(3.)))
+#
+    #velocities_from_streamfunction(config, fields, psi)
+    u0 = (config.xmax - config.xmin)/config.T # mean flow velocity
+
+    xc = 0.5 * (config.xmax + config.xmin)
+    yc = 0.5 * (config.ymax + config.ymin)
+
+    t = (it + 0.5)*config.dt
+    r = np.sqrt((fields.xff - xc - u0*t)**2 + (fields.yff - yc - u0*t)**2)
+
+    fields.psi = np.cos(2.*np.pi*t/config.T)*(-4.*np.pi/config.T*(np.log(1. - 16.*r*r + 256.*r*r*r*r)/96. - np.log(1. + 16.*r*r)/48. - np.sqrt(3.)/48.*np.arctan((-1. + 32.*r*r)/np.sqrt(3.))) - np.pi*np.pi/(8.*np.sqrt(3)*config.T))
+
+    velocities_from_streamfunction(config, fields)
+
+    fields.u += u0
+    fields.v += u0
+
+
+def velocities_from_streamfunction(config, fields):
     """Deriving the u and v velocity components from the streamfunction psi.
     psi[i,j] is defined at i-1/2, j-1/2 -> bottom left cell corner"""
 
-    fields.u = - (np.roll(psi, -1, axis=1) - psi)/config.dy #(np.roll(psi, -1, axis=1) - psi)/config.dy
-    fields.v = (np.roll(psi, -1, axis=0) - psi)/config.dx
+    fields.u = - (np.roll(fields.psi, -1, axis=1) - fields.psi)/config.dy #(np.roll(psi, -1, axis=1) - psi)/config.dy
+    fields.v = (np.roll(fields.psi, -1, axis=0) - fields.psi)/config.dx
 
     div = (np.roll(fields.u, -1, axis=0) - fields.u)/config.dx + (np.roll(fields.v, -1, axis=1) - fields.v)/config.dy
     print('Max divergence in space =', np.max(np.abs(div)))

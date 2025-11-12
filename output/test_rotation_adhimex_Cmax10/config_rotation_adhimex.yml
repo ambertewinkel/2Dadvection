@@ -12,8 +12,8 @@ BC_x: periodic
 BC_y: periodic
 grid_setting: uniform
 
-dt: 1. #6. # s
-nt: 600 #100
+dt: 10. #6. # s
+nt: 60 #100
 starttime: 0.
 
 velocity_setting: solid_body_rotation
@@ -23,4 +23,4 @@ initial_tracer: gaussian_chenetal2017
 filename: chenetal2017
 verbose: True
 animate: True
-outputdir: test_rotation_adhimex_
+outputdir: test_rotation_adhimex_Cmax10

@@ -12,6 +12,8 @@ def time_stepping(config, fields, **kwargs):
     #plt.contourf(fields.xfc, fields.yfc, fields.u, label='initial')
     #plt.show()
     maxC = 0.
+    maxpsi = np.max(fields.psi)
+    minpsi = np.min(fields.psi)
     # Time stepping loop
     for it in range(config.nt):
         # Update velocity fields
@@ -68,6 +70,26 @@ def time_stepping(config, fields, **kwargs):
             plt.savefig('./output/' + config.outputdir + f'/plots/Cnt{it+1}.svg', dpi=150)
             plt.close()            
         
+            maxpsinew = np.max(fields.psi)
+            minpsinew = np.min(fields.psi)
+            if maxpsinew > maxpsi:
+                maxpsi = maxpsinew
+            if minpsinew < minpsi:
+                minpsi = minpsinew
+            if minpsi < -maxpsi:
+                maxpsi = - minpsi
+            else:
+                minpsi = - maxpsi
+            contour = plt.contourf(fields.xff, fields.yff, fields.psi, levels=[minpsi, minpsi + 0.1*(maxpsi-minpsi), minpsi + 0.2*(maxpsi-minpsi),minpsi + 0.3*(maxpsi-minpsi),minpsi + 0.4*(maxpsi-minpsi),minpsi + 0.5*(maxpsi-minpsi),minpsi + 0.6*(maxpsi-minpsi),minpsi + 0.7*(maxpsi-minpsi),minpsi + 0.8*(maxpsi-minpsi),minpsi + 0.9*(maxpsi-minpsi),maxpsi], cmap='viridis')
+            cbar = plt.colorbar(contour)
+            cbar.set_label('Streamfunction')
+            plt.xlabel('$x$')
+            plt.ylabel('$y$')
+            plt.title('Streamfunction at t=' + str((it+1)*config.dt))
+            plt.savefig('./output/' + config.outputdir + f'/plots/strfn_nt{it+1}.png', dpi=150)
+            plt.savefig('./output/' + config.outputdir + f'/plots/strfn_nt{it+1}.svg', dpi=150)
+            plt.close()  
+
         #if it == config.nt-1: #% 10 == 0:# and config.verbose:
         #    plt.contourf(fields.xcc, fields.ycc, fields.tracer)#, label='tracer at it='+str(it))
         #    plt.quiver(fields.xfc, fields.yfc, fields.u, fields.v)#, label='vel at it='+str(it))

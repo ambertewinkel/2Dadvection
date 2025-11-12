@@ -23,4 +23,4 @@ initial_tracer: gaussian_chenetal2017
 filename: chenetal2017
 verbose: True
 animate: True
-outputdir: test_rotation_adhimex_
+outputdir: test_rotation_adhimex_Cmax1

@@ -149,3 +149,13 @@ def create_animation(config, fields):
     # Remove .png files used to create the animation
     for it in range((config.nt)):        
         os.remove("./output/" + config.outputdir + f'/plots/Cnt{it+1}.png')
+
+    images = []
+    for it in range((config.nt)):
+        images.append(imageio.imread("./output/" + config.outputdir + f'/plots/strfn_nt{it+1}.png'))
+    anim_filename = f'./output/{config.outputdir}/strfn_animation.gif'
+    imageio.mimsave(anim_filename, images, duration=60)
+
+    # Remove .png files used to create the animation
+    for it in range((config.nt)):        
+        os.remove("./output/" + config.outputdir + f'/plots/strfn_nt{it+1}.png')

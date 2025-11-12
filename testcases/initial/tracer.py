@@ -120,3 +120,8 @@ def gaussian_chenetal2017(config, fields):
     x_phi = xc
     y_phi = yc + rcphi
     fields.tracer = np.exp(-0.5*((fields.xcc - x_phi)**2 + (fields.ycc - y_phi)**2)/(rphi*rphi)) # [i,j] at i,j
+
+
+def initial_blosseydurran(config, fields):
+    r_tilde = 5.*np.sqrt((fields.xcc - 0.3)**2 + (fields.ycc - 0.5)**2)
+    fields.tracer = np.where(r_tilde < 1., 0.25*(1. + np.cos(np.pi*r_tilde))*(1. + np.cos(np.pi*r_tilde)), 0.)

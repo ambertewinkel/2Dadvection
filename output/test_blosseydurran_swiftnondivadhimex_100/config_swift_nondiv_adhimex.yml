@@ -1,8 +1,8 @@
 
 scheme: adhimex
 
-nx: 50 #100 #128 #100 #64 #40 #20 #40 #20 #40
-ny: 50 #100 #128 #100 #80 #64 #40 #20 #40 #20 #40
+nx: 100 #100 #128 #100 #64 #40 #20 #40 #20 #40
+ny: 100 #100 #128 #100 #80 #64 #40 #20 #40 #20 #40
 xmin: 0. #-500. #0.
 xmax: 1. #500. #1000.
 ymin: 0. #-500. #0.
@@ -31,4 +31,4 @@ T: 100. # s
 filename: swift
 verbose: True
 animate: True
-outputdir: test_blosseydurran_swiftnondivadhimex_50
+outputdir: test_blosseydurran_swiftnondivadhimex_100
