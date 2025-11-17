@@ -9,9 +9,6 @@ fieldnames_nodes_xy =   [
                       "ycf", # y coordinates: cell centers in x, cell faces in y
                       "xfc",
                       "yfc",
-                      "xff", # x coordinates: cell corners (faces in x, faces in y) -> i,j defined at [i-1/2,j-1/2], i.e., bottom left corner of cell
-                      "yff", # y coordinates: cell corners (faces in x, faces in y) -> i,j defined at [i-1/2,j-1/2], i.e., bottom left corner of cell
-                      "psi", # streamfunction at cell corners # defined at [i-1/2,j-1/2]
                       "u", # defined at faces in x, centers in y # defined at [i-1/2,j]
                       "v", # defined at centers in x, faces in y # defined at [i,j-1/2]
                       "flxx", # defined at faces in x, centers in y # defined at [i-1/2,j]          
@@ -26,6 +23,11 @@ fieldnames_nodes_xy =   [
                       "maxthetacc", # temporal max implicitness at cell centers
                      ]
 
+fieldnames_nodes_xy_boundaries =   [
+                      "psi", # streamfunction at cell corners # defined at [i-1/2,j-1/2], also including right and top boundaries for easy differentiation to find velocities
+                      "xffb", # x coordinates: cell corners (faces in x, faces in y) -> i,j defined at [i-1/2,j-1/2], i.e., bottom left corner of cell, including right and top boundaries
+                      "yffb", # y coordinates: cell corners (faces in x, faces in y) -> i,j defined at [i-1/2,j-1/2], i.e., bottom left corner of cell, including right and top boundaries
+                     ]
 
 class FieldContainer:
 
@@ -33,4 +35,6 @@ class FieldContainer:
 
     def __init__(self, config):
         for field in fieldnames_nodes_xy:
-            setattr(self, field, np.zeros((config.nx, config.ny), dtype=self.dtype))
+            setattr(self, field, np.zeros((config.nx, config.ny), dtype=self.dtype))        
+        for field in fieldnames_nodes_xy_boundaries:
+            setattr(self, field, np.zeros((config.nx+1, config.ny+1), dtype=self.dtype))

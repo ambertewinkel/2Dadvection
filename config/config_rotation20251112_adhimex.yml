@@ -1,0 +1,27 @@
+# from derivations 12-11-2025
+
+scheme: adhimex
+
+nx: 25 #100
+ny: 25 #100
+xmin: 0. # m
+xmax: 1. # m
+ymin: 0. # m
+ymax: 1. # m
+BC_x: periodic
+BC_y: periodic
+grid_setting: uniform
+
+dt: 2. #6. # s
+nt: 50 #100
+starttime: 0.
+
+velocity_setting: rotationalflowplusmeaninstrfn_20251112
+u0: 0.02 #0.01
+
+initial_tracer: initial_blosseydurran
+
+filename: rotation20251112
+verbose: True
+animate: True
+outputdir: test_rotation20251112tryuniforminstrfn_adhimex

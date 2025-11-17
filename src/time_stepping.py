@@ -80,7 +80,7 @@ def time_stepping(config, fields, **kwargs):
                 maxpsi = - minpsi
             else:
                 minpsi = - maxpsi
-            contour = plt.contourf(fields.xff, fields.yff, fields.psi, levels=[minpsi, minpsi + 0.1*(maxpsi-minpsi), minpsi + 0.2*(maxpsi-minpsi),minpsi + 0.3*(maxpsi-minpsi),minpsi + 0.4*(maxpsi-minpsi),minpsi + 0.5*(maxpsi-minpsi),minpsi + 0.6*(maxpsi-minpsi),minpsi + 0.7*(maxpsi-minpsi),minpsi + 0.8*(maxpsi-minpsi),minpsi + 0.9*(maxpsi-minpsi),maxpsi], cmap='viridis')
+            contour = plt.contourf(fields.xffb, fields.yffb, fields.psi, levels=[minpsi, minpsi + 0.1*(maxpsi-minpsi), minpsi + 0.2*(maxpsi-minpsi),minpsi + 0.3*(maxpsi-minpsi),minpsi + 0.4*(maxpsi-minpsi),minpsi + 0.5*(maxpsi-minpsi),minpsi + 0.6*(maxpsi-minpsi),minpsi + 0.7*(maxpsi-minpsi),minpsi + 0.8*(maxpsi-minpsi),minpsi + 0.9*(maxpsi-minpsi),maxpsi], cmap='viridis')
             cbar = plt.colorbar(contour)
             cbar.set_label('Streamfunction')
             plt.xlabel('$x$')
