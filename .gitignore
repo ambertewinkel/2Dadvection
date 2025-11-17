@@ -169,3 +169,5 @@ cython_debug/
 *.txt
 *.out
 .vscode/settings.json
+output/
+output/*
