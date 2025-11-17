@@ -1,0 +1,27 @@
+# based on Blossey Durran 2008 deformational rotation
+
+scheme: adhimex
+
+nx: 50
+ny: 50
+xmin: 0. # m
+xmax: 1. # m
+ymin: 0. # m
+ymax: 1. # m
+BC_x: periodic
+BC_y: periodic
+grid_setting: uniform
+
+dt: 1. #6. # s
+nt: 100 #100
+starttime: 0.
+
+velocity_setting: blossey_durran
+
+initial_tracer: initial_blosseydurran
+config.T: 100
+
+filename: blosseydurran
+verbose: True
+animate: True
+outputdir: test_blosseydurran_adhimex

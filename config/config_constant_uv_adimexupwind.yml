@@ -1,0 +1,24 @@
+
+scheme: adimex_upwind
+
+nx: 40
+ny: 40
+xmin: 0.
+xmax: 1.
+ymin: 0.
+ymax: 1.
+BC_x: periodic
+BC_y: periodic
+grid_setting: uniform
+
+dt: 0.01
+nt: 5 #25
+starttime: 0.
+
+velocity_setting: constant_uv
+constant_u: 5. #0.5 #5.
+constant_v: 5. #0.2 #5.
+
+initial_tracer: sine_xy
+
+verbose: True
