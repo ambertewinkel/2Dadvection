@@ -33,19 +33,20 @@ class Config:
 
     initial_tracer: str
     filename: str
-    verbose: bool
-    outputdir: str
     animate: bool
+    verbose: bool = False
+    outputdir: str = 'test'
 
     solver: str = 'gcrk_matrixfree' # numpy, gcrk_matrix, gcrk_matrixfree
     constant_tracer: float = 1.
     constant_u: float = 1.
     constant_v: float = 1.
 
+    # SWIFT defaults (u0 and T also used for other testcases, with potentially different values)
     mref: float = 0.5 # kg kg-1
     mmag: float = 0.5 # kg kg-1
     u0: float = 10. # m s-1    
-    T: float = 100. # s, SWIFT period of oscillation
+    T: float = 100. # s
 
     def __post_init__(self):
         self.dx = (self.xmax - self.xmin) / self.nx

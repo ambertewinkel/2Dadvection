@@ -1,12 +1,15 @@
 import numpy as np
+import logging
+import warnings
 
-def gcrk_matrixfree(A, b, x, kiter, jiter, tolerance=1e-6): # Implemented with A matrixfree (i.e., a function that computes Ax through def A(x)))
+def gcrk_matrixfree(config, A, b, x, kiter, jiter, tolerance=1e-6):
     """
-    Solving Ax=b with the GCR(k) algorithm.
+    Matrixfree solution of linear Ax=b system using GCR(k) method. (matrixfree through a function that computes Ax with def A(x)))
+    --- IN --- 
     A: function to implement the A matrix
     b: N vector, rhs of equation
     x: N vector, initial guess for solution
-    OUT: 
+    --- OUT ---
     p : converged (or cut short) solution
     """
     r = b - A(x)
@@ -24,16 +27,11 @@ def gcrk_matrixfree(A, b, x, kiter, jiter, tolerance=1e-6): # Implemented with A
                 Api = A(p[i])
                 Api2_sum = np.maximum(np.sum(Api*Api), 1e-15)
                 beta[i] = - np.sum(A(r)*Api)/Api2_sum
-            #if j == 0: # bit of a hacky solution to avoid the np dot error when beta is just a 1D vector.
-            #    p[j+1] = r + np.sum(beta*p[0:j+1])
-            #else:
-            p[j+1] = r + np.dot(np.rollaxis(p[0:j+1],0,3), beta)#np.sum(np.dot(beta, p[0:j+1]))
+            p[j+1] = r + np.dot(np.rollaxis(p[0:j+1],0,3), beta)
             rmx = np.sqrt(np.max(r[:]*r[:])) # square root of max square residual
             if rmx < tolerance: 
-                print("Converged at k,j:", k, j, "with residual:", rmx)
+                if config.verbose: logging.info(f"Converged at k,j: {k}, {j} with residual: {rmx}")
                 return x
-            #else:
-            #    print(k+1, j+1, 'out of', kiter, jiter, '-> residual:', np.linalg.norm(r))
 
-    print('Did not converge within the given iterations. Final residual:', rmx)
-    return x
+    logging.warning(f'GCR(k) did not converge within the given iterations (ktotal,jtotal={kiter},{jiter}). Final residual: {rmx}')
+    warnings.warn(f'GCR(k) did not converge within the given iterations (ktotal,jtotal={kiter},{jiter}). Final residual: {rmx}')
