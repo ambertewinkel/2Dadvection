@@ -36,3 +36,5 @@ def gcrk_matrixfree(config, A, b, x, kiter, jiter, tolerance=1e-6):
 
     logging.warning(f'GCR(k) did not converge within the given iterations (ktotal,jtotal={kiter},{jiter}). Final residual: {rmx}')
     warnings.warn(f'GCR(k) did not converge within the given iterations (ktotal,jtotal={kiter},{jiter}). Final residual: {rmx}')
+    
+    return x

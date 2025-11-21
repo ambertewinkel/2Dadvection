@@ -5,18 +5,25 @@ import os
 import logging
 import shutil
 from src.fields import variables
+from datetime import date
 
 
 def set_up_output_directory(config):
     """Sets up the output directory for storing results."""
 
+    if not os.path.exists('./output/'):
+        os.mkdir('./output/')
     if config.outputdir == 'test':
         config.outputdir = './output/test/'
         if not os.path.exists(config.outputdir):
             os.mkdir(config.outputdir)
             os.mkdir(config.outputdir + 'data/')        
     else:
-        config.outputdir = './output/' + config.outputdir
+        config.outputdir = f'./output/dated/{date.today().strftime("%Y%m%d")}/' + config.outputdir
+        if not os.path.exists(f'./output/dated/'):
+            os.mkdir(f'./output/dated/')
+        if not os.path.exists(f'./output/dated/{date.today().strftime("%Y%m%d")}/'):
+            os.mkdir(f'./output/dated/{date.today().strftime("%Y%m%d")}/')
         if not os.path.exists(config.outputdir):
             os.mkdir(config.outputdir)
             config.outputdir = config.outputdir + '/'

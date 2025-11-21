@@ -136,9 +136,12 @@ def plot_fields(config, fieldnames, data, plots_dir, setting):
                 add_hatching, minval, maxval = False, np.min(data[field]), np.max(data[field])
                 if field == 'tracer' or field == 'density':
                     plot_figure(data['xcc'], data['ycc'], data[field][0], f'{field} at nt=0', 'x', 'y', 'viridis', plots_dir + f'{field}_nt0.png', minval, maxval)
-                    add_hatching = True if 'Ccc' in fieldnames and 'thetacc' in fieldnames else False
                     for it in range(1, config.nt+1):
-                        plot_figure(data['xcc'], data['ycc'], data[field][it], f'{field} at nt={it}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it}.png', minval, maxval, add_hatching, data['Ccc'][it-1], data['thetacc'][it-1])
+                        if 'Ccc' in fieldnames and 'thetacc' in fieldnames:
+                            add_hatching, Ccc, thetacc = True, data['Ccc'][it-1], data['thetacc'][it-1]
+                        else:
+                            add_hatching, Ccc, thetacc = False, None, None
+                        plot_figure(data['xcc'], data['ycc'], data[field][it], f'{field} at nt={it}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it}.png', minval, maxval, add_hatching, Ccc, thetacc)
                 else:
                     if field == 'Ccc' or field == 'thetacc':
                         x, y = data['xcc'], data['ycc']

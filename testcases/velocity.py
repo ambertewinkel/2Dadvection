@@ -135,6 +135,132 @@ def rotationalflowplusmeaninstrfn_20251112(config, fields, it):
     velocities_from_streamfunction(config, fields, it)
 
 
+def ujet(config, fields, it):
+    """Zonal jet to create a zonal velocity field of:
+    u = 0 when y < a
+    u = 0.5(1-cos(2pi(y-a)/(b-a))) when a <= y <= b
+    u = 0 when y > b"""
+
+    a = config.ujet_a
+    b = config.ujet_b
+
+    for j in range(config.ny+1):
+        y = fields.yffb[0,j]
+        if y <= a:
+            fields.psi[it,:,j] = 0.
+        elif a < y < b:
+            fields.psi[it,:,j] = 0.5*config.ujet_max*(0.5*(b-a)/np.pi*np.sin(2.*np.pi*(y-a)/(b-a)) + a - y)
+        else: # y >= b
+            fields.psi[it,:,j] = 0.5*config.ujet_max*(a-b)
+    
+    velocities_from_streamfunction(config, fields, it)
+
+
+def ujet_reversal(config, fields, it):
+    """Zonal jet to create a zonal velocity field of:
+    u = 0 when y < a
+    u = 0.5(1-cos(2pi(y-a)/(b-a))) when a <= y <= b
+    u = 0 when y > b"""
+
+    a = config.ujet_a
+    b = config.ujet_b
+
+    for j in range(config.ny+1):
+        y = fields.yffb[0,j]
+        if y <= a:
+            fields.psi[it,:,j] = 0.
+        elif a < y < b:
+            fields.psi[it,:,j] = 0.5*config.ujet_max*(0.5*(b-a)/np.pi*np.sin(2.*np.pi*(y-a)/(b-a)) + a - y)*np.cos(np.pi*(it + 0.5)*config.dt/config.T)
+        else: # y >= b
+            fields.psi[it,:,j] = 0.5*config.ujet_max*(a-b)*np.cos(np.pi*(it + 0.5)*config.dt/config.T)
+    
+    velocities_from_streamfunction(config, fields, it)
+
+
+def ujet_45deg_reversal(config, fields, it):
+    """Zonal jet to create a zonal velocity field of:
+    u = 0 when y < a
+    u = 0.5(1-cos(2pi(y-a)/(b-a))) when a <= y <= b
+    u = 0 when y > b"""
+
+    a = config.ujet_a - config.ymin
+    b = config.ujet_b - config.ymin
+
+    L = config.ymax - config.ymin
+    for j in range(config.ny+1):
+        y = fields.yffb[0,j] - config.ymin
+        for i in range(config.nx+1):
+            x = fields.xffb[i,0] -  config.xmin
+            ya = a + x
+            yb = b + x
+            if ya > L: ya = ya%L
+            if yb > L: yb = yb%L
+
+            if y <= ya <= a and x > 0.:
+                fields.psi[it,i,j] = -0.5*config.ujet_max*(a - b)*np.cos(np.pi*(it + 0.5)*config.dt/config.T)
+            elif (ya < y < yb and ya <= a and yb <= b and x > 0.) or (yb < ya and y < yb):
+                fields.psi[it,i,j] = 0.5*config.ujet_max*(0.5*(b - a)/np.pi*np.sin(2.*np.pi*(y - a - x)/(b - a)) + a + x - y)*np.cos(np.pi*(it + 0.5)*config.dt/config.T) + config.ujet_max*(a - b)*np.cos(np.pi*(it + 0.5)*config.dt/config.T)
+            elif (y >= yb and a < yb <= b and x > 0.) or (yb <= y <= ya) or (y <= ya and ya >= a and x < L):
+                fields.psi[it,i,j] = 0.
+            elif (ya < y < yb and x < L and ya >= a and yb >= b) or (yb < ya < y):
+                fields.psi[it,i,j] = 0.5*config.ujet_max*(0.5*(b - a)/np.pi*np.sin(2.*np.pi*(y - x - a)/(b - a)) + a - y + x)*np.cos(np.pi*(it + 0.5)*config.dt/config.T)
+            elif y >= yb >= b and x < L:
+                fields.psi[it,i,j] = 0.5*config.ujet_max*(a - b)*np.cos(np.pi*(it + 0.5)*config.dt/config.T)
+            else:
+                print('I dont have this case covered:', i, j, x, y, ya, yb)
+    
+    velocities_from_streamfunction(config, fields, it)
+
+
+def swift_ujet45rev(config, fields, it):
+    """Zonal jet to create a zonal velocity field of:
+    u = 0 when y < a
+    u = 0.5(1-cos(2pi(y-a)/(b-a))) when a <= y <= b
+    u = 0 when y > b"""
+
+    # Calculate SWIFT streamfunction 
+    Lx = config.xmax - config.xmin
+    Ly = config.ymax - config.ymin
+    if Lx != Ly:
+        raise ValueError("SWIFT nondiv velocity is only nondivergent for square domains (Lx=Ly).")
+    coeff = 0.5*Lx - config.u0*(it + 0.5)*config.dt # using one coeff assumes Lx=Ly
+    fields.psi[it] = - config.u0*Lx/np.pi*np.sin(np.pi*(fields.xffb + coeff)/Lx)*np.sin(np.pi*(fields.xffb + coeff)/Lx)*np.sin(np.pi*(fields.yffb + coeff)/Ly)*np.sin(np.pi*(fields.yffb + coeff)/Ly)*np.cos(np.pi*(it + 0.5)*config.dt/config.T) - config.u0*fields.yffb + config.u0*fields.xffb # assumes Lx=Ly
+
+    # Calculate jet streamfunction
+    jetpsi = np.zeros((config.nx+1, config.ny+1))
+
+    a = config.ujet_a - config.ymin
+    b = config.ujet_b - config.ymin
+
+    L = config.ymax - config.ymin
+    for j in range(config.ny+1):
+        y = fields.yffb[0,j] - config.ymin
+        for i in range(config.nx+1):
+            x = fields.xffb[i,0] -  config.xmin
+            ya = a + x
+            yb = b + x
+            if ya > L: ya = ya%L
+            if yb > L: yb = yb%L
+
+            if y <= ya <= a and x > 0.:
+                jetpsi[i,j] = -0.5*config.ujet_max*(a - b)*np.cos(np.pi*(it + 0.5)*config.dt/config.T)
+            elif (ya < y < yb and ya <= a and yb <= b and x > 0.) or (yb < ya and y < yb):
+                jetpsi[i,j] = 0.5*config.ujet_max*(0.5*(b - a)/np.pi*np.sin(2.*np.pi*(y - a - x)/(b - a)) + a + x - y)*np.cos(np.pi*(it + 0.5)*config.dt/config.T) + config.ujet_max*(a - b)*np.cos(np.pi*(it + 0.5)*config.dt/config.T)
+            elif (y >= yb and a < yb <= b and x > 0.) or (yb <= y <= ya) or (y <= ya and ya >= a and x < L):
+                jetpsi[i,j] = 0.
+            elif (ya < y < yb and x < L and ya >= a and yb >= b) or (yb < ya < y):
+                jetpsi[i,j] = 0.5*config.ujet_max*(0.5*(b - a)/np.pi*np.sin(2.*np.pi*(y - x - a)/(b - a)) + a - y + x)*np.cos(np.pi*(it + 0.5)*config.dt/config.T)
+            elif y >= yb >= b and x < L:
+                jetpsi[i,j] = 0.5*config.ujet_max*(a - b)*np.cos(np.pi*(it + 0.5)*config.dt/config.T)
+            else:
+                print('I dont have this case covered:', i, j, x, y, ya, yb)
+    
+    # Add SWIFT and jet together
+    fields.psi[it] = fields.psi[it] + jetpsi
+    
+    velocities_from_streamfunction(config, fields, it)
+
+
 def velocities_from_streamfunction(config, fields, it):
     """Deriving the u and v velocity components from the streamfunction psi.
     psi[i,j] is defined at i-1/2, j-1/2 -> bottom left cell corner"""

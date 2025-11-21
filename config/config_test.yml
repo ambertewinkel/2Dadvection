@@ -1,24 +1,29 @@
 scheme: adhimex
 
-nx: 100
-ny: 100
+nx: 50 #10 #100
+ny: 50 #10 #100
 xmin: 0. # m
-xmax: 10000. # m
+xmax: 1. # m
 ymin: 0. # m
-ymax: 10000. # m
+ymax: 1. # m
 BC_x: periodic
 BC_y: periodic
 grid_setting: uniform
 
-dt: 1. #6. # s
-nt: 10 #600 #100
+dt: 0.02 #6. # s
+nt: 50 #0 #600 #100
 starttime: 0.
 
-velocity_setting: swift_nondiv_streamfunction #solid_body_rotation
+velocity_setting: swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation
 
-initial_tracer: gaussian_chenetal2017
+initial_tracer: sine_swift #cosine_bell #gaussian_chenetal2017
+
+ujet_max: 1. #1.
+
+T: 1. #10. 
+u0: 1. #0.5
 
 filename: chenetal2017
 verbose: True
 animate: True
-outputdir: test
+outputdir: test #swift_weakjet #test #ujet_reversal_umax3

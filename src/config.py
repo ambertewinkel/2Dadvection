@@ -48,7 +48,15 @@ class Config:
     u0: float = 10. # m s-1    
     T: float = 100. # s
 
+    # Jet testcase defaults
+    ujet_max: float = 1. # maximum jet velocity magnitude
+
     def __post_init__(self):
+
+        # Jet testcase defaults
+        self.ujet_a: float = self.ymax/3.
+        self.ujet_b: float = 2.*self.ymax/3.
+
         self.dx = (self.xmax - self.xmin) / self.nx
         self.dy = (self.ymax - self.ymin) / self.ny
         
