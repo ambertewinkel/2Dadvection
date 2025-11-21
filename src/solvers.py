@@ -10,8 +10,9 @@ def gcrk_matrixfree(config, A, b, x, kiter, jiter, tolerance=1e-6):
     b: N vector, rhs of equation
     x: N vector, initial guess for solution
     --- OUT ---
-    p : converged (or cut short) solution
+    x : converged (or cut short) solution
     """
+    x = x.copy()
     r = b - A(x)
     for k in range(kiter):
         p = np.zeros((jiter+1, *np.shape(r)))
