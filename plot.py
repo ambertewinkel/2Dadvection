@@ -94,11 +94,11 @@ def plot_fields(config, fieldnames, data, plots_dir, setting):
         for field in fieldnames:
             minval, maxval = np.min(data[field][-1]), np.max(data[field][-1])
             if field == 'tracer':
-                if 'Ccc' in fieldnames and 'thetacc' in fieldnames:
-                    add_hatching, Ccc, thetacc = True, data['Ccc'][-1], data['thetacc'][-1] 
+                if 'thetacc' in fieldnames:
+                    add_hatching, thetacc = True, data['thetacc'][-1] 
                 else:
-                    add_hatching, Ccc, thetacc = False, None, None
-                plot_figure(data['xcc'], data['ycc'], data[field][-1], f'{field} at nt={config.nt}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval, add_hatching, Ccc, thetacc, True, data['tracer'][0])
+                    add_hatching, thetacc = False, None
+                plot_figure(data['xcc'], data['ycc'], data[field][-1], f'{field} at nt={config.nt}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval, add_hatching, thetacc, True, data['tracer'][0])
             elif field == 'Ccc' or field == 'thetacc':
                 plot_figure(data['xcc'], data['ycc'], data[field][-1], f'{field} at nt={config.nt}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval)
             elif field == 'u' or field == 'thetafc':
@@ -112,9 +112,9 @@ def plot_fields(config, fieldnames, data, plots_dir, setting):
             minval, maxval, add_hatching = np.min(data[field]), np.max(data[field]), False
             if field == 'tracer' or field == 'density':
                 plot_figure(data['xcc'], data['ycc'], data[field][0], f'{field} at nt=0', 'x', 'y', 'viridis', plots_dir + f'{field}_nt0.svg', minval, maxval)
-                add_hatching = True if 'Ccc' in fieldnames and 'thetacc' in fieldnames else False
+                add_hatching = True if 'thetacc' in fieldnames else False
                 for it in range(1,config.nt+1):
-                    plot_figure(data['xcc'], data['ycc'], data[field][it], f'{field} at nt={it}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it}.svg', minval, maxval, add_hatching, data['Ccc'][it-1], data['thetacc'][it-1])
+                    plot_figure(data['xcc'], data['ycc'], data[field][it], f'{field} at nt={it}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it}.svg', minval, maxval, add_hatching, data['thetacc'][it-1])
             elif field == 'Ccc' or field == 'thetacc':
                 for it in range(config.nt):
                     plot_figure(data['xcc'], data['ycc'], data[field][it], f'{field} at nt={it+0.5}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it+1}.svg', minval, maxval)
@@ -137,11 +137,11 @@ def plot_fields(config, fieldnames, data, plots_dir, setting):
                 if field == 'tracer' or field == 'density':
                     plot_figure(data['xcc'], data['ycc'], data[field][0], f'{field} at nt=0', 'x', 'y', 'viridis', plots_dir + f'{field}_nt0.png', minval, maxval)
                     for it in range(1, config.nt+1):
-                        if 'Ccc' in fieldnames and 'thetacc' in fieldnames:
-                            add_hatching, Ccc, thetacc = True, data['Ccc'][it-1], data['thetacc'][it-1]
+                        if 'thetacc' in fieldnames:
+                            add_hatching, thetacc = True, data['thetacc'][it-1]
                         else:
-                            add_hatching, Ccc, thetacc = False, None, None
-                        plot_figure(data['xcc'], data['ycc'], data[field][it], f'{field} at nt={it}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it}.png', minval, maxval, add_hatching, Ccc, thetacc)
+                            add_hatching, thetacc = False, None
+                        plot_figure(data['xcc'], data['ycc'], data[field][it], f'{field} at nt={it}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it}.png', minval, maxval, add_hatching, thetacc)
                 else:
                     if field == 'Ccc' or field == 'thetacc':
                         x, y = data['xcc'], data['ycc']
@@ -158,7 +158,7 @@ def plot_fields(config, fieldnames, data, plots_dir, setting):
         raise ValueError('Plotting setting not recognized.')
 
 
-def plot_figure(x, y, field, title, xlabel, ylabel, cmap, filename, minval, maxval, add_hatching=False, Ccc=None, thetacc=None, add_initial=False, initialtracer=None):
+def plot_figure(x, y, field, title, xlabel, ylabel, cmap, filename, minval, maxval, add_hatching=False, thetacc=None, add_initial=False, initialtracer=None):
     plt.figure()
     diff = maxval - minval
     if diff == 0.:
@@ -168,9 +168,13 @@ def plot_figure(x, y, field, title, xlabel, ylabel, cmap, filename, minval, maxv
     plt.contourf(x, y, field, cmap=cmap, levels=contourlevels)
     plt.colorbar()
     if add_initial:
-        plt.contour(x, y, initialtracer, colors='w', levels=contourlevels[1:-1], linewidths=0.5, linestyles=':')
+        if diff == 0.:
+            contourlevels_reduced = None
+        else:
+            contourlevels_reduced = [(minval + 0.15*diff), (minval + 0.25*diff), (minval + 0.35*diff), (minval + 0.45*diff), (minval + 0.55*diff), (minval + 0.65*diff), (minval + 0.75*diff), (minval + 0.85*diff)]
+        plt.contour(x, y, initialtracer, colors='w', levels=contourlevels_reduced, linewidths=0.5, linestyles=':')
     if add_hatching:
-        plt.contour(x, y, Ccc, colors='k', levels=[1.4], linewidths=0.5, linestyles='--')
+        plt.contour(x, y, thetacc, colors='k', levels=[0.], linewidths=0.5, linestyles='--')
         bool_AdImEx = np.where(thetacc > 0., 1, 0)
         plt.contourf(x, y, bool_AdImEx, levels=[0.5, 1], colors='none', hatches=['..'])
     plt.title(title)

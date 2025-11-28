@@ -21,8 +21,18 @@ def constant_uv(config, fields, it):
     fields.v[it,:,:] = config.constant_v
 
 
+def swift_div(config, fields, it):
+    # Divergent velocity field at half time levels from SWIFT test case
+
+    Lx = config.xmax - config.xmin
+    Ly = config.ymax - config.ymin
+    ut = config.u0*(it + 0.5)*config.dt
+    fields.u[it] = 0.5*config.u0*np.sin(np.pi*(fields.xfc + 0.5*Lx - ut)/Lx)*np.sin(np.pi*(fields.xfc + 0.5*Lx - ut)/Lx)*np.sin(2.*np.pi*(fields.yfc + 0.5*Ly - ut)/Ly)*np.cos(np.pi*(it + 0.5)*config.dt/config.T) + config.u0
+    fields.v[it] = 0.5*config.u0*np.sin(2.*np.pi*(fields.xcf + 0.5*Lx - ut)/Lx)*np.sin(np.pi*(fields.ycf + 0.5*Ly - ut)/Ly)*np.sin(np.pi*(fields.ycf + 0.5*Ly - ut)/Ly)*np.cos(np.pi*(it + 0.5)*config.dt/config.T) + config.u0
+
+
 def swift_nondiv(config, fields, it):
-    # Non-divergent velocity field at half time levels
+    # Non-divergent velocity field at half time levels from SWIFT test case
 
     Lx = config.xmax - config.xmin
     Ly = config.ymax - config.ymin
@@ -32,7 +42,7 @@ def swift_nondiv(config, fields, it):
 
 
 def swift_nondiv_streamfunction(config, fields, it):
-    # Non-divergent velocity field at half time levels using the streamfunction
+    # Non-divergent velocity field at half time levels from SWIFT testcase using the streamfunction
 
     Lx = config.xmax - config.xmin
     Ly = config.ymax - config.ymin

@@ -32,8 +32,8 @@ class Config:
     starttime: float
 
     initial_tracer: str
-    filename: str
-    animate: bool
+    #filename: str
+    #animate: bool
     verbose: bool = False
     outputdir: str = 'test'
 
