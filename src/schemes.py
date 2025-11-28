@@ -142,3 +142,99 @@ def adhimex(config, fields, it, **kwargs):
         #flx_contribution_from_stage_k[ik,:] = AEx[-1,ik]*(1 - beta[it])*flx_k[ik,:] + AIm[-1,ik]*beta[it]*flx_k[ik,:]
 
     fields.tracer[it+1] = field_k.copy()
+
+#import matplotlib.pyplot as plt
+
+def adhimex_iota_butcher():
+    """Sets up AdHImEx Butcher tableau"""
+
+    # Butcher tableau for explicit part (left tableau from Ullrich and Jablonowski 2012. See the Weller Lock and Wood (2013) UJ3(1+e,3,2) scheme)   
+    AEx = np.array([[0., 0., 0., 0., 0.],[0., 0., 0., 0., 0.],[0., 1., 0., 0., 0.],[0., 0.25, 0.25, 0., 0.],[0., 1/6, 1/6, 2/3, 0.]])
+
+    # Butcher tableau for implicit part (right tableau from Ullrich and Jablonowski 2012. See the Weller Lock and Wood (2013) UJ3(1+e,3,2) scheme)   
+    #AIm = np.array([[0., 0., 0., 0., 0.],[0.5*iota, 0., 0., 0., 0.],[0.5*(2.-iota), 0., 0., 0., 0.],[0.5, 0., 0., 0., 0.],[0.5, 0., 0., 0., 0.5]])
+    #AIm = np.array([[0., 0., 0., 0., 0.],[0.5, 0., 0., 0., 0.],[0.5, 0., 0., 0., 0.],[0.5, 0., 0., 0., 0.],[0.5, 0., 0., 0., 0.5]])
+    AIm = np.array([[0., 0., 0., 0., 0.],[0., 0., 0., 0., 0.],[1., 0., 0., 0., 0.],[0.5, 0., 0., 0., 0.],[0.5, 0., 0., 0., 0.5]])
+
+    nstages = np.shape(AIm)[1]
+
+    return AEx, AIm, nstages
+
+
+def implicitness_iota_adhimex(config, fields, it, **kwargs):
+    """Calculate Courant numbers at cell centers and implicitness at cell centers and faces for AdHImEx scheme"""
+
+    sum_abs_velarea = (abs(fields.u[it]) + abs(np.roll(fields.u[it],-1,0)))*config.dy + (abs(fields.v[it]) + abs(np.roll(fields.v[it],-1,1)))*config.dx # at [i,j]
+    fields.Ccc[it] = 0.5*config.dt*sum_abs_velarea/(config.dx*config.dy) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
+    fields.thetacc[it] = 1. - 1./(1. + 1.*np.maximum(0., fields.Ccc[it] - 1.)) # at [i,j]
+    fields.thetafc[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,0)) # at [i-1/2,j]
+    fields.thetacf[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,1)) # at [i,j-1/2]
+
+
+def calc_iota(fields, it, ik):
+        #iota = np.select([fields.Ccc[it] <= 1., fields.Ccc[it] > 1. and fields.Ccc[it] < 1.7, fields.Ccc[it] >= 1.7], [0., 3*q*q - 2*q*q*q, 1.])#np.where(fields.Ccc <= 1., 0., np.where(1. < fields.Ccc < 1.7, 3*q*q - 2*q*q*q, 1.)) # at [i,j]
+        #plt.contourf(fields.xcc, fields.ycc, iota); plt.colorbar(); plt.title('iota'); plt.show()
+        #exit()
+    #else:
+    #    iota = np.ones_like(fields.Ccc[it]) # at [i,j]
+
+    #if ik == 1 or ik == 2:
+    #    q = (fields.Ccc[it] - 1.)/(1.7 - 1.)
+    #    iota = np.where(fields.Ccc[it] <= 1., 0., 3.*q*q - 2*q*q*q) # at [i,j]
+    #    iota = np.where(fields.Ccc[it] >= 1.7, 1., iota)
+    #    iotafc, iotacf = np.maximum(iota, np.roll(iota,1,0)), np.maximum(iota, np.roll(iota,1,1)) # at [i-1/2,j] and [i,j-1/2]
+    #    if ik == 2:
+    #        iotafc = 2. - iotafc
+    #        iotacf = 2. - iotacf
+
+
+    #if ik == 1 or ik == 2:
+    #    q = (fields.Ccc[it] - 1.)/(1.7 - 1.)
+    #    iota = np.where(fields.Ccc[it] <= 1., 0., 3.*q*q - 2*q*q*q) # at [i,j]
+    #    iota = np.where(fields.Ccc[it] >= 1.7, 1., iota)
+    #    iotafc, iotacf = np.zeros_like(fields.Ccc[it]), np.zeros_like(fields.Ccc[it])
+    #    #iotafc, iotacf = np.maximum(iota, np.roll(iota,1,0)), np.maximum(iota, np.roll(iota,1,1)) # at [i-1/2,j] and [i,j-1/2]
+    #    if ik == 2:
+    #        iotafc = 2. - iotafc
+    #        iotacf = 2. - iotacf
+    #else:
+    #    iotafc, iotacf = np.ones_like(fields.Ccc[it]), np.ones_like(fields.Ccc[it])
+
+    iotafc, iotacf = np.ones_like(fields.Ccc[it]), np.ones_like(fields.Ccc[it])
+    return iotafc, iotacf
+
+
+def adhimex_iota(config, fields, it, **kwargs): # iota considerations 27-11-2025
+    """Implement the AdHImEx scheme for the given time step"""
+
+    # Calculate the implicitness at each cell face
+    implicitness_iota_adhimex(config, fields, it, **kwargs)
+
+    # Calculate iota
+   # iotafc, iotacf = calc_iota(fields, it)#, ik)
+
+    # Set up Butcher tableau # needs to be put after iota
+    AEx, AIm, nstages = adhimex_iota_butcher()#fields, iota) # but no: !!! iota is a 2D spatial array and AEx and AIm are not. The spatial dependency comes through theta... But I can't just put it into theta as the theta is applied for multiple stages. (plus it is not just a factor that multiples the implicit Butcher tableau, it changes the tableau more complexly)
+
+    # Time step
+    fEx, fIm = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
+    field_k = fields.tracer[it].copy()
+    for ik in range(nstages):
+
+        iotafc, iotacf = calc_iota(fields, it, ik)
+
+        # Calculate the field at stage k          
+        rhs_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
+        matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
+        field_k = gcrk_matrixfree(config, matrix, rhs_k, field_k, kiter=10, jiter=10)
+
+        fEx[ik,:] = fluxdiv_fifth(config, fields, it, field_k, (1.-fields.thetafc[it]), (1.-fields.thetacf[it]))
+        fIm[ik,:] = fluxdiv_fifth(config, fields, it, field_k, fields.thetafc[it]*iotafc, fields.thetacf[it]*iotacf)
+
+        # Calculate the flux based on the field at stage k (legacy code, but kept for reference for later FCT implementation)
+        #flx_k[ik,:] = uf[it]*fluxfn(field_k) # [i] at i-1/2
+        #fEx[ik,:] = -ddx((1 - beta[it])*flx_k[ik,:], np.roll((1 - beta[it])*flx_k[ik,:],-1), dxc)
+        #fIm[ik,:] = -ddx(beta[it]*flx_k[ik,:], np.roll(beta[it]*flx_k[ik,:],-1), dxc)   
+        #flx_contribution_from_stage_k[ik,:] = AEx[-1,ik]*(1 - beta[it])*flx_k[ik,:] + AIm[-1,ik]*beta[it]*flx_k[ik,:]
+
+    fields.tracer[it+1] = field_k.copy()
