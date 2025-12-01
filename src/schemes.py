@@ -142,3 +142,39 @@ def adhimex(config, fields, it, **kwargs):
         #flx_contribution_from_stage_k[ik,:] = AEx[-1,ik]*(1 - beta[it])*flx_k[ik,:] + AIm[-1,ik]*beta[it]*flx_k[ik,:]
 
     fields.tracer[it+1] = field_k.copy()
+
+def adhimex_adv(config, fields, it, **kwargs):
+    """Implement the AdHImEx scheme for the given time step"""
+
+    # Set up Butcher tableau
+    AEx, AIm, nstages = adhimex_butcher()
+
+    # Calculate the implicitness at each cell face
+    implicitness_adhimex(config, fields, it, **kwargs)
+    
+    # Time step
+    fEx_c, fIm_c = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
+    fEx_f, fIm_f = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
+    field_k = fields.tracer[it].copy()
+    for ik in range(nstages):
+
+        # Calculate the field at stage k      
+        if ik == 1 or ik == 2:
+            rhs_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx_c[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_c[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
+        else: 
+            rhs_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx_f[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_f[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
+        matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
+        field_k = gcrk_matrixfree(config, matrix, rhs_k, field_k, kiter=10, jiter=10)
+        
+        fEx_c[ik,:] = (1.-fields.thetacc[it])*fluxdiv_fifth(config, fields, it, field_k, 1., 1.)
+        fIm_c[ik,:] = fields.thetacc[it]*fluxdiv_fifth(config, fields, it, field_k, 1., 1.)
+        fEx_f[ik,:] = fluxdiv_fifth(config, fields, it, field_k, 1.-fields.thetafc[it], 1.-fields.thetacf[it])
+        fIm_f[ik,:] = fluxdiv_fifth(config, fields, it, field_k, fields.thetafc[it], fields.thetacf[it])
+        
+        # Calculate the flux based on the field at stage k (legacy code, but kept for reference for later FCT implementation)
+        #flx_k[ik,:] = uf[it]*fluxfn(field_k) # [i] at i-1/2
+        #fEx[ik,:] = -ddx((1 - beta[it])*flx_k[ik,:], np.roll((1 - beta[it])*flx_k[ik,:],-1), dxc)
+        #fIm[ik,:] = -ddx(beta[it]*flx_k[ik,:], np.roll(beta[it]*flx_k[ik,:],-1), dxc)   
+        #flx_contribution_from_stage_k[ik,:] = AEx[-1,ik]*(1 - beta[it])*flx_k[ik,:] + AIm[-1,ik]*beta[it]*flx_k[ik,:]
+
+    fields.tracer[it+1] = field_k.copy()

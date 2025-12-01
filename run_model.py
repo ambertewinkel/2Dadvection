@@ -14,6 +14,8 @@ from src.run import run
 def run_model():
     """Overarching function to run the model with the terminal-specified config file."""
 
+    print('Running model...')
+    
     # Get the config from the command line argument
     if len(argv) < 2:
         print("Usage: python run_schemes.py <config>")
