@@ -1,4 +1,4 @@
-scheme: adhimex_adv
+scheme: adhimex
 
 nx: 64 #50 #10 #100
 ny: 64 #50 #10 #100
@@ -27,4 +27,4 @@ u0: 10. #0.5
 filename: chenetal2017
 verbose: True
 animate: True
-outputdir: adhimexadv_sineswift_swiftnondivdouble_similar_to_presentationNOV2025butadv #test #swift_weakjet #test #ujet_reversal_umax3
+outputdir: adhimex_sineswift_swiftnondivdouble_similar_to_presentationNOV2025 #test #swift_weakjet #test #ujet_reversal_umax3

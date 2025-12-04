@@ -11,21 +11,27 @@ def grid_coordinates(config, fields):
     xcf, ycf = (fields.xcf, fields.ycf)
     xfc, yfc = (fields.xfc, fields.yfc)
     xffb, yffb = (fields.xffb, fields.yffb)
+
+    dxcc, dycc = (fields.dxcc, fields.dycc)
+
     xf, yf = (config.xf, config.yf)
     xc, yc = (config.xc, config.yc)
     nx, ny = (config.nx, config.ny)
+    dx, dy = (config.dx, config.dy) # For uniform grid, might need adjustment for nonuniform grid
 
-    _grid_coordinates(xcc, ycc, xcf, ycf, xfc, yfc, xffb, yffb, xf, yf, xc, yc, nx, ny, config.xmax, config.ymax)
+    _grid_coordinates(xcc, ycc, xcf, ycf, xfc, yfc, xffb, yffb, dxcc, dycc, xf, yf, xc, yc, nx, ny, dx, dy, config.xmax, config.ymax)
 
 
 @njit(**jitflags)
-def _grid_coordinates(xcc, ycc, xcf, ycf, xfc, yfc, xffb, yffb, xf, yf, xc, yc, nx, ny, xmax, ymax): 
+def _grid_coordinates(xcc, ycc, xcf, ycf, xfc, yfc, xffb, yffb, dxcc, dycc, xf, yf, xc, yc, nx, ny, dx, dy, xmax, ymax): 
     for jx in prange(0, nx):
         for jy in prange(0, ny):
                 xcc[jx,jy] = xc[jx]
                 xcf[jx,jy] = xc[jx]
                 xfc[jx,jy] = xf[jx]
                 xffb[jx,jy] = xf[jx]
+                dxcc[jx, jy] = dx # For uniform grid, needs adjustment for nonuniform grid
+                dycc[jx, jy] = dy # For uniform grid, needs adjustment for nonuniform grid
                 ycc[jx,jy] = yc[jy]
                 ycf[jx,jy] = yf[jy]
                 yfc[jx,jy] = yc[jy]

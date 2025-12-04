@@ -8,6 +8,8 @@ grid_nodes_xy = [
                       "ycf", # y coordinates: cell centers in x, cell faces in y
                       "xfc",
                       "yfc",
+                      "dxcc",
+                      "dycc",
 ]
 
 grid_nodes_xy_boundaries = [
