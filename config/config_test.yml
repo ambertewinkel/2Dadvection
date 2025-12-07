@@ -1,4 +1,4 @@
-scheme: adhimex
+scheme: adhimex_12 #3_overwritek2
 
 nx: 64 #50 #10 #100
 ny: 64 #50 #10 #100
@@ -11,13 +11,13 @@ BC_y: periodic
 grid_setting: uniform
 
 dt: 1. #0.02 #6. # s
-nt: 100 #50 #1 #50 #0 #600 #100
+nt: 1 #00 #50 #1 #50 #0 #600 #100
 starttime: 0.
 
-velocity_setting: swift_nondiv_double_streamfunction #swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation
+velocity_setting: swift_nondiv_streamfunction #swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation
 
-initial_tracer: sine_swift #sine_swift #cosine_bell #gaussian_chenetal2017
-#constant_tracer: 0.5
+initial_tracer: constant #sine_swift #sine_swift #cosine_bell #gaussian_chenetal2017
+constant_tracer: 0.5
 
 #ujet_max: 1. #1.
 
@@ -27,4 +27,4 @@ u0: 10. #0.5
 filename: chenetal2017
 verbose: True
 animate: True
-outputdir: adhimex_sineswift_swiftnondivdouble_similar_to_presentationNOV2025 #test #swift_weakjet #test #ujet_reversal_umax3
+outputdir: adhimex12_0p5_uniform_field_swiftnondiv #sineswift_swiftnondivdouble_similar_to_presentationNOV2025 #test #swift_weakjet #test #ujet_reversal_umax3

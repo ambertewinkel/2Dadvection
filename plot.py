@@ -99,7 +99,7 @@ def plot_fields(config, fieldnames, data, plots_dir, setting):
                 else:
                     add_hatching, thetacc = False, None
                 plot_figure(data['xcc'], data['ycc'], data[field][-1], f'{field} at nt={config.nt}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval, add_hatching, thetacc, True, data['tracer'][0])
-            elif field == 'Ccc' or field == 'thetacc':
+            elif field == 'Ccc' or field == 'thetacc' or field == 'dthetafc' or field == 'dthetacf':
                 plot_figure(data['xcc'], data['ycc'], data[field][-1], f'{field} at nt={config.nt}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval)
             elif field == 'u' or field == 'thetafc':
                 plot_figure(data['xfc'], data['yfc'], data[field][-1], f'{field} at nt={config.nt}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval)
@@ -189,7 +189,7 @@ def plot():
 
     # Get command line arguments
     if len(sys.argv) < 4:
-        print("Usage: python plot.py <setting> <field> <outputdir>")
+        print("Usage: python plot.py <field> <setting> <outputdir>")
         exit(1)
     else:
         field_to_plot = sys.argv[1]  # 'all' or specific field name

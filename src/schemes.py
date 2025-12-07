@@ -79,6 +79,8 @@ def implicitness_adhimex(config, fields, it, **kwargs):
     fields.thetacc[it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.4)) # at [i,j]
     fields.thetafc[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,0)) # at [i-1/2,j]
     fields.thetacf[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,1)) # at [i,j-1/2]
+    fields.dthetafc[it] = np.roll(fields.thetafc[it],-1,0) - fields.thetafc[it] # at [i,j]
+    fields.dthetacf[it] = np.roll(fields.thetacf[it],-1,1) - fields.thetacf[it] # at [i,j]
 
 
 def adhimex_butcher():
@@ -143,6 +145,7 @@ def adhimex(config, fields, it, **kwargs):
 
     fields.tracer[it+1] = field_k.copy()
 
+
 def adhimex_adv(config, fields, it, **kwargs):
     """Implement the AdHImEx scheme for the given time step"""
 
@@ -171,6 +174,125 @@ def adhimex_adv(config, fields, it, **kwargs):
         fEx_f[ik,:] = fluxdiv_fifth(config, fields, it, field_k, 1.-fields.thetafc[it], 1.-fields.thetacf[it])
         fIm_f[ik,:] = fluxdiv_fifth(config, fields, it, field_k, fields.thetafc[it], fields.thetacf[it])
         
+        # Calculate the flux based on the field at stage k (legacy code, but kept for reference for later FCT implementation)
+        #flx_k[ik,:] = uf[it]*fluxfn(field_k) # [i] at i-1/2
+        #fEx[ik,:] = -ddx((1 - beta[it])*flx_k[ik,:], np.roll((1 - beta[it])*flx_k[ik,:],-1), dxc)
+        #fIm[ik,:] = -ddx(beta[it]*flx_k[ik,:], np.roll(beta[it]*flx_k[ik,:],-1), dxc)   
+        #flx_contribution_from_stage_k[ik,:] = AEx[-1,ik]*(1 - beta[it])*flx_k[ik,:] + AIm[-1,ik]*beta[it]*flx_k[ik,:]
+
+    fields.tracer[it+1] = field_k.copy()
+
+
+def adhimex_butcher_12():
+    """Sets up AdHImEx Butcher tableau - only the first two stages"""
+
+    # Butcher tableau for explicit part (left tableau from Ullrich and Jablonowski 2012. See the Weller Lock and Wood (2013) UJ3(1+e,3,2) scheme)   
+    AEx = np.array([[0., 0.],[0., 0.]])
+
+    # Butcher tableau for implicit part (right tableau from Ullrich and Jablonowski 2012. See the Weller Lock and Wood (2013) UJ3(1+e,3,2) scheme)   
+    AIm = np.array([[0., 0.],[0.5, 0.]])
+
+    nstages = np.shape(AIm)[1]
+
+    return AEx, AIm, nstages
+
+
+def adhimex_12(config, fields, it, **kwargs):
+    """Implement the AdHImEx scheme for the given time step. Only the first two stages."""
+
+    # Set up Butcher tableau
+    AEx, AIm, nstages = adhimex_butcher_12()
+
+    # Calculate the implicitness at each cell face
+    implicitness_adhimex(config, fields, it, **kwargs)
+
+    # Time step
+    fEx, fIm = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
+    field_k = fields.tracer[it].copy()
+    for ik in range(nstages):
+        # Calculate the field at stage k          
+        rhs_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
+        matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
+        field_k = gcrk_matrixfree(config, matrix, rhs_k, field_k, kiter=10, jiter=10)
+
+        fEx[ik,:] = fluxdiv_fifth(config, fields, it, field_k, 1.-fields.thetafc[it], 1.-fields.thetacf[it])
+        fIm[ik,:] = fluxdiv_fifth(config, fields, it, field_k, fields.thetafc[it], fields.thetacf[it])
+
+        # Calculate the flux based on the field at stage k (legacy code, but kept for reference for later FCT implementation)
+        #flx_k[ik,:] = uf[it]*fluxfn(field_k) # [i] at i-1/2
+        #fEx[ik,:] = -ddx((1 - beta[it])*flx_k[ik,:], np.roll((1 - beta[it])*flx_k[ik,:],-1), dxc)
+        #fIm[ik,:] = -ddx(beta[it]*flx_k[ik,:], np.roll(beta[it]*flx_k[ik,:],-1), dxc)   
+        #flx_contribution_from_stage_k[ik,:] = AEx[-1,ik]*(1 - beta[it])*flx_k[ik,:] + AIm[-1,ik]*beta[it]*flx_k[ik,:]
+
+    fields.tracer[it+1] = field_k.copy()
+
+
+def adhimex_butcher_123():
+    """Sets up AdHImEx Butcher tableau - only the first three stages"""
+
+    # Butcher tableau for explicit part (left tableau from Ullrich and Jablonowski 2012. See the Weller Lock and Wood (2013) UJ3(1+e,3,2) scheme)   
+    AEx = np.array([[0., 0., 0.],[0., 0., 0.],[0., 1., 0.]])
+
+    # Butcher tableau for implicit part (right tableau from Ullrich and Jablonowski 2012. See the Weller Lock and Wood (2013) UJ3(1+e,3,2) scheme)   
+    AIm = np.array([[0., 0., 0.],[0.5, 0., 0.],[0.5, 0., 0.]])
+
+    nstages = np.shape(AIm)[1]
+
+    return AEx, AIm, nstages
+
+
+def adhimex_123(config, fields, it, **kwargs):
+    """Implement the AdHImEx scheme for the given time step. Only the first three stages."""
+
+    # Set up Butcher tableau
+    AEx, AIm, nstages = adhimex_butcher_123()
+
+    # Calculate the implicitness at each cell face
+    implicitness_adhimex(config, fields, it, **kwargs)
+
+    # Time step
+    fEx, fIm = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
+    field_k = fields.tracer[it].copy()
+    for ik in range(nstages):
+        # Calculate the field at stage k          
+        rhs_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
+        matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
+        field_k = gcrk_matrixfree(config, matrix, rhs_k, field_k, kiter=10, jiter=10)
+
+        fEx[ik,:] = fluxdiv_fifth(config, fields, it, field_k, 1.-fields.thetafc[it], 1.-fields.thetacf[it])
+        fIm[ik,:] = fluxdiv_fifth(config, fields, it, field_k, fields.thetafc[it], fields.thetacf[it])
+
+        # Calculate the flux based on the field at stage k (legacy code, but kept for reference for later FCT implementation)
+        #flx_k[ik,:] = uf[it]*fluxfn(field_k) # [i] at i-1/2
+        #fEx[ik,:] = -ddx((1 - beta[it])*flx_k[ik,:], np.roll((1 - beta[it])*flx_k[ik,:],-1), dxc)
+        #fIm[ik,:] = -ddx(beta[it]*flx_k[ik,:], np.roll(beta[it]*flx_k[ik,:],-1), dxc)   
+        #flx_contribution_from_stage_k[ik,:] = AEx[-1,ik]*(1 - beta[it])*flx_k[ik,:] + AIm[-1,ik]*beta[it]*flx_k[ik,:]
+
+    fields.tracer[it+1] = field_k.copy()
+
+    
+def adhimex_123_overwritek2(config, fields, it, **kwargs):
+    """Implement the AdHImEx scheme for the given time step. Only the first three stages. And overwrite the second stage with the initial condition (i.e. testing it with a 0.5 uniform field on 07-12-2025)
+    """
+
+    # Set up Butcher tableau
+    AEx, AIm, nstages = adhimex_butcher_123()
+
+    # Calculate the implicitness at each cell face
+    implicitness_adhimex(config, fields, it, **kwargs)
+
+    # Time step
+    fEx, fIm = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
+    field_k = fields.tracer[it].copy()
+    for ik in range(nstages):
+        # Calculate the field at stage k          
+        rhs_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
+        matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
+        field_k = gcrk_matrixfree(config, matrix, rhs_k, field_k, kiter=10, jiter=10)
+        if ik == 1: field_k = fields.tracer[it].copy()
+        fEx[ik,:] = fluxdiv_fifth(config, fields, it, field_k, 1.-fields.thetafc[it], 1.-fields.thetacf[it])
+        fIm[ik,:] = fluxdiv_fifth(config, fields, it, field_k, fields.thetafc[it], fields.thetacf[it])
+
         # Calculate the flux based on the field at stage k (legacy code, but kept for reference for later FCT implementation)
         #flx_k[ik,:] = uf[it]*fluxfn(field_k) # [i] at i-1/2
         #fEx[ik,:] = -ddx((1 - beta[it])*flx_k[ik,:], np.roll((1 - beta[it])*flx_k[ik,:],-1), dxc)
