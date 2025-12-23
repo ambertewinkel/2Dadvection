@@ -1,6 +1,6 @@
 import numpy as np
 from functools import partial
-from src.solvers import gcrk_matrixfree
+import src.solvers as sv
 
 
 ################# UPWIND SCHEME #################
@@ -64,7 +64,7 @@ def adimex_upwind(config, fields, it, **kwargs):
 
     if solver == 'gcrk_matrixfree':
         matrix = partial(adimex_upwind_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it])
-        fields.tracer[it+1] = gcrk_matrixfree(config, matrix, rhs, fields.tracer[it], kiter=5, jiter=5)
+        fields.tracer[it+1] = sv.gcrk(config, matrix, rhs, fields.tracer[it], kiter=5, jiter=5)
     else:
         raise ValueError(f"Unknown solver {solver}")
 
@@ -131,8 +131,13 @@ def adhimex(config, fields, it, **kwargs):
     for ik in range(nstages):
         # Calculate the field at stage k          
         rhs_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
-        matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
-        field_k = gcrk_matrixfree(config, matrix, rhs_k, field_k, kiter=10, jiter=10)
+
+        if ik == 4 and np.any(fields.thetacc[it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
+            matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
+            solver = getattr(sv, config.solver)
+            field_k = solver(config, matrix, rhs_k, field_k, kiter=10, jiter=10)
+        else:
+            field_k = rhs_k.copy()
 
         fEx[ik,:] = fluxdiv_fifth(config, fields, it, field_k, 1.-fields.thetafc[it], 1.-fields.thetacf[it])
         fIm[ik,:] = fluxdiv_fifth(config, fields, it, field_k, fields.thetafc[it], fields.thetacf[it])
@@ -166,9 +171,14 @@ def adhimex_adv(config, fields, it, **kwargs):
             rhs_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx_c[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_c[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
         else: 
             rhs_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx_f[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_f[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
-        matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
-        field_k = gcrk_matrixfree(config, matrix, rhs_k, field_k, kiter=10, jiter=10)
         
+        if ik == 4 and np.any(fields.thetacc[it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
+            matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
+            solver = getattr(sv, config.solver)
+            field_k = solver(config, matrix, rhs_k, field_k, kiter=10, jiter=10)
+        else:
+            field_k = rhs_k.copy()
+               
         fEx_c[ik,:] = (1.-fields.thetacc[it])*fluxdiv_fifth(config, fields, it, field_k, 1., 1.)
         fIm_c[ik,:] = fields.thetacc[it]*fluxdiv_fifth(config, fields, it, field_k, 1., 1.)
         fEx_f[ik,:] = fluxdiv_fifth(config, fields, it, field_k, 1.-fields.thetafc[it], 1.-fields.thetacf[it])
@@ -211,9 +221,7 @@ def adhimex_12(config, fields, it, **kwargs):
     field_k = fields.tracer[it].copy()
     for ik in range(nstages):
         # Calculate the field at stage k          
-        rhs_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
-        matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
-        field_k = gcrk_matrixfree(config, matrix, rhs_k, field_k, kiter=10, jiter=10)
+        field_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
 
         fEx[ik,:] = fluxdiv_fifth(config, fields, it, field_k, 1.-fields.thetafc[it], 1.-fields.thetacf[it])
         fIm[ik,:] = fluxdiv_fifth(config, fields, it, field_k, fields.thetafc[it], fields.thetacf[it])
@@ -255,9 +263,7 @@ def adhimex_123(config, fields, it, **kwargs):
     field_k = fields.tracer[it].copy()
     for ik in range(nstages):
         # Calculate the field at stage k          
-        rhs_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
-        matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
-        field_k = gcrk_matrixfree(config, matrix, rhs_k, field_k, kiter=10, jiter=10)
+        field_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
 
         fEx[ik,:] = fluxdiv_fifth(config, fields, it, field_k, 1.-fields.thetafc[it], 1.-fields.thetacf[it])
         fIm[ik,:] = fluxdiv_fifth(config, fields, it, field_k, fields.thetafc[it], fields.thetacf[it])
@@ -286,9 +292,7 @@ def adhimex_123_overwritek2(config, fields, it, **kwargs):
     field_k = fields.tracer[it].copy()
     for ik in range(nstages):
         # Calculate the field at stage k          
-        rhs_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
-        matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
-        field_k = gcrk_matrixfree(config, matrix, rhs_k, field_k, kiter=10, jiter=10)
+        field_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
         if ik == 1: field_k = fields.tracer[it].copy()
         fEx[ik,:] = fluxdiv_fifth(config, fields, it, field_k, 1.-fields.thetafc[it], 1.-fields.thetacf[it])
         fIm[ik,:] = fluxdiv_fifth(config, fields, it, field_k, fields.thetafc[it], fields.thetacf[it])

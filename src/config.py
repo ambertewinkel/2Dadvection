@@ -37,7 +37,7 @@ class Config:
     verbose: bool = False
     outputdir: str = 'test'
 
-    solver: str = 'gcrk_matrixfree' # numpy, gcrk_matrix, gcrk_matrixfree
+    solver: str = 'gmresm' #gcrk or gmresm --- both matrixfree (gmresm kinda)
     constant_tracer: float = 1.
     constant_u: float = 1.
     constant_v: float = 1.
