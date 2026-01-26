@@ -31,6 +31,26 @@ def swift_div(config, fields, it):
     fields.v[it] = 0.5*config.u0*np.sin(2.*np.pi*(fields.xcf + 0.5*Lx - ut)/Lx)*np.sin(np.pi*(fields.ycf + 0.5*Ly - ut)/Ly)*np.sin(np.pi*(fields.ycf + 0.5*Ly - ut)/Ly)*np.cos(np.pi*(it + 0.5)*config.dt/config.T) + config.u0
 
 
+#def swift_div_on_steroids(config, fields, it):
+#    # Divergent velocity field at half time levels from SWIFT test case
+#
+#    Lx = config.xmax - config.xmin
+#    Ly = config.ymax - config.ymin
+#    ut = config.u0*(it + 0.5)*config.dt
+#    fields.u[it] = 5.*config.u0*np.sin(np.pi*(fields.xfc + 0.5*Lx - ut)/Lx)*np.sin(np.pi*(fields.xfc + 0.5*Lx - ut)/Lx)*np.sin(2.*np.pi*(fields.yfc + 0.5*Ly - ut)/Ly)*np.cos(np.pi*(it + 0.5)*config.dt/config.T) + config.u0
+#    fields.v[it] = 5.*config.u0*np.sin(2.*np.pi*(fields.xcf + 0.5*Lx - ut)/Lx)*np.sin(np.pi*(fields.ycf + 0.5*Ly - ut)/Ly)*np.sin(np.pi*(fields.ycf + 0.5*Ly - ut)/Ly)*np.cos(np.pi*(it + 0.5)*config.dt/config.T) + config.u0
+#
+#
+def strong_convergence(config, fields, it):
+    Lx = config.xmax - config.xmin
+    Ly = config.ymax - config.ymin
+    fields.u[it] = 10.*config.u0*np.sin(np.pi*(fields.xfc/Lx - 0.5))**4
+    fields.v[it] = 10.*config.u0*np.sin(np.pi*(fields.ycf/Ly - 0.5))**4
+
+    #ut = config.u0*(it + 0.5)*config.dt
+    #fields.u[it] = config.u0*np.sin(np.pi*(fields.xfc + 0.5*Lx - ut)/Lx)*np.sin(np.pi*(fields.xfc + 0.5*Lx - ut)/Lx)*np.sin(2.*np.pi*(fields.yfc + 0.5*Ly - ut)/Ly)*np.cos(np.pi*(it + 0.5)*config.dt/config.T) + config.u0
+
+
 def swift_nondiv(config, fields, it):
     # Non-divergent velocity field at half time levels from SWIFT test case
 

@@ -164,14 +164,16 @@ def plot_figure(x, y, field, title, xlabel, ylabel, cmap, filename, minval, maxv
     if diff == 0.:
         contourlevels = None
     else:
-        contourlevels = [minval, (minval + 0.15*diff), (minval + 0.25*diff), (minval + 0.35*diff), (minval + 0.45*diff), (minval + 0.55*diff), (minval + 0.65*diff), (minval + 0.75*diff), (minval + 0.85*diff), maxval]
+        contourlevels = list(np.linspace(minval, maxval, 20, endpoint=True))
+        #contourlevels = [minval, (minval + 0.15*diff), (minval + 0.25*diff), (minval + 0.35*diff), (minval + 0.45*diff), (minval + 0.55*diff), (minval + 0.65*diff), (minval + 0.75*diff), (minval + 0.85*diff), maxval]
     plt.contourf(x, y, field, cmap=cmap, levels=contourlevels)
     plt.colorbar()
     if add_initial:
         if diff == 0.:
             contourlevels_reduced = None
         else:
-            contourlevels_reduced = [(minval + 0.15*diff), (minval + 0.25*diff), (minval + 0.35*diff), (minval + 0.45*diff), (minval + 0.55*diff), (minval + 0.65*diff), (minval + 0.75*diff), (minval + 0.85*diff)]
+            contourlevels_reduced = contourlevels[1:-1]
+            #contourlevels_reduced = [(minval + 0.15*diff), (minval + 0.25*diff), (minval + 0.35*diff), (minval + 0.45*diff), (minval + 0.55*diff), (minval + 0.65*diff), (minval + 0.75*diff), (minval + 0.85*diff)]
         plt.contour(x, y, initialtracer, colors='w', levels=contourlevels_reduced, linewidths=0.5, linestyles=':')
     if add_hatching:
         plt.contour(x, y, thetacc, colors='k', levels=[0.], linewidths=0.5, linestyles='--')

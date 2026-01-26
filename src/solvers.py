@@ -47,11 +47,11 @@ def gcrk(config, A, b, x, kiter, jiter, tolerance=1e-6):
     
     return x
 
-import matplotlib.pyplot as plt
+
 def gmresm(config, A, b, x, kiter=2, jiter=2, tolerance=1e-6):
     """
     Matrixfree solution of linear Ax=b system using GMRES(m) method. (matrixfree through a function that computes Ax with def A(x))).
-    However, GMRES(m) does need a small matrix H to be stored and solved (done here through np.linalg.solve). Apart from that, it currently stores a V and V_hat matrix, arrays of size (m+1,N) where N is the size of the problem. This could be improved to reduce memory usage (memory usage is already improved with the restarting).
+    However, GMRES(m) does need a small matrix H to be stored and solved (done here through np.linalg.solve). Apart from that, it currently stores a V matrix, arrays of size (m+1,N) where N is the size of the problem. This could be improved to reduce memory usage (memory usage is already improved with the restarting).
     --- IN --- 
     A: function to implement the A matrix
     b: N vector, rhs of equation

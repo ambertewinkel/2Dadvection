@@ -38,8 +38,12 @@ def implicitness_adimex_upwind(config, fields, it, **kwargs):
     C_out_cc = - np.minimum(0.,Cfc) + np.maximum(0.,np.roll(Cfc,-1,0)) - np.minimum(0.,Ccf) + np.maximum(0.,np.roll(Ccf,-1,1)) # at [i,j]
     fields.Ccc[it] = 0.5*(C_in_cc + C_out_cc) # at [i,j] (always nonnegative) 
 
+    # temporary edit to check monotonicity (e.g. with nondivergent winds in 2D)
+    fields.Ccc[it] = C_out_cc
+
     # Calculate implicitness at cell centers and faces
-    fields.thetacc[it] = np.maximum(0., 1. - 0.5/fields.Ccc[it]) # at [i,j] # using 2C here instead of C preserves monotonicity better (17-11-2025: check if guaranteed monotonicity?)
+    #fields.thetacc[it] = np.maximum(0., 1. - 0.5/fields.Ccc[it]) # at [i,j] # using 2C here instead of C preserves monotonicity better (17-11-2025: check if guaranteed monotonicity?)
+    fields.thetacc[it] = np.ones(np.shape(C_out_cc))
     fields.thetafc[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,0)) # at [i-1/2,j]
     fields.thetacf[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,1)) # at [i,j-1/2]
 
@@ -62,11 +66,12 @@ def adimex_upwind(config, fields, it, **kwargs):
     # Calculate LHS (implicit) upwind fluxes at cell faces    
     solver = config.solver # numpy, gcrk_matrix, gcrk_matrixfree # not sure if numpy is possible with a 4D matrix. # 17-11-2025: only gcrk_matrixfree implemented
 
-    if solver == 'gcrk_matrixfree':
-        matrix = partial(adimex_upwind_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it])
-        fields.tracer[it+1] = sv.gcrk(config, matrix, rhs, fields.tracer[it], kiter=5, jiter=5)
+    if np.any(fields.thetacc[it]): # avoids gmresm breaking down, only running the solver when there is a nonunit matrix
+        matrix = partial(adimex_upwind_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it]) # at [i,j]
+        solver = getattr(sv, config.solver)
+        fields.tracer[it+1] = solver(config, matrix, rhs, fields.tracer[it], kiter=10, jiter=10)
     else:
-        raise ValueError(f"Unknown solver {solver}")
+        fields.tracer[it+1] = rhs.copy()
 
 
 ################# ADHIMEX SCHEME #################
