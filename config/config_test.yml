@@ -14,7 +14,7 @@ dt: 1. #0.02 #6. # s
 nt: 1 #100 #00 #50 #1 #50 #0 #600 #100
 starttime: 0.
 
-velocity_setting: strong_convergence #swift_div_on_steroids #_streamfunction #swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation
+velocity_setting: swift_nondiv_streamfunction #strong_convergence #swift_div_on_steroids #_streamfunction #swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation
 
 initial_tracer: sine_swift #constant #sine_swift #constant #sine_swift #sine_swift #sine_swift #cosine_bell #gaussian_chenetal2017
 constant_tracer: 0.5
@@ -29,4 +29,4 @@ solver: gcrk #gmresm
 filename: chenetal2017
 verbose: True
 animate: True
-outputdir: nt1_checking_sine_monton_strongconvergence_imupwind_gcrk #adhimexadv_constIC_swiftnondiv_gmresm_unityconnectedtotolerance #test #adhimexadv_constIC_swiftnondiv_gcrk #adhimex12_0p5_uniform_field_swiftnondiv #sineswift_swiftnondivdouble_similar_to_presentationNOV2025 #test #swift_weakjet #test #ujet_reversal_umax3
+outputdir: test # nt1_checking_sine_monton_strongconvergence_imupwind_gcrk #adhimexadv_constIC_swiftnondiv_gmresm_unityconnectedtotolerance #test #adhimexadv_constIC_swiftnondiv_gcrk #adhimex12_0p5_uniform_field_swiftnondiv #sineswift_swiftnondivdouble_similar_to_presentationNOV2025 #test #swift_weakjet #test #ujet_reversal_umax3
