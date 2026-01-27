@@ -1,6 +1,18 @@
 import numpy as np
 
 
+grid_nodes_x = [
+                      "xc",
+                      "xf",
+                      "dxc",
+]
+
+grid_nodes_y = [
+                      "yc",
+                      "yf",
+                      "dyc",
+]
+
 grid_nodes_xy = [
                       "xcc",
                       "ycc",
@@ -44,6 +56,10 @@ class FieldContainer:
     dtype = np.float64
 
     def __init__(self, config):
+        for field in grid_nodes_x:
+            setattr(self, field, np.zeros(config.nx, dtype=self.dtype))
+        for field in grid_nodes_y:
+            setattr(self, field, np.zeros(config.ny, dtype=self.dtype))
         for field in grid_nodes_xy:
             setattr(self, field, np.zeros((config.nx, config.ny), dtype=self.dtype))
         for field in grid_nodes_xy_boundaries:

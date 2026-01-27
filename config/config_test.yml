@@ -1,4 +1,4 @@
-scheme: adimex_upwind #adhimex_adv #3_overwritek2
+scheme: adhimex #adimex_upwind #adhimex_adv #3_overwritek2
 
 nx: 64 #50 #10 #100
 ny: 64 #50 #10 #100
@@ -6,12 +6,13 @@ xmin: -500. # m
 xmax: 500. # m
 ymin: -500. # m
 ymax: 500. # m
+grid_x: cosine
+grid_y: cosine
 BC_x: periodic
 BC_y: periodic
-grid_setting: uniform
 
 dt: 1. #0.02 #6. # s
-nt: 1 #100 #00 #50 #1 #50 #0 #600 #100
+nt: 100 #00 #100 #00 #50 #1 #50 #0 #600 #100
 starttime: 0.
 
 velocity_setting: swift_nondiv_streamfunction #strong_convergence #swift_div_on_steroids #_streamfunction #swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation

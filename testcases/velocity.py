@@ -295,5 +295,5 @@ def velocities_from_streamfunction(config, fields, it):
     """Deriving the u and v velocity components from the streamfunction psi.
     psi[i,j] is defined at i-1/2, j-1/2 -> bottom left cell corner"""
 
-    fields.u[it] = - (fields.psi[it][:-1,1:] - fields.psi[it][:-1,:-1])/config.dy
-    fields.v[it] = (fields.psi[it][1:,:-1] - fields.psi[it][:-1,:-1])/config.dx
+    fields.u[it] = - (fields.psi[it][:-1,1:] - fields.psi[it][:-1,:-1])/fields.dycc
+    fields.v[it] = (fields.psi[it][1:,:-1] - fields.psi[it][:-1,:-1])/fields.dxcc

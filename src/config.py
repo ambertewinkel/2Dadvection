@@ -2,11 +2,10 @@
 from typing import Any
 import numpy as np
 import yaml
-import dataclasses
 from pydantic.dataclasses import dataclass
 
 @dataclass
-class Config:
+class Config():
 
     scheme: str
     
@@ -18,22 +17,19 @@ class Config:
     ymin: float
     ymax: float
 
-    BC_x: str
-    BC_y: str
-    grid_setting: str
+    grid_x: str # e.g., 'uniform' or 'cosine'
+    grid_y: str # e.g., 'uniform' or 'cosine'
+
+    BC_x: str # e.g., 'periodic'
+    BC_y: str # e.g., 'periodic'
 
     velocity_setting: str
-
-    xc: Any = dataclasses.field(init=False)
-    yc: Any = dataclasses.field(init=False)
 
     dt: float
     nt: int
     starttime: float
 
     initial_tracer: str
-    #filename: str
-    #animate: bool
     verbose: bool = False
     outputdir: str = 'test'
 
@@ -51,21 +47,13 @@ class Config:
     # Jet testcase defaults
     ujet_max: float = 1. # maximum jet velocity magnitude
 
+
     def __post_init__(self):
 
         # Jet testcase defaults
         self.ujet_a: float = self.ymax/3.
         self.ujet_b: float = 2.*self.ymax/3.
-
-        self.dx = (self.xmax - self.xmin) / self.nx
-        self.dy = (self.ymax - self.ymin) / self.ny
         
-        self.xf = np.linspace(self.xmin, self.xmax, self.nx, endpoint=False)
-        self.yf = np.linspace(self.ymin, self.ymax, self.ny, endpoint=False)
-        
-        self.xc = self.xf + 0.5*self.dx
-        self.yc = self.yf + 0.5*self.dy
-
         self.endtime = self.starttime + self.nt * self.dt
 
 

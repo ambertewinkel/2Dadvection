@@ -15,7 +15,7 @@ def fluxdiv_first(config, fields, it, phi, factor_fc, factor_cf):
     flxx = factor_fc*(np.maximum(0., fields.u[it]) * phi_BS_fc + np.minimum(0., fields.u[it]) * phi_FS_fc) # at [i-1/2,j]
     flxy = factor_cf*(np.maximum(0., fields.v[it]) * phi_BS_cf + np.minimum(0., fields.v[it]) * phi_FS_cf) # at [i,j-1/2]
 
-    return (flxx - np.roll(flxx,-1,0))/config.dx + (flxy - np.roll(flxy,-1,1))/config.dy # at [i,j]
+    return (flxx - np.roll(flxx,-1,0))/fields.dxcc + (flxy - np.roll(flxy,-1,1))/fields.dycc # at [i,j]
 
 
 def upwind(config, fields, it, **kwargs):
@@ -31,17 +31,17 @@ def implicitness_adimex_upwind(config, fields, it, **kwargs):
     # Assumes nondivergent winds
 
     # Calculate Courant numbers at cell faces
-    Cfc = config.dt/config.dx * fields.u[it] # at [i-1/2,j]
-    Ccf = config.dt/config.dy * fields.v[it] # at [i,j-1/2]
-
+    Cfc = config.dt/fields.dxcc * fields.u[it] # at [i-1/2,j]
+    Ccf = config.dt/fields.dycc * fields.v[it] # at [i,j-1/2]
+    
     # Calculate Courant numbers at cell centers
     C_in_cc = np.maximum(0.,Cfc) - np.minimum(0.,np.roll(Cfc,-1,0)) + np.maximum(0.,Ccf) - np.minimum(0.,np.roll(Ccf,-1,1)) # at [i,j]
     C_out_cc = - np.minimum(0.,Cfc) + np.maximum(0.,np.roll(Cfc,-1,0)) - np.minimum(0.,Ccf) + np.maximum(0.,np.roll(Ccf,-1,1)) # at [i,j]
     fields.Ccc[it] = 0.5*(C_in_cc + C_out_cc) # at [i,j] (always nonnegative) 
-
+    
     # Calculate implicitness at cell centers and faces
     fields.thetacc[it] = np.maximum(0., 1. - 0.5/fields.Ccc[it]) # at [i,j] # using 2C here instead of C preserves monotonicity better (17-11-2025: check if guaranteed monotonicity?)
-    #fields.thetacc[it] = np.ones(np.shape(C_out_cc))    # would need to be commented out if winds are divergent!
+    #fields.thetacc[it] = np.ones(np.shape(C_out_cc))    # would need to be commented in if winds are divergent!
     fields.thetafc[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,0)) # at [i-1/2,j]
     fields.thetacf[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,1)) # at [i,j-1/2]
 
@@ -77,8 +77,8 @@ def adimex_upwind(config, fields, it, **kwargs):
 def implicitness_adhimex(config, fields, it, **kwargs):
     """Calculate Courant numbers at cell centers and implicitness at cell centers and faces for AdHImEx scheme"""
 
-    sum_abs_velarea = (abs(fields.u[it]) + abs(np.roll(fields.u[it],-1,0)))*config.dy + (abs(fields.v[it]) + abs(np.roll(fields.v[it],-1,1)))*config.dx # at [i,j]
-    fields.Ccc[it] = 0.5*config.dt*sum_abs_velarea/(config.dx*config.dy) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
+    sum_abs_velarea = (abs(fields.u[it]) + abs(np.roll(fields.u[it],-1,0)))*fields.dycc + (abs(fields.v[it]) + abs(np.roll(fields.v[it],-1,1)))*fields.dxcc # at [i,j]
+    fields.Ccc[it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
     fields.thetacc[it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.4)) # at [i,j]
     fields.thetafc[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,0)) # at [i-1/2,j]
     fields.thetacf[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,1)) # at [i,j-1/2]
@@ -110,7 +110,7 @@ def fluxdiv_fifth(config, fields, it,  phi, factor_fc, factor_cf):
     flxx = factor_fc*(np.maximum(0., fields.u[it]) * phi_BS_fc + np.minimum(0., fields.u[it]) * phi_FS_fc) # at [i-1/2,j]
     flxy = factor_cf*(np.maximum(0., fields.v[it]) * phi_BS_cf + np.minimum(0., fields.v[it]) * phi_FS_cf) # at [i,j-1/2]
 
-    return (flxx - np.roll(flxx,-1,0))/config.dx + (flxy - np.roll(flxy,-1,1))/config.dy # at [i,j]
+    return (flxx - np.roll(flxx,-1,0))/fields.dxcc + (flxy - np.roll(flxy,-1,1))/fields.dycc # at [i,j]
 
 
 def adhimex_matrix_func(phi, config, fields, it, thetafc, thetacf, alpha):
