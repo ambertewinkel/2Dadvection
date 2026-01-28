@@ -297,3 +297,23 @@ def velocities_from_streamfunction(config, fields, it):
 
     fields.u[it] = - (fields.psi[it][:-1,1:] - fields.psi[it][:-1,:-1])/fields.dycc
     fields.v[it] = (fields.psi[it][1:,:-1] - fields.psi[it][:-1,:-1])/fields.dxcc
+
+
+def double_rotation(config, fields, it):
+    Lx = config.xmax - config.xmin # domain size in x direction (assumed square domain)
+    Ly = config.ymax - config.ymin
+
+    fields.psi[it] = -10000.*np.sin(2.*np.pi*(fields.xffb - config.xmin)/Lx)*np.sin(np.pi*(fields.yffb - config.ymin)/Ly)
+    velocities_from_streamfunction(config, fields, it)
+
+
+def double_rotation_rising_bubble_capped(config, fields, it):
+    Lx = config.xmax - config.xmin # domain size in x direction (assumed square domain)
+    Ly = config.ymax - config.ymin
+
+    fields.psi[it] = -8000.*np.sin(2.*np.pi*(fields.xffb - config.xmin)/Lx)*np.sin(1.25*np.pi*(fields.yffb - config.ymin)/Ly)
+    fields.psi[it] = np.where(fields.yffb < 0.8*(config.ymax - config.ymin) + config.ymin, fields.psi[it], 0.)
+    #plt.contourf(fields.xffb, fields.yffb, fields.psi[it])
+    #plt.show()
+    #exit()
+    velocities_from_streamfunction(config, fields, it)

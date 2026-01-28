@@ -125,3 +125,25 @@ def gaussian_chenetal2017(config, fields, it):
 def initial_blosseydurran(config, fields, it):
     r_tilde = 5.*np.sqrt((fields.xcc - 0.3)**2 + (fields.ycc - 0.5)**2)
     fields.tracer[it] = np.where(r_tilde < 1., 0.25*(1. + np.cos(np.pi*r_tilde))*(1. + np.cos(np.pi*r_tilde)), 0.)
+
+
+def surface_cosine_bell(config, fields, it):
+    """
+    Create a 2D cosine bell profile centered at (0.5, 0.1) with given radius.
+
+    Parameters:
+    - x, y: 2D arrays of coordinates (e.g., from np.meshgrid)
+    - xmin, xmax: domain limits in x
+    - ymin, ymax: domain limits in y
+
+    Returns:
+    - 2D array of cosine bell values
+    """
+    x_center = 0.5 * (config.xmax + config.xmin)
+    y_center = 0.1 * (config.ymax - config.ymin) + config.ymin
+    radius = 0.1*min(config.xmax - config.xmin, config.ymax - config.ymin)
+    # Compute distance from the center
+    r = np.sqrt((fields.xcc - x_center)*(fields.xcc - x_center) + (fields.ycc - y_center)*(fields.ycc - y_center))
+
+    # Apply cosine bell formula
+    fields.tracer[it] = np.where(r < radius, 0.5 * (1 + np.cos(np.pi * r / radius)), 0)
