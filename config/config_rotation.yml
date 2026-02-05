@@ -1,6 +1,6 @@
 # based on Chen et al 2017 solid body rotation
 
-scheme: adhimex
+scheme: adhimex_adv
 
 nx: 100
 ny: 100
@@ -10,10 +10,11 @@ ymin: 0. # m
 ymax: 10000. # m
 BC_x: periodic
 BC_y: periodic
-grid_setting: uniform
+grid_x: uniform
+grid_y: cosine4
 
-dt: 1. #6. # s
-nt: 600 #100
+dt: 3. #1.5 #6. # s
+nt: 200 #100
 starttime: 0.
 
 velocity_setting: solid_body_rotation
@@ -23,4 +24,4 @@ initial_tracer: gaussian_chenetal2017
 filename: chenetal2017
 verbose: True
 animate: True
-outputdir: test_rotation_adhimex_
+outputdir: rotation_adhimexadv_nt200_ycos4

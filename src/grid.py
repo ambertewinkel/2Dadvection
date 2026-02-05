@@ -150,6 +150,36 @@ def set_grid_y_cosine4_topleft(config, fields):
     fields.yc = fields.yf + 0.5*fields.dyc
 
 
+def set_grid_x_cosine4(config, fields):
+    """Create cosine squared stretched grid in x direction in the middle of the domain"""
+
+    Lx = config.xmax - config.xmin
+
+    fields.dxc = 1.2 - np.cos(np.pi*(np.arange(config.nx)/config.nx + 0.5))**4
+    fields.dxc = fields.dxc / np.sum(fields.dxc) * Lx
+
+    fields.xf[0] = config.xmin
+    for i in range(config.nx-1):
+        fields.xf[i+1] = fields.xf[i] + fields.dxc[i]
+
+    fields.xc = fields.xf + 0.5*fields.dxc
+
+
+def set_grid_y_cosine4(config, fields):
+    """Create cosine squared stretched grid in y direction in the middle of the domain"""
+
+    Ly = config.ymax - config.ymin
+
+    fields.dyc = 1.2 - np.cos(np.pi*(np.arange(config.ny)/config.ny + 0.5))**4
+    fields.dyc = fields.dyc / np.sum(fields.dyc) * Ly
+
+    fields.yf[0] = config.ymin
+    for i in range(config.ny-1):
+        fields.yf[i+1] = fields.yf[i] + fields.dyc[i]
+
+    fields.yc = fields.yf + 0.5*fields.dyc
+
+
 def set_grid_y_linear(config,fields):
     Ly = config.ymax - config.ymin
 

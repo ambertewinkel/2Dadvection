@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 def velocity(config, fields, it):
     # Define velocity fields at time step it (actually velocities taken at it + 0.5 for second-order accuracy)
@@ -317,3 +316,51 @@ def double_rotation_rising_bubble_capped(config, fields, it):
     #plt.show()
     #exit()
     velocities_from_streamfunction(config, fields, it)
+
+
+def sech(x):
+    return 2.*np.cosh(x)/(np.cosh(2.*x) + 1.)
+
+
+def doswell(config, fields, it):
+
+    Lx = config.xmax - config.xmin
+    Ly = config.ymax - config.ymin
+
+    xc = 0.5 * (config.xmax + config.xmin)
+    yc = 0.5 * (config.ymax + config.ymin)
+
+    alpha = np.arctan((fields.yffb/Ly) / (fields.xffb/Lx +1.e-16))
+    r = np.sqrt((fields.xffb - xc)**2 + (fields.yffb - yc)**2)
+    Vt = sech(r*np.pi/(0.5*Lx))**2*np.tanh(r*np.pi/(0.5*Lx))#*Lx # assumes Lx=Ly
+    alpha = np.arctan2(fields.yffb, fields.xffb)# + np.pi # angle from x-axis, radians
+    fields.psi[it] = -Lx*0.5*sech(r*np.pi/(0.5*Lx))**2 # assumes Lx=Ly
+    
+    velocities_from_streamfunction(config, fields, it)
+
+
+def hadley(config, fields, it):
+    # Kent et al 2014: using v and w in eqs 37 and 38
+    # fields.xffb is latitude (phi)
+    # fields.yffb is height (z)
+    # fields.u is v, meridional wind
+    # fields.v is w, vertical wind
+    # default settings to be used with this: xmin = -90, xmax = 90 (degrees), ymin = 0, ymax = ztop = 1.2e4 (m), nx = 90 or 180 or 360 (corresponds to 220, 110, 55 km grid spacing), ny = 30 or 60 or 120 (uniform spacing, corresponds to 400, 200, 100 m grid spacing). 
+    # run the simulation for 1 day, i.e., 86400s ... for time step ???
+
+    a = 6.37122e6 # m Earth radius
+    w0 = 0.15 # ms-1 reference vertical velocity
+    K = 5 # number of overturning cells
+    ztop = 1.2e4 # m height position of model top 
+    p0 = 1.e5 # Pa reference pressure
+    Rd = 287. # J kg-1 K-1 gas constant for dry air
+    T0 = 300. # K isothermal atmospheric temperature
+    rho0 = p0/(Rd*T0) # kg m-3 reference density
+    tau = 86400. # s period of motion (1 day)
+    g = 9.80616 # ms-2 gravity
+    H = Rd*T0/g # m scale height
+    rhofc = rho0*np.exp(-fields.yfc/H)
+    rhocf = rho0*np.exp(-fields.ycf/H)
+
+    fields.u[it] = -a*w0*np.pi*rho0/(K*ztop*rhofc)*np.cos(np.radians(fields.xfc))*np.sin(K*np.radians(fields.xfc))*np.cos(np.pi*fields.yfc/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)/(360.*a)
+    fields.v[it] = w0*rho0/(K*rhocf)*(-2.*np.sin(K*np.radians(fields.xcf))*np.sin(np.radians(fields.xcf)) + K*np.cos(np.radians(fields.xcf))*np.cos(K*np.radians(fields.xcf)))*np.sin(np.pi*fields.ycf/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)

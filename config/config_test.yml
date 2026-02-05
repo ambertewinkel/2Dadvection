@@ -1,4 +1,4 @@
-scheme: adhimex_adv #adimex_upwind #adhimex_adv #3_overwritek2
+scheme: adhimex_adv
 
 nx: 64 #50 #10 #100
 ny: 64 #50 #10 #100
@@ -7,18 +7,18 @@ xmax: 500. # m
 ymin: -500. # m
 ymax: 500. # m
 grid_x: uniform #cosine4_topleft
-grid_y: linear #cosine4_topleft
+grid_y: uniform # linear #cosine4_topleft
 BC_x: periodic
 BC_y: periodic
 
 dt: 1. #0.02 #6. # s
-nt: 25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
+nt: 1000 #25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
 starttime: 0.
 
-velocity_setting: double_rotation_rising_bubble_capped #constant_v #swift_nondiv_streamfunction #strong_convergence #swift_div_on_steroids #_streamfunction #swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation
+velocity_setting: hadley #double_rotation_rising_bubble_capped #constant_v #swift_nondiv_streamfunction #strong_convergence #swift_div_on_steroids #_streamfunction #swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation
 constant_v: 20. 
 
-initial_tracer: surface_cosine_bell #sine_swift #constant #sine_swift #constant #sine_swift #sine_swift #sine_swift #cosine_bell #gaussian_chenetal2017
+initial_tracer: hadley #surface_cosine_bell #sine_swift #constant #sine_swift #constant #sine_swift #sine_swift #sine_swift #cosine_bell #gaussian_chenetal2017
 constant_tracer: 0.5
 
 #ujet_max: 1. #1.
@@ -26,9 +26,9 @@ constant_tracer: 0.5
 T: 100. #10. 
 u0: 10. #0. #0.5 with T=100. and u=100. we have Cmax of order 20, which is difficult to converge to.
 
-solver: gmresm #gmresm
+solver: gcrk #gmresm
 
 filename: chenetal2017
 verbose: True
 animate: True
-outputdir: adhimex_risingbubble_linear #test # nt1_checking_sine_monton_strongconvergence_imupwind_gcrk #adhimexadv_constIC_swiftnondiv_gmresm_unityconnectedtotolerance #test #adhimexadv_constIC_swiftnondiv_gcrk #adhimex12_0p5_uniform_field_swiftnondiv #sineswift_swiftnondivdouble_similar_to_presentationNOV2025 #test #swift_weakjet #test #ujet_reversal_umax3
+outputdir: adhimexadv_hadley
