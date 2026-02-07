@@ -31,17 +31,25 @@ def implicitness_adimex_upwind(config, fields, it, **kwargs):
     # Assumes nondivergent winds
 
     # Calculate Courant numbers at cell faces
-    Cfc = config.dt/fields.dxcc * fields.u[it] # at [i-1/2,j]
-    Ccf = config.dt/fields.dycc * fields.v[it] # at [i,j-1/2]
+    #Cfc = config.dt/fields.dxcc * fields.u[it] # at [i-1/2,j] # not sure if this is quite valid to do when using a nonuniform grid
+    #Ccf = config.dt/fields.dycc * fields.v[it] # at [i,j-1/2]
     
     # Calculate Courant numbers at cell centers
-    C_in_cc = np.maximum(0.,Cfc) - np.minimum(0.,np.roll(Cfc,-1,0)) + np.maximum(0.,Ccf) - np.minimum(0.,np.roll(Ccf,-1,1)) # at [i,j]
-    C_out_cc = - np.minimum(0.,Cfc) + np.maximum(0.,np.roll(Cfc,-1,0)) - np.minimum(0.,Ccf) + np.maximum(0.,np.roll(Ccf,-1,1)) # at [i,j]
-    fields.Ccc[it] = 0.5*(C_in_cc + C_out_cc) # at [i,j] (always nonnegative) 
+    #C_in_cc = np.maximum(0.,Cfc) - np.minimum(0.,np.roll(Cfc,-1,0)) + np.maximum(0.,Ccf) - np.minimum(0.,np.roll(Ccf,-1,1)) # at [i,j]
+    #C_out_cc = - np.minimum(0.,Cfc) + np.maximum(0.,np.roll(Cfc,-1,0)) - np.minimum(0.,Ccf) + np.maximum(0.,np.roll(Ccf,-1,1)) # at [i,j]
+
+    # assumes dy is constant in the x direction (should be defined at each face to multiply with the velocity to get the flux, but this is the same value as dycc at the cell center, so using that for simplicity) -- the same thing applies for dx in the y direction.
+    #Cincc =  0.5*config.dt/(fields.dxcc*fields.dycc)*((np.maximum(0.,fields.u[it]) - np.minimum(0.,np.roll(fields.u[it],-1,0)))*fields.dycc + (np.maximum(0.,fields.v[it]) - np.minimum(0.,np.roll(fields.v[it],-1,1)))*fields.dxcc) # at [i,j]
+    #Coutcc = 0.5*config.dt/(fields.dxcc*fields.dycc)*((-np.minimum(0.,fields.u[it]) + np.maximum(0.,np.roll(fields.u[it],-1,0)))*fields.dycc + (-np.minimum(0.,fields.v[it]) + np.maximum(0.,np.roll(fields.v[it],-1,1)))*fields.dxcc) # at [i,j]
+    #fields.Ccc[it] = 0.5*(Cincc + Coutcc) # at [i,j] (always nonnegative) 
     
+    # assumes dy is constant in the x direction (should be defined at each face to multiply with the velocity to get the flux, but this is the same value as dycc at the cell center, so using that for simplicity) -- the same thing applies for dx in the y direction.
+    sum_abs_velarea = (abs(fields.u[it]) + abs(np.roll(fields.u[it],-1,0)))*fields.dycc + (abs(fields.v[it]) + abs(np.roll(fields.v[it],-1,1)))*fields.dxcc # at [i,j]
+    fields.Ccc[it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
+
     # Calculate implicitness at cell centers and faces
-    fields.thetacc[it] = np.maximum(0., 1. - 0.5/fields.Ccc[it]) # at [i,j] # using 2C here instead of C preserves monotonicity better (17-11-2025: check if guaranteed monotonicity?)
-    #fields.thetacc[it] = np.ones(np.shape(C_out_cc))    # would need to be commented in if winds are divergent!
+    fields.thetacc[it] = np.maximum(0., 1. - 0.5/fields.Ccc[it]) # at [i,j] # for divergent winds: using 2C here instead of C preserves positivity in all cases for c_in and c_out
+    fields.thetacc[it] = np.maximum(0., 1. - 0.5/fields.Ccc[it]) # at [i,j] # for nondivergent winds: using C here preserves positivity in all cases for c_in and c_out
     fields.thetafc[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,0)) # at [i-1/2,j]
     fields.thetacf[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,1)) # at [i,j-1/2]
 
@@ -77,6 +85,7 @@ def adimex_upwind(config, fields, it, **kwargs):
 def implicitness_adhimex(config, fields, it, **kwargs):
     """Calculate Courant numbers at cell centers and implicitness at cell centers and faces for AdHImEx scheme"""
 
+    # assumes dy is constant in the x direction (should be defined at each face to multiply with the velocity to get the flux, but this is the same value as dycc at the cell center, so using that for simplicity) -- the same thing applies for dx in the y direction.
     sum_abs_velarea = (abs(fields.u[it]) + abs(np.roll(fields.u[it],-1,0)))*fields.dycc + (abs(fields.v[it]) + abs(np.roll(fields.v[it],-1,1)))*fields.dxcc # at [i,j]
     fields.Ccc[it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
     fields.thetacc[it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.4)) # at [i,j]
@@ -110,7 +119,7 @@ def fluxdiv_fifth(config, fields, it,  phi, factor_fc, factor_cf):
     flxx = factor_fc*(np.maximum(0., fields.u[it]) * phi_BS_fc + np.minimum(0., fields.u[it]) * phi_FS_fc) # at [i-1/2,j]
     flxy = factor_cf*(np.maximum(0., fields.v[it]) * phi_BS_cf + np.minimum(0., fields.v[it]) * phi_FS_cf) # at [i,j-1/2]
 
-    return (flxx - np.roll(flxx,-1,0))/fields.dxcc + (flxy - np.roll(flxy,-1,1))/fields.dycc # at [i,j]
+    return (flxx - np.roll(flxx,-1,0))/fields.dxcc + (flxy - np.roll(flxy,-1,1))/fields.dycc # at [i,j] # would need adapting for arbitrary grid (and dx varying in y and dy varying in x)
 
 
 def adhimex_matrix_func(phi, config, fields, it, thetafc, thetacf, alpha):
@@ -119,8 +128,8 @@ def adhimex_matrix_func(phi, config, fields, it, thetafc, thetacf, alpha):
     return phi - config.dt*alpha*fluxdiv_fifth(config, fields, it, phi, thetafc, thetacf) # at [i,j]
 
 
-def adhimex(config, fields, it, **kwargs):
-    """Implement the AdHImEx scheme for the given time step"""
+def adhimex_ncp(config, fields, it, **kwargs):
+    """Implement the AdHImEx scheme for the given time step - non-constancy-preserving version"""
 
     # Set up Butcher tableau
     AEx, AIm, nstages = adhimex_butcher()
@@ -154,8 +163,8 @@ def adhimex(config, fields, it, **kwargs):
     fields.tracer[it+1] = field_k.copy()
 
 
-def adhimex_adv(config, fields, it, **kwargs):
-    """Implement the AdHImEx scheme for the given time step"""
+def adhimex(config, fields, it, **kwargs):
+    """Implement the AdHImEx scheme for the given time step - constancy-preserving version"""
 
     # Set up Butcher tableau
     AEx, AIm, nstages = adhimex_butcher()

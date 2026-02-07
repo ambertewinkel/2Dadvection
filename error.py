@@ -1,7 +1,6 @@
 # This code defines error functions. 
 
 
-from fileinput import filename
 import numpy as np
 from sys import argv, exit
 from src.config import Config
