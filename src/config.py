@@ -30,6 +30,11 @@ class Config():
     starttime: float
 
     initial_tracer: str
+    FCT: bool = False
+    FCT_reduced: bool = False
+    tracermin: float = None
+    tracermax: float = None
+
     verbose: bool = False
     outputdir: str = 'test'
 
@@ -37,6 +42,7 @@ class Config():
     constant_tracer: float = 1.
     constant_u: float = 1.
     constant_v: float = 1.
+    nondivergent: bool = None
 
     # SWIFT defaults (u0 and T also used for other testcases, with potentially different values)
     mref: float = 0.5 # kg kg-1

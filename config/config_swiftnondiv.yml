@@ -11,14 +11,14 @@ grid_y: uniform # linear #cosine4_topleft
 BC_x: periodic
 BC_y: periodic
 
-dt: 0.25 #1. #0.2 #0.02 #6. # s
-nt: 400 #100 #000 #25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
+dt: 1. # s
+nt: 100
 starttime: 0.
 
-velocity_setting: swift_nondiv_streamfunction #strong_convergence #swift_div_on_steroids #_streamfunction #swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation
-constant_v: 20. 
+velocity_setting: swift_nondiv_streamfunction
+#constant_v: 20. 
 
-initial_tracer: sine_swift #constant #sine_swift #constant #sine_swift #sine_swift #sine_swift #cosine_bell #gaussian_chenetal2017
+initial_tracer: sine_swift
 constant_tracer: 0.5
 
 #ujet_max: 1. #1.
@@ -29,12 +29,10 @@ u0: 10. #0. #0.5 with T=100. and u=100. we have Cmax of order 20, which is diffi
 #FCT: True
 FCT_reduced: True
 nondivergent: True
-#tracermin: 0.
-#tracermax: 1.
 
-solver: gmresm
+solver: gmresm #gcrk #gmresm
 
 filename: chenetal2017
 verbose: True
 animate: True
-outputdir: test
+outputdir: swiftnondiv_adhimexFCTred

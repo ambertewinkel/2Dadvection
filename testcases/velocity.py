@@ -364,3 +364,27 @@ def hadley(config, fields, it):
 
     fields.u[it] = -a*w0*np.pi*rho0/(K*ztop*rhofc)*np.cos(np.radians(fields.xfc))*np.sin(K*np.radians(fields.xfc))*np.cos(np.pi*fields.yfc/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)/(360.*a)
     fields.v[it] = w0*rho0/(K*rhocf)*(-2.*np.sin(K*np.radians(fields.xcf))*np.sin(np.radians(fields.xcf)) + K*np.cos(np.radians(fields.xcf))*np.cos(K*np.radians(fields.xcf)))*np.sin(np.pi*fields.ycf/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)
+
+
+
+def swift1D_x(config, fields, it, L=1000., U=10., T=100.): #velocity_varying_time_space_swift() in 1D code
+    """Returns the velocity varying in space and time, 1D version of the 2D nondivergent winds in the Bendall and Kent (2025) SWIFT paper. 
+    nt : number of time steps
+    dt : time step size
+    x  : points in domain to calculate velocity for
+    L  : domain size
+    U  : velocity coefficient
+    T  : period of oscillation
+    """
+    t = (it + 0.5)*config.dt # +0.5 for velocity at the half level in time for second-order accuracy
+    x_prime = fields.xfc + 0.5*L - U*t
+    y_prime = 0.75*L - U*t
+
+    fields.u[it] = U*np.sin(np.pi*x_prime/L)*np.sin(np.pi*x_prime/L)*np.sin(2.*np.pi*y_prime/L)*np.cos(np.pi*t/T) + U
+
+    ##u_x = np.zeros((nt, len(x)))
+    #for it in range(nt):
+    #    t = (it+0.5)*dt # +0.5 for velocity at the half level in time for second-order accuracy
+#
+    #    u_x[it] = U*np.sin(np.pi*x_prime/L)*np.sin(np.pi*x_prime/L)*np.sin(2.*np.pi*y_prime/L)*np.cos(np.pi*t/T) + U
+    #return u_x

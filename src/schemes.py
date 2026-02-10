@@ -1,7 +1,7 @@
 import numpy as np
 from functools import partial
 import src.solvers as sv
-
+import src.limiter as lim
 
 ################# UPWIND SCHEME #################
 
@@ -48,8 +48,13 @@ def implicitness_adimex_upwind(config, fields, it, **kwargs):
     fields.Ccc[it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
 
     # Calculate implicitness at cell centers and faces
-    fields.thetacc[it] = np.maximum(0., 1. - 0.5/fields.Ccc[it]) # at [i,j] # for divergent winds: using 2C here instead of C preserves positivity in all cases for c_in and c_out
-    fields.thetacc[it] = np.maximum(0., 1. - 0.5/fields.Ccc[it]) # at [i,j] # for nondivergent winds: using C here preserves positivity in all cases for c_in and c_out
+    if config.nondivergent:
+        fields.thetacc[it] = np.maximum(0., 1. - 1./fields.Ccc[it]) # at [i,j] # for nondivergent winds: using C here preserves positivity in all cases for c_in and c_out
+    elif config.nondivergent == False:
+        fields.thetacc[it] = np.maximum(0., 1. - 0.5/fields.Ccc[it]) # at [i,j] # for divergent winds: using 2C here instead of C preserves positivity in all cases for c_in and c_out
+    elif config.nondivergent == None:
+        print('Abort: nondivergent is not set - please specify whether the winds are nondivergent (True) or not (False).')
+        
     fields.thetafc[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,0)) # at [i-1/2,j]
     fields.thetacf[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,1)) # at [i,j-1/2]
 
@@ -109,7 +114,21 @@ def adhimex_butcher():
     return AEx, AIm, nstages
 
 
-def fluxdiv_fifth(config, fields, it,  phi, factor_fc, factor_cf):
+def fifth_order(fields, it, phi):
+    """Fifth-order spatial discretisation"""
+    phi_BS_fc = -1./20*np.roll(phi,-1,0) + 9./20.*phi + 47./60.*np.roll(phi,1,0) - 13./60.*np.roll(phi,2,0) + 1./30.*np.roll(phi,3,0) # backward in space (upwind if u>0) flux at face in x direction
+    phi_FS_fc = -1./20*np.roll(phi,2,0) + 9./20.*np.roll(phi,1,0) + 47./60.*phi - 13./60.*np.roll(phi,-1,0) + 1./30.*np.roll(phi,-2,0) # forward in space (upwind if u<0) flux at face in x direction
+    phi_BS_cf = -1./20*np.roll(phi,-1,1) + 9./20.*phi + 47./60.*np.roll(phi,1,1) - 13./60.*np.roll(phi,2,1) + 1./30.*np.roll(phi,3,1) # backward in space (upwind if v>0) flux at face in y direction
+    phi_FS_cf = -1./20*np.roll(phi,2,1) + 9./20.*np.roll(phi,1,1) + 47./60.*phi - 13./60.*np.roll(phi,-1,1) + 1./30.*np.roll(phi,-2,1) # forward in space (upwind if v<0) flux at face in y direction
+
+    flxfc = np.maximum(0., fields.u[it]) * phi_BS_fc + np.minimum(0., fields.u[it]) * phi_FS_fc # at [i-1/2,j]
+
+    flxcf = np.maximum(0., fields.v[it]) * phi_BS_cf + np.minimum(0., fields.v[it]) * phi_FS_cf # at [i,j-1/2]
+
+    return flxfc, flxcf
+
+
+def fluxdiv_fifth(config, fields, it,  phi, factor_fc, factor_cf): # old code for adhimex_12 etc. Should do the same as fluxdiv() with fifth_order()
     """Calculating the fifth-order flux divergence for a certain phi, can be applied for bot the explicit and implicit parts (using different factors)"""
 
     phi_BS_fc = -1./20*np.roll(phi,-1,0) + 9./20.*phi + 47./60.*np.roll(phi,1,0) - 13./60.*np.roll(phi,2,0) + 1./30.*np.roll(phi,3,0) # backward in space (upwind if u>0) flux at face in x direction
@@ -122,10 +141,19 @@ def fluxdiv_fifth(config, fields, it,  phi, factor_fc, factor_cf):
     return (flxx - np.roll(flxx,-1,0))/fields.dxcc + (flxy - np.roll(flxy,-1,1))/fields.dycc # at [i,j] # would need adapting for arbitrary grid (and dx varying in y and dy varying in x)
 
 
+def fluxdiv(fields, flxfc, flxcf, factorfc, factorcf):
+    """Calculating the flux divergence for a certain flx, can be applied for both the explicit and implicit parts (using different factors)"""
+
+    flxfactorfc = factorfc*flxfc # at [i-1/2,j]
+    flxfactorcf = factorcf*flxcf # at [i,j-1/2]
+
+    return (flxfactorfc - np.roll(flxfactorfc,-1,0))/fields.dxcc + (flxfactorcf - np.roll(flxfactorcf,-1,1))/fields.dycc # at [i,j] # would need adapting for arbitrary grid (and dx varying in y and dy varying in x)
+
+
 def adhimex_matrix_func(phi, config, fields, it, thetafc, thetacf, alpha):
     """Matrix function for the implicit part of the AdHImEx scheme"""
     
-    return phi - config.dt*alpha*fluxdiv_fifth(config, fields, it, phi, thetafc, thetacf) # at [i,j]
+    return phi - config.dt*alpha*fluxdiv(fields, *fifth_order(fields, it, phi), thetafc, thetacf) # at [i,j]
 
 
 def adhimex_ncp(config, fields, it, **kwargs):
@@ -140,6 +168,8 @@ def adhimex_ncp(config, fields, it, **kwargs):
     # Time step
     fEx, fIm = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
     field_k = fields.tracer[it].copy()
+    flxfc_HO, flxcf_HO = np.zeros_like(field_k), np.zeros_like(field_k)
+
     for ik in range(nstages):
         # Calculate the field at stage k          
         rhs_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
@@ -151,16 +181,23 @@ def adhimex_ncp(config, fields, it, **kwargs):
         else:
             field_k = rhs_k.copy()
 
-        fEx[ik,:] = fluxdiv_fifth(config, fields, it, field_k, 1.-fields.thetafc[it], 1.-fields.thetacf[it])
-        fIm[ik,:] = fluxdiv_fifth(config, fields, it, field_k, fields.thetafc[it], fields.thetacf[it])
+        # Calculate the velocity times the fifth-order field approximation at faces
+        flxkfc, flxkcf = fifth_order(fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
 
-        # Calculate the flux based on the field at stage k (legacy code, but kept for reference for later FCT implementation)
-        #flx_k[ik,:] = uf[it]*fluxfn(field_k) # [i] at i-1/2
-        #fEx[ik,:] = -ddx((1 - beta[it])*flx_k[ik,:], np.roll((1 - beta[it])*flx_k[ik,:],-1), dxc)
-        #fIm[ik,:] = -ddx(beta[it]*flx_k[ik,:], np.roll(beta[it]*flx_k[ik,:],-1), dxc)   
-        #flx_contribution_from_stage_k[ik,:] = AEx[-1,ik]*(1 - beta[it])*flx_k[ik,:] + AIm[-1,ik]*beta[it]*flx_k[ik,:]
+        fEx[ik,:] = fluxdiv(fields, flxkfc, flxkcf, 1.-fields.thetafc[it], 1.-fields.thetacf[it])
+        fIm[ik,:] = fluxdiv(fields, flxkfc, flxkcf, fields.thetafc[it], fields.thetacf[it])
 
-    fields.tracer[it+1] = field_k.copy()
+        # Accumulate the flux contributions from the stages (needed for FCT)
+        flxfc_HO += AEx[-1,ik]*(1 - fields.thetafc[it])*flxkfc + AIm[-1,ik]*fields.thetafc[it]*flxkfc # at [i-1/2,j]
+        flxcf_HO += AEx[-1,ik]*(1 - fields.thetacf[it])*flxkcf + AIm[-1,ik]*fields.thetacf[it]*flxkcf # at [i,j-1/2]
+
+    # Implement FCT if required
+    if config.FCT:
+        fields.tracer[it+1] = lim.FCT(config, fields, it, flxfc_HO, flxcf_HO)     
+    elif config.FCT_reduced:
+        fields.tracer[it+1] = lim.FCT_reduced(config, fields, it, flxfc_HO, flxcf_HO)
+    else:     
+        fields.tracer[it+1] = field_k.copy() 
 
 
 def adhimex(config, fields, it, **kwargs):
@@ -176,6 +213,8 @@ def adhimex(config, fields, it, **kwargs):
     fEx_c, fIm_c = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
     fEx_f, fIm_f = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
     field_k = fields.tracer[it].copy()
+    flxfc_HO, flxcf_HO = np.zeros_like(field_k), np.zeros_like(field_k)
+
     for ik in range(nstages):
 
         # Calculate the field at stage k      
@@ -191,18 +230,25 @@ def adhimex(config, fields, it, **kwargs):
         else:
             field_k = rhs_k.copy()
                
-        fEx_c[ik,:] = (1.-fields.thetacc[it])*fluxdiv_fifth(config, fields, it, field_k, 1., 1.)
-        fIm_c[ik,:] = fields.thetacc[it]*fluxdiv_fifth(config, fields, it, field_k, 1., 1.)
-        fEx_f[ik,:] = fluxdiv_fifth(config, fields, it, field_k, 1.-fields.thetafc[it], 1.-fields.thetacf[it])
-        fIm_f[ik,:] = fluxdiv_fifth(config, fields, it, field_k, fields.thetafc[it], fields.thetacf[it])
-        
-        # Calculate the flux based on the field at stage k (legacy code, but kept for reference for later FCT implementation)
-        #flx_k[ik,:] = uf[it]*fluxfn(field_k) # [i] at i-1/2
-        #fEx[ik,:] = -ddx((1 - beta[it])*flx_k[ik,:], np.roll((1 - beta[it])*flx_k[ik,:],-1), dxc)
-        #fIm[ik,:] = -ddx(beta[it]*flx_k[ik,:], np.roll(beta[it]*flx_k[ik,:],-1), dxc)   
-        #flx_contribution_from_stage_k[ik,:] = AEx[-1,ik]*(1 - beta[it])*flx_k[ik,:] + AIm[-1,ik]*beta[it]*flx_k[ik,:]
+        # Calculate the velocity times the fifth-order field approximation at faces
+        flxkfc, flxkcf = fifth_order(fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
 
-    fields.tracer[it+1] = field_k.copy()
+        fEx_c[ik,:] = (1.-fields.thetacc[it])*fluxdiv(fields, flxkfc, flxkcf, 1., 1.)
+        fIm_c[ik,:] = fields.thetacc[it]*fluxdiv(fields, flxkfc, flxkcf, 1., 1.)
+        fEx_f[ik,:] = fluxdiv(fields, flxkfc, flxkcf, 1.-fields.thetafc[it], 1.-fields.thetacf[it])
+        fIm_f[ik,:] = fluxdiv(fields, flxkfc, flxkcf, fields.thetafc[it], fields.thetacf[it])    
+        
+        # Accumulate the flux contributions from the stages (needed for FCT)
+        flxfc_HO += AEx[-1,ik]*(1 - fields.thetafc[it])*flxkfc + AIm[-1,ik]*fields.thetafc[it]*flxkfc # at [i-1/2,j]
+        flxcf_HO += AEx[-1,ik]*(1 - fields.thetacf[it])*flxkcf + AIm[-1,ik]*fields.thetacf[it]*flxkcf # at [i,j-1/2]
+
+    # Implement FCT if required
+    if config.FCT:
+        fields.tracer[it+1] = lim.FCT(config, fields, it, flxfc_HO, flxcf_HO)     
+    elif config.FCT_reduced:
+        fields.tracer[it+1] = lim.FCT_reduced(config, fields, it, flxfc_HO, flxcf_HO)
+    else:     
+        fields.tracer[it+1] = field_k.copy() 
 
 
 def adhimex_butcher_12():
