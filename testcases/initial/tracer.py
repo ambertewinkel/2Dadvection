@@ -165,3 +165,41 @@ def hadley(config, fields, it):
     z0 = 0.5*(z1 + z2)
     fields.tracer[it] = 0.5*(1. + np.cos(2.*np.pi*(fields.ycc-z0)/(z2 - z1)))
     fields.tracer[it] = np.where((fields.ycc < z1) | (fields.ycc > z2), 0., fields.tracer[it])#, np.where((fields.ycc < z1) | (fields.ycc > z2))] = 0.
+
+
+def slotted_cylinder(config, fields, it): 
+    # Single one of these used in AdLImHEx paper (HW) and perhaps SWIFT.
+    # Assumes Lx = Ly and centered at (0.5*Lx, 0.5*Ly)
+
+    Lx = config.xmax - config.xmin
+    Ly = config.ymax - config.ymin
+    #L = 1000. # m, radius of cylinder
+    rc = 160. # m
+    lc = 25. # m
+
+    r = np.sqrt((fields.xcc - 0.5*Lx - config.xmin)**2 + (fields.ycc - 0.5*Ly - config.ymin)**2)
+    fields.tracer[it] = np.where(r < rc, 1., 0.)
+    fields.tracer[it] = np.where((fields.ycc > 0.5*Ly + config.ymin) & (abs(fields.xcc - 0.5*Lx - config.xmin) < lc), 0., fields.tracer[it])
+
+
+def slotted_cylinders(config, fields, it): 
+    # Used in AdLImHEx paper (HW) and perhaps SWIFT.
+    # Assumes Lx = Ly
+
+    Lx = config.xmax - config.xmin
+    Ly = config.ymax - config.ymin
+    #L = 1000. # m, radius of cylinder
+    rc = 160. # m
+    lc = 25. # m
+
+    xc1 = 0.25*Lx + config.xmin
+    yc = 0.5*Ly + config.ymin
+    xc2 = 0.75*Lx + config.xmin
+
+    r1 = np.sqrt((fields.xcc - xc1)**2 + (fields.ycc - yc)**2)
+    r2 = np.sqrt((fields.xcc - xc2)**2 + (fields.ycc - yc)**2)
+
+    fields.tracer[it] = np.where(r1 < rc, 1., 0.)
+    fields.tracer[it] = np.where(r2 < rc, 1., fields.tracer[it])
+    fields.tracer[it] = np.where((fields.ycc > 0.5*Ly + config.ymin) & (abs(fields.xcc - xc1) < lc), 0., fields.tracer[it])
+    fields.tracer[it] = np.where((fields.ycc > 0.5*Ly + config.ymin) & (abs(fields.xcc - xc2) < lc), 0., fields.tracer[it])
