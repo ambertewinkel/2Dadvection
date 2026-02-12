@@ -3,7 +3,6 @@
 
 import numpy as np
 import src.schemes as sch
-import matplotlib.pyplot as plt
 
 
 def set_extrema_1D(config, fields, it, field_bounded, axis):
@@ -59,7 +58,7 @@ def set_extrema_2D(config, fields, it, field_bounded):
 
     return fieldmin, fieldmax
 
-
+import matplotlib.pyplot as plt
 def FCT1D(config, fields, flx_HO, flx_bounded, fieldmin, fieldmax, field_bounded, axis, d_axis):
     """!!! update docstring 
     This function implements flux-corrected transport (FCT) in 1D. Either using global bounds or local bounds based on low-order bounded solution and optionally previous time step. Returns the limited field at the new time step. Assumes constant dxc and uf>0.
@@ -76,25 +75,9 @@ def FCT1D(config, fields, flx_HO, flx_bounded, fieldmin, fieldmax, field_bounded
     # Calculate high-order correction
     corr = (flx_HO - flx_bounded)*d_axis # at [i-1/2,j] if axis=0, at [i,j-1/2] if axis=1
 
-    if config.tracermin is None and config.tracermax is None:
-        # Checking for rare cases where we need to set the correction to zero
-        for i in range(np.shape(field_bounded)[0]):
-            for j in range(np.shape(field_bounded)[1]):
-                if corr[i,j]*(field_bounded[i,j] - np.roll(field_bounded,1,axis)[i,j]) <= 0. and (corr[i,j]*(np.roll(field_bounded,-1,axis)[i,j] - field_bounded[i,j]) <= 0. or corr[i,j]*(np.roll(field_bounded,1,axis)[i,j] - np.roll(field_bounded,2,axis)[i,j]) <= 0.):
-                    corr[i,j] = 0. 
-
     # Calculate allowable mass I/O for max rise and fall
     Qp = fields.dxcc*fields.dycc*(fieldmax - field_bounded) # at [i,j]
     Qm = fields.dxcc*fields.dycc*(field_bounded - fieldmin) # at [i,j]
-
-    #    plt.pcolor(fields.xcc, fields.ycc, Qp)
-    #    plt.colorbar()
-    #    plt.title('Q+')
-    #    plt.show()
-    #    plt.pcolor(fields.xcc, fields.ycc, Qm)
-    #    plt.colorbar()
-    #    plt.title('Q-')
-    #    plt.show()
 
     # Calculate I/O fluxes at cell centers
     Pp = config.dt*(np.maximum(0, corr) - np.minimum(0, np.roll(corr,-1,axis)))
@@ -104,16 +87,46 @@ def FCT1D(config, fields, flx_HO, flx_bounded, fieldmin, fieldmax, field_bounded
     Rp = np.where(Pp > 1e-12, np.minimum(1., Qp/np.maximum(Pp,1e-12)), 0.)
     Rm = np.where(Pm > 1e-12, np.minimum(1., Qm/np.maximum(Pm,1e-12)), 0.)
 
+    #plt.contourf(fields.xcc, fields.ycc, Qp)
+    #plt.colorbar()
+    #plt.title('Qp FCT1D')
+    #plt.show()
+    #plt.contourf(fields.xcc, fields.ycc, Qm)
+    #plt.colorbar()
+    #plt.title('Qm FCT1D')
+    #plt.show()
+    #plt.contourf(fields.xcc, fields.ycc, Pp)
+    #plt.colorbar()
+    #plt.title('Pp FCT1D')
+    #plt.show()
+    #plt.contourf(fields.xcc, fields.ycc, Pm)
+    #plt.colorbar()
+    #plt.title('Pm FCT1D')
+    #plt.show()
+    ####plt.contourf(fields.xcc, fields.ycc, Rp, levels=100)
+    ####plt.colorbar()
+    ####plt.title('Rp FCT1D axis='+str(axis))
+    ####plt.show()
+    ####plt.contourf(fields.xcc, fields.ycc, Rm, levels=100)
+    ####plt.colorbar()
+    ####plt.title('Rm FCT1D axis='+str(axis))
+    ####plt.show()
+
     # Calculate the limiter for each face
     face_limiter = np.where(corr >= 0., np.minimum(Rp, np.roll(Rm,1,axis)), np.minimum(np.roll(Rp,1,axis), Rm)) # at [i-1/2,j] if axis=0, at [i,j-1/2] if axis=1
 
+    plt.contourf(fields.xcc, fields.ycc, face_limiter)
+    plt.colorbar()
+    plt.title('face_limiter FCT1D axis='+str(axis))
+    plt.show()
+    
     # Update the bounded flux and field
     flx_corr = flx_bounded + face_limiter*corr/d_axis
 
     return flx_corr
 
 
-def FCT2D(config, fields, it, flxfc, flxfc_bounded, flxcf, flxcf_bounded, fieldmin, fieldmax, field_bounded):
+def FCT2D(config, fields, flxfc, flxfc_bounded, flxcf, flxcf_bounded, fieldmin, fieldmax, field_bounded):
     """2D !!!!!! update docstring
     This function implements flux-corrected transport (FCT). Either using global bounds or local bounds based on low-order bounded solution and optionally previous time step. Returns the limited field at the new time step. Assumes constant dxc and uf>0.
     flx_HO: high-order flux at i-1/2
@@ -130,15 +143,6 @@ def FCT2D(config, fields, it, flxfc, flxfc_bounded, flxcf, flxcf_bounded, fieldm
     corrfc = (flxfc - flxfc_bounded)*fields.dycc # at [i-1/2,j]
     corrcf = (flxcf - flxcf_bounded)*fields.dxcc # at [i,j-1/2]
 
-    #if config.tracermin is None and config.tracermax is None:
-    #    # Checking for rare cases where we need to set the correction to zero
-    #    for i in range(np.shape(field_bounded)[0]):
-    #        for j in range(np.shape(field_bounded)[1]):
-    #            if corrfc[i,j]*(field_bounded[i,j] - np.roll(field_bounded,1,0)[i,j]) <= 0. and (corrfc[i,j]*(np.roll(field_bounded,-1,0)[i,j] - field_bounded[i,j]) <= 0. or corrfc[i,j]*(np.roll(field_bounded,1,0)[i,j] - np.roll(field_bounded,2,0)[i,j]) <= 0.):
-    #                corrfc[i,j] = 0. 
-    #            if corrcf[i,j]*(field_bounded[i,j] - np.roll(field_bounded,1,1)[i,j]) <= 0. and (corrcf[i,j]*(np.roll(field_bounded,-1,1)[i,j] - field_bounded[i,j]) <= 0. or corrcf[i,j]*(np.roll(field_bounded,1,1)[i,j] - np.roll(field_bounded,2,1)[i,j]) <= 0.):
-    #                corrcf[i,j] = 0. 
-
     # Calculate allowable mass I/O for max rise and fall
     Qp = fields.dxcc*fields.dycc*(fieldmax - field_bounded) # at [i,j]
     Qm = fields.dxcc*fields.dycc*(field_bounded - fieldmin) # at [i,j]
@@ -152,51 +156,31 @@ def FCT2D(config, fields, it, flxfc, flxfc_bounded, flxcf, flxcf_bounded, fieldm
     Rm = np.where(Pm > 1e-12, np.minimum(1., Qm/np.maximum(Pm,1e-12)), 0.)
 
 
-    if it == 0:
-    ###    #plt.pcolor(fields.xcc, fields.ycc, Qp)
-    ###    #plt.colorbar()
-    ###    #plt.title('Q+ it='+str(it))
-    ###    #plt.show()        
-    ###    #plt.pcolor(fields.xcc, fields.ycc, Qm)
-    ###    #plt.colorbar()
-    ###    #plt.title('Q- it='+str(it))
-    ###    #plt.show()
-###
-    ###    plt.pcolor(fields.xfc, fields.yfc, flxfc_bounded)
-    ###    plt.colorbar()
-    ###    plt.title('flxfc b it='+str(it))
-    ###    plt.show()        
-    ###    plt.pcolor(fields.xcf, fields.ycf, flxcf_bounded)
-    ###    plt.colorbar()
-    ###    plt.title('flxcf b it='+str(it))
-    ###    plt.show()
-###
-    ###    plt.pcolor(fields.xcc, fields.ycc, fields.dycc)
-    ###    plt.colorbar()
-    ###    plt.title('dycc it='+str(it))
-    ###    plt.show()
-    ###    plt.pcolor(fields.xcc, fields.ycc, fields.dxcc)
-    ###    plt.colorbar()
-    ###    plt.title('dxcc it='+str(it))
-    ###    plt.show()
-###
-    ###    plt.pcolor(fields.xfc, fields.yfc, corrfc)
-    ###    plt.colorbar()
-    ###    plt.title('corrfc it='+str(it))
-    ###    plt.show()        
-    ###    plt.pcolor(fields.xcf, fields.ycf, corrcf)
-    ###    plt.colorbar()
-    ###    plt.title('corrcf it='+str(it))
-    ###    plt.show()
-###
-        plt.pcolor(fields.xcc, fields.ycc, Pp)
-        plt.colorbar()
-        plt.title('P+ it='+str(it))
-        plt.show()        
-        plt.pcolor(fields.xcc, fields.ycc, Pm)
-        plt.colorbar()
-        plt.title('P- it='+str(it))
-        plt.show()
+    #plt.contourf(fields.xcc, fields.ycc, Qp)
+    #plt.colorbar()
+    #plt.title('Qp FCT2D')
+    #plt.show()
+    #plt.contourf(fields.xcc, fields.ycc, Qm)
+    #plt.colorbar()
+    #plt.title('Qm FCT2D')
+    #plt.show()
+    #plt.contourf(fields.xcc, fields.ycc, Pp)
+    #plt.colorbar()
+    #plt.title('Pp FCT2D')
+    #plt.show()
+    #plt.contourf(fields.xcc, fields.ycc, Pm)
+    #plt.colorbar()
+    #plt.title('Pm FCT2D')
+    #plt.show()
+    ####plt.contourf(fields.xcc, fields.ycc, Rp, levels=100)
+    ####plt.colorbar()
+    ####plt.title('Rp FCT2D')
+    ####plt.show()
+    ####plt.contourf(fields.xcc, fields.ycc, Rm, levels=100)
+    ####plt.colorbar()
+    ####plt.title('Rm FCT2D')
+    ####plt.show()
+
 
     # Calculate the limiter for each face
     face_limiter_fc = np.where(corrfc >= 0., np.minimum(Rp, np.roll(Rm,1,0)), np.minimum(np.roll(Rp,1,0), Rm)) # at [i-1/2,j]
@@ -215,12 +199,6 @@ def FCT(config, fields, it, flxfc_HO, flxcf_HO, **kwargs):
     # Calculate 2D first-order solution if not using both global bounds
     sch.adimex_upwind(config, fields, it, **kwargs) # at [i,j] # temporarily writes in fields.tracer[it+1] but will be overwritten by the FCT solution at the end of this function
 
-    #if it == 3:
-    #    plt.pcolor(fields.xcc, fields.ycc, fields.tracer[it+1])
-    #    plt.colorbar()
-    #    plt.title('bounded solution it='+str(it))
-    #    plt.show()
-
     flxfc_bounded = np.maximum(0.,fields.u[it])*(1.-fields.thetafc[it])*np.roll(fields.tracer[it],1,0) + np.minimum(0.,fields.u[it])*(1.-fields.thetafc[it])*fields.tracer[it] + np.maximum(0.,fields.u[it])*fields.thetafc[it]*np.roll(fields.tracer[it+1],1,0) + np.minimum(0.,fields.u[it])*fields.thetafc[it]*fields.tracer[it+1] # at [i-1/2,j]
     flxcf_bounded = np.maximum(0.,fields.v[it])*(1.-fields.thetacf[it])*np.roll(fields.tracer[it],1,1) + np.minimum(0.,fields.v[it])*(1.-fields.thetacf[it])*fields.tracer[it] + np.maximum(0.,fields.v[it])*fields.thetacf[it]*np.roll(fields.tracer[it+1],1,1) + np.minimum(0.,fields.v[it])*fields.thetacf[it]*fields.tracer[it+1] # at [i,j-1/2]
     
@@ -232,21 +210,33 @@ def FCT(config, fields, it, flxfc_HO, flxcf_HO, **kwargs):
     flx_corr_x = FCT1D(config, fields, flxfc_HO, flxfc_bounded, minx, maxx, fields.tracer[it+1], axis=0, d_axis=fields.dycc) # at [i-1/2,j]
     flx_corr_y = FCT1D(config, fields, flxcf_HO, flxcf_bounded, miny, maxy, fields.tracer[it+1], axis=1, d_axis=fields.dxcc) # at [i,j-1/2]
 
+    tempfield = fields.tracer[it] + config.dt*(sch.fluxdiv(fields, flx_corr_x, flx_corr_y, 1., 1.)) # at [i,j]
+
+    plt.contourf(fields.xfc, fields.yfc, abs(flx_corr_x)-abs(flxfc_HO))
+    plt.colorbar()
+    plt.title('flx_corr_x - flxfc_HO after FCT1D abs')
+    plt.show()
+    plt.contourf(fields.xcf, fields.ycf, flx_corr_y-flxcf_HO)
+    plt.colorbar()
+    plt.title('flx_corr_y - flxcf_HO after FCT1D')
+    plt.show()
+
+
+    plt.contourf(fields.xcc, fields.ycc, tempfield-fields.tracer[it])
+    plt.colorbar()
+    plt.title('tempfield - bounded after FCT1D before FCT2D')
+    plt.show()
+
     # Apply 2D FCT using the limited fluxes (necessary to avoid all ripples, see Zalesak 1979 p.350)
     min2D, max2D = set_extrema_2D(config, fields, it, fields.tracer[it+1]) # at [i,j]
     flx_corr_fc, flx_corr_cf = FCT2D(config, fields, flx_corr_x, flxfc_bounded, flx_corr_y, flxcf_bounded, min2D, max2D, fields.tracer[it+1]) # at [i-1/2,j] and at [i,j-1/2]
 
+    finalfield = fields.tracer[it] + config.dt*(sch.fluxdiv(fields, flx_corr_fc, flx_corr_cf, 1., 1.)) # at [i,j]
 
-    #if it == 3:
-    #    plt.pcolor(fields.xcc, fields.ycc, min2D)
-    #    plt.colorbar()
-    #    plt.title('min2D it='+str(it))
-    #    plt.show()
-    #    plt.pcolor(fields.xcc, fields.ycc, max2D)
-    #    plt.colorbar()
-    #    plt.title('max2D it='+str(it))
-    #    plt.show()
-
+    #plt.contourf(fields.xcc, fields.ycc, finalfield-fields.tracer[it])
+    #plt.colorbar()
+    #plt.title('final field - bounded after both FCT1D and FCT2D')
+    #plt.show()
     return fields.tracer[it] + config.dt*(sch.fluxdiv(fields, flx_corr_fc, flx_corr_cf, 1., 1.)) # at [i,j]
 
 
@@ -257,29 +247,13 @@ def FCT_reduced(config, fields, it, flxfc_HO, flxcf_HO, **kwargs): # only does o
     # Calculate 2D first-order solution if not using both global bounds
     sch.adimex_upwind(config, fields, it, **kwargs) # at [i,j] # temporarily writes in fields.tracer[it+1] but will be overwritten by the FCT solution at the end of this function
 
-    #if it == 20:
-    #    plt.pcolor(fields.xcc, fields.ycc, fields.tracer[it+1])
-    #    plt.colorbar()
-    #    plt.title('bounded solution it='+str(it))
-    #    plt.show()
-
     flxfc_bounded = np.maximum(0.,fields.u[it])*(1.-fields.thetafc[it])*np.roll(fields.tracer[it],1,0) + np.minimum(0.,fields.u[it])*(1.-fields.thetafc[it])*fields.tracer[it] + np.maximum(0.,fields.u[it])*fields.thetafc[it]*np.roll(fields.tracer[it+1],1,0) + np.minimum(0.,fields.u[it])*fields.thetafc[it]*fields.tracer[it+1] # at [i-1/2,j]
     flxcf_bounded = np.maximum(0.,fields.v[it])*(1.-fields.thetacf[it])*np.roll(fields.tracer[it],1,1) + np.minimum(0.,fields.v[it])*(1.-fields.thetacf[it])*fields.tracer[it] + np.maximum(0.,fields.v[it])*fields.thetacf[it]*np.roll(fields.tracer[it+1],1,1) + np.minimum(0.,fields.v[it])*fields.thetacf[it]*fields.tracer[it+1] # at [i,j-1/2]
 
     # Apply 2D FCT using the limited fluxes (necessary to avoid all ripples, see Zalesak 1979 p.350)
     min2D, max2D = set_extrema_2D(config, fields, it, fields.tracer[it+1]) # at [i,j]
 
-    #if it == 3:
-    #    plt.pcolor(fields.xcc, fields.ycc, min2D)
-    #    plt.colorbar()
-    #    plt.title('min2D it='+str(it))
-    #    plt.show()
-    #    plt.pcolor(fields.xcc, fields.ycc, max2D)
-    #    plt.colorbar()
-    #    plt.title('max2D it='+str(it))
-    #    plt.show()
-
-    flx_corr_fc, flx_corr_cf = FCT2D(config, fields, it, flxfc_HO, flxfc_bounded, flxcf_HO, flxcf_bounded, min2D, max2D, fields.tracer[it+1]) # at [i-1/2,j] and at [i,j-1/2]
+    flx_corr_fc, flx_corr_cf = FCT2D(config, fields, flxfc_HO, flxfc_bounded, flxcf_HO, flxcf_bounded, min2D, max2D, fields.tracer[it+1]) # at [i-1/2,j] and at [i,j-1/2]
     
     return fields.tracer[it] + config.dt*(sch.fluxdiv(fields, flx_corr_fc, flx_corr_cf, 1., 1.)) # at [i,j]
 
