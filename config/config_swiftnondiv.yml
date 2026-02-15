@@ -12,7 +12,7 @@ BC_x: periodic
 BC_y: periodic
 
 dt: 0.4 #2. #1. # s
-nt: 25 #250 #50 #100
+nt: 250 #1 #250 #50 #100
 starttime: 0.
 
 velocity_setting: swift_nondiv_streamfunction
@@ -37,4 +37,4 @@ solver: gmresm #gcrk #gmresm
 filename: chenetal2017
 verbose: True
 animate: True
-outputdir: test #swiftnondiv_adhimexFCTred_comparetoHW
+outputdir: test #_adhimexFCT_main #swiftnondiv_adhimexFCTred_comparetoHW
