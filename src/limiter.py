@@ -3,6 +3,8 @@
 
 import numpy as np
 import src.schemes as sch
+from functools import partial
+import src.solvers as sv
 
 
 def set_extrema_1D(config, fields, it, field_bounded, axis):
@@ -57,6 +59,7 @@ def set_extrema_2D(config, fields, it, field_bounded):
             fieldmax = np.maximum.reduce([np.roll(field_bounded,1,0), field_bounded, np.roll(field_bounded,-1,0), np.roll(field_bounded,1,1), np.roll(field_bounded,-1,1)]) # at [i,j]
 
     return fieldmin, fieldmax
+
 
 import matplotlib.pyplot as plt
 def FCT1D(config, fields, flx_HO, flx_bounded, fieldmin, fieldmax, field_bounded, axis, d_axis):
@@ -115,11 +118,11 @@ def FCT1D(config, fields, flx_HO, flx_bounded, fieldmin, fieldmax, field_bounded
     # Calculate the limiter for each face
     face_limiter = np.where(corr >= 0., np.minimum(Rp, np.roll(Rm,1,axis)), np.minimum(np.roll(Rp,1,axis), Rm)) # at [i-1/2,j] if axis=0, at [i,j-1/2] if axis=1
 
-    plt.contourf(fields.xcc, fields.ycc, face_limiter)
-    plt.colorbar()
-    plt.title('face_limiter FCT1D axis='+str(axis))
-    plt.show()
-    
+    #plt.contourf(fields.xcc, fields.ycc, face_limiter)
+    #plt.colorbar()
+    #plt.title('face_limiter FCT1D axis='+str(axis))
+    #plt.show()
+
     # Update the bounded flux and field
     flx_corr = flx_bounded + face_limiter*corr/d_axis
 
@@ -196,36 +199,48 @@ def FCT2D(config, fields, flxfc, flxfc_bounded, flxcf, flxcf_bounded, fieldmin, 
 def FCT(config, fields, it, flxfc_HO, flxcf_HO, **kwargs):
     # 2D FCT, should call the FCT1D function in x and y directions, and then call again combined to ensure monotonicity in both directions. Would need to consider how to set the extrema in 2D (probably based on the 8 surrounding cells and optionally previous time step).
 
-    # Calculate 2D first-order solution if not using both global bounds
-    sch.adimex_upwind(config, fields, it, **kwargs) # at [i,j] # temporarily writes in fields.tracer[it+1] but will be overwritten by the FCT solution at the end of this function
 
-    flxfc_bounded = np.maximum(0.,fields.u[it])*(1.-fields.thetafc[it])*np.roll(fields.tracer[it],1,0) + np.minimum(0.,fields.u[it])*(1.-fields.thetafc[it])*fields.tracer[it] + np.maximum(0.,fields.u[it])*fields.thetafc[it]*np.roll(fields.tracer[it+1],1,0) + np.minimum(0.,fields.u[it])*fields.thetafc[it]*fields.tracer[it+1] # at [i-1/2,j]
-    flxcf_bounded = np.maximum(0.,fields.v[it])*(1.-fields.thetacf[it])*np.roll(fields.tracer[it],1,1) + np.minimum(0.,fields.v[it])*(1.-fields.thetacf[it])*fields.tracer[it] + np.maximum(0.,fields.v[it])*fields.thetacf[it]*np.roll(fields.tracer[it+1],1,1) + np.minimum(0.,fields.v[it])*fields.thetacf[it]*fields.tracer[it+1] # at [i,j-1/2]
+    bounded_x_field, thetaf_x = adimex_upwind_1D(config, fields, it, axis=0) # at [i,j], solution in x direction
+    bounded_y_field, thetaf_y = adimex_upwind_1D(config, fields, it, axis=1) # at [i,j], solution in y direction
+    
+    #FCT1D(config, fields, flxfc_HO, None, None, None, axis=0, d_axis=fields.dycc) # at [i-1/2,j]
+    # Calculate 2D first-order solution if not using both global bounds
+    #sch.adimex_upwind(config, fields, it, **kwargs) # at [i,j] # temporarily writes in fields.tracer[it+1] but will be overwritten by the FCT solution at the end of this function
+
+    #flxfc_bounded = np.maximum(0.,fields.u[it])*(1.-fields.thetafc[it])*np.roll(fields.tracer[it],1,0) + np.minimum(0.,fields.u[it])*(1.-fields.thetafc[it])*fields.tracer[it] + np.maximum(0.,fields.u[it])*fields.thetafc[it]*np.roll(fields.tracer[it+1],1,0) + np.minimum(0.,fields.u[it])*fields.thetafc[it]*fields.tracer[it+1] # at [i-1/2,j]
+    #flxcf_bounded = np.maximum(0.,fields.v[it])*(1.-fields.thetacf[it])*np.roll(fields.tracer[it],1,1) + np.minimum(0.,fields.v[it])*(1.-fields.thetacf[it])*fields.tracer[it] + np.maximum(0.,fields.v[it])*fields.thetacf[it]*np.roll(fields.tracer[it+1],1,1) + np.minimum(0.,fields.v[it])*fields.thetacf[it]*fields.tracer[it+1] # at [i,j-1/2]
+        
+    flxfc_bounded = np.maximum(0.,fields.u[it])*(1.-thetaf_x)*np.roll(fields.tracer[it],1,0) + np.minimum(0.,fields.u[it])*(1.-thetaf_x)*fields.tracer[it] + np.maximum(0.,fields.u[it])*thetaf_x*np.roll(bounded_x_field,1,0) + np.minimum(0.,fields.u[it])*thetaf_x*bounded_x_field # at [i-1/2,j]
+    flxcf_bounded = np.maximum(0.,fields.v[it])*(1.-thetaf_y)*np.roll(fields.tracer[it],1,1) + np.minimum(0.,fields.v[it])*(1.-thetaf_y)*fields.tracer[it] + np.maximum(0.,fields.v[it])*thetaf_y*np.roll(bounded_y_field,1,1) + np.minimum(0.,fields.v[it])*thetaf_y*bounded_y_field # at [i,j-1/2]
     
     # Set extrema for each cell
-    minx, maxx = set_extrema_1D(config, fields, it, fields.tracer[it+1], axis=0) # at [i,j]
-    miny, maxy = set_extrema_1D(config, fields, it, fields.tracer[it+1], axis=1) # at [i,j]
-
+    #minx, maxx = set_extrema_1D(config, fields, it, fields.tracer[it+1], axis=0) # at [i,j]
+    #miny, maxy = set_extrema_1D(config, fields, it, fields.tracer[it+1], axis=1) # at [i,j]
+    minx, maxx = set_extrema_1D(config, fields, it, bounded_x_field, axis=0) # at [i,j]
+    miny, maxy = set_extrema_1D(config, fields, it, bounded_y_field, axis=1) # at [i,j]
+    
     # Apply 1D FCT in both x and y directions. Gives the limited fluxes in each direction
-    flx_corr_x = FCT1D(config, fields, flxfc_HO, flxfc_bounded, minx, maxx, fields.tracer[it+1], axis=0, d_axis=fields.dycc) # at [i-1/2,j]
-    flx_corr_y = FCT1D(config, fields, flxcf_HO, flxcf_bounded, miny, maxy, fields.tracer[it+1], axis=1, d_axis=fields.dxcc) # at [i,j-1/2]
-
+    #flx_corr_x = FCT1D(config, fields, flxfc_HO, flxfc_bounded, minx, maxx, fields.tracer[it+1], axis=0, d_axis=fields.dycc) # at [i-1/2,j]
+    #flx_corr_y = FCT1D(config, fields, flxcf_HO, flxcf_bounded, miny, maxy, fields.tracer[it+1], axis=1, d_axis=fields.dxcc) # at [i,j-1/2]
+    flx_corr_x = FCT1D(config, fields, flxfc_HO, flxfc_bounded, minx, maxx, bounded_x_field, axis=0, d_axis=fields.dycc) # at [i-1/2,j]
+    flx_corr_y = FCT1D(config, fields, flxcf_HO, flxcf_bounded, miny, maxy, bounded_y_field, axis=1, d_axis=fields.dxcc) # at [i,j-1/2]
+    
     tempfield = fields.tracer[it] + config.dt*(sch.fluxdiv(fields, flx_corr_x, flx_corr_y, 1., 1.)) # at [i,j]
 
-    plt.contourf(fields.xfc, fields.yfc, abs(flx_corr_x)-abs(flxfc_HO))
-    plt.colorbar()
-    plt.title('flx_corr_x - flxfc_HO after FCT1D abs')
-    plt.show()
-    plt.contourf(fields.xcf, fields.ycf, flx_corr_y-flxcf_HO)
-    plt.colorbar()
-    plt.title('flx_corr_y - flxcf_HO after FCT1D')
-    plt.show()
-
-
-    plt.contourf(fields.xcc, fields.ycc, tempfield-fields.tracer[it])
-    plt.colorbar()
-    plt.title('tempfield - bounded after FCT1D before FCT2D')
-    plt.show()
+    #######!!!plt.contourf(fields.xfc, fields.yfc, abs(flx_corr_x)-abs(flxfc_HO))
+    #######!!!plt.colorbar()
+    #######!!!plt.title('flx_corr_x - flxfc_HO after FCT1D abs')
+    #######!!!plt.show()
+    #######!!!plt.contourf(fields.xcf, fields.ycf, flx_corr_y-flxcf_HO)
+    #######!!!plt.colorbar()
+    #######!!!plt.title('flx_corr_y - flxcf_HO after FCT1D')
+    #######!!!plt.show()
+#######!!!
+#######!!!
+    #######!!!plt.contourf(fields.xcc, fields.ycc, tempfield-fields.tracer[it])
+    #######!!!plt.colorbar()
+    #######!!!plt.title('tempfield - bounded after FCT1D before FCT2D')
+    #######!!!plt.show()
 
     # Apply 2D FCT using the limited fluxes (necessary to avoid all ripples, see Zalesak 1979 p.350)
     min2D, max2D = set_extrema_2D(config, fields, it, fields.tracer[it+1]) # at [i,j]
@@ -257,3 +272,68 @@ def FCT_reduced(config, fields, it, flxfc_HO, flxcf_HO, **kwargs): # only does o
     
     return fields.tracer[it] + config.dt*(sch.fluxdiv(fields, flx_corr_fc, flx_corr_cf, 1., 1.)) # at [i,j]
 
+
+################# 1D ADIMEX UPWIND SCHEME #################
+
+def implicitness_adimex_upwind_axis(config, fields, it, axis, d_axis, vel_axis, **kwargs):
+    """Calculate Courant numbers at cell centers and implicitness at cell centers and faces for AdImEx upwind scheme"""
+    # Assumes nondivergent winds
+
+    # assumes dy is constant in the x direction (should be defined at each face to multiply with the velocity to get the flux, but this is the same value as dycc at the cell center, so using that for simplicity) -- the same thing applies for dx in the y direction.
+    sum_abs_velarea = (abs(vel_axis) + abs(np.roll(vel_axis,-1,axis)))*d_axis # at [i,j]
+    Ccc_axis = 0.5*config.dt*sum_abs_velarea/d_axis # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
+
+    # Calculate implicitness at cell centers and faces
+    if config.nondivergent:
+        thetac_axis = np.maximum(0., 1. - 1./Ccc_axis) # at [i,j] # for nondivergent winds: using C here preserves positivity in all cases for c_in and c_out
+    elif config.nondivergent == False:
+        thetac_axis = np.maximum(0., 1. - 0.5/Ccc_axis) # at [i,j] # for divergent winds: using 2C here instead of C preserves positivity in all cases for c_in and c_out
+    elif config.nondivergent == None:
+        print('Abort: nondivergent is not set - please specify whether the winds are nondivergent (True) or not (False).')
+        
+    thetaf_axis = np.maximum(thetac_axis, np.roll(thetac_axis,1,axis)) # at [i-1/2,j] if axis=0, at [i,j-1/2] if axis=1.
+    
+    return thetaf_axis
+
+
+def fluxdiv_axis(config, fields, it, phi, factor_axis, axis, d_axis, vel_axis):
+    """Calculating the first-order flux divergence for a certain phi, can be applied for bot the explicit and implicit parts (using different factors) in either x or y direction."""
+
+    phi_BS_axis = np.roll(phi,1,axis) # backward in space (upwind if u>0) flux at face in x direction
+    phi_FS_axis = phi # forward in space (upwind if u<0) flux at face in x direction
+    flx_axis = factor_axis*(np.maximum(0., vel_axis) * phi_BS_axis + np.minimum(0., vel_axis) * phi_FS_axis) # at [i-1/2,j] if axis=0, at [i,j-1/2] if axis=1
+
+    return (flx_axis - np.roll(flx_axis,-1, axis))/d_axis # at [i,j]
+
+
+def adimex_upwind_matrix_func_axis(phi, config, fields, it, thetaf_axis, axis, d_axis, vel_axis):
+    """Matrix function for the implicit part of the AdImEx upwind scheme"""
+
+    return phi - config.dt*fluxdiv_axis(config, fields, it, phi, thetaf_axis, axis, d_axis, vel_axis) # at [i,j]
+
+
+def adimex_upwind_1D(config, fields, it, axis, **kwargs):
+    """Implement the AdImEx upwind scheme for the given time step"""
+
+    if axis == 0:
+        d_axis = fields.dycc
+        vel_axis = fields.u[it]
+    elif axis == 1:
+        d_axis = fields.dxcc
+        vel_axis = fields.v[it]
+
+    # Calculate the implicitness (1-1/(2C)) at each cell face
+    thetaf_axis = implicitness_adimex_upwind_axis(config, fields, it, axis, d_axis, vel_axis, **kwargs)
+
+    # Calculate RHS (explicit) at cell faces
+    rhs = fields.tracer[it] + config.dt*fluxdiv_axis(config, fields, it, fields.tracer[it], 1.-thetaf_axis, axis, d_axis, vel_axis) # at [i,j] 
+    
+    # Calculate LHS (implicit) upwind fluxes at cell faces    
+    solver = config.solver # numpy, gcrk_matrix, gcrk_matrixfree # not sure if numpy is possible with a 4D matrix. # 17-11-2025: only gcrk_matrixfree implemented
+
+    if np.any(thetaf_axis): # avoids gmresm breaking down, only running the solver when there is a nonunit matrix
+        matrix = partial(adimex_upwind_matrix_func_axis, config=config, fields=fields, it=it, thetaf_axis=thetaf_axis, axis=axis, d_axis=d_axis, vel_axis=vel_axis) # at [i,j]
+        solver = getattr(sv, config.solver)
+        return solver(config, matrix, rhs, fields.tracer[it], kiter=10, jiter=10), thetaf_axis
+    else:
+        return rhs.copy(), thetaf_axis
