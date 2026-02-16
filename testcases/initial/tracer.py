@@ -90,13 +90,13 @@ def sine_x(config, fields, it):
 def square_wave_x(config, fields, it):
     Lx = config.xmax - config.xmin
     fields.tracer[it] = 0.
-    fields.tracer[it] = np.where((fields.xcc >= 0.25*Lx) & (fields.xcc <= 0.75*Lx), 1., 0.)
+    fields.tracer[it] = np.where((fields.xcc >= config.xmin + 0.25*Lx) & (fields.xcc <= config.xmin + 0.75*Lx), 1., 0.)
 
 
 def square_wave_y(config, fields, it):
     Ly = config.ymax - config.ymin
     fields.tracer[it] = 0.
-    fields.tracer[it] = np.where((fields.ycc >= 0.25*Ly) & (fields.ycc <= 0.75*Ly), 1., 0.)
+    fields.tracer[it] = np.where((fields.ycc >= config.ymin + 0.25*Ly) & (fields.ycc <= config.ymin + 0.75*Ly), 1., 0.)
 
 
 def square_wave_xy(config, fields, it):

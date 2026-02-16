@@ -91,26 +91,26 @@ def FCT1D(config, fields, flx_HO, flx_bounded, fieldmin, fieldmax, field_bounded
     #plt.colorbar()
     #plt.title('Qp FCT1D')
     #plt.show()
-    #plt.contourf(fields.xcc, fields.ycc, Qm)
-    #plt.colorbar()
-    #plt.title('Qm FCT1D')
-    #plt.show()
+    plt.contourf(fields.xcc, fields.ycc, Qm)
+    plt.colorbar()
+    plt.title('Qm FCT1D')
+    plt.show()
     #plt.contourf(fields.xcc, fields.ycc, Pp)
     #plt.colorbar()
     #plt.title('Pp FCT1D')
     #plt.show()
-    #plt.contourf(fields.xcc, fields.ycc, Pm)
-    #plt.colorbar()
-    #plt.title('Pm FCT1D')
-    #plt.show()
+    plt.contourf(fields.xcc, fields.ycc, Pm)
+    plt.colorbar()
+    plt.title('Pm FCT1D')
+    plt.show()
     #plt.contourf(fields.xcc, fields.ycc, Rp, levels=100)
     #plt.colorbar()
     #plt.title('Rp FCT1D axis='+str(axis))
     #plt.show()
-    #plt.contourf(fields.xcc, fields.ycc, Rm, levels=100)
-    #plt.colorbar()
-    #plt.title('Rm FCT1D axis='+str(axis))
-    #plt.show()
+    plt.contourf(fields.xcc, fields.ycc, Rm, levels=100)
+    plt.colorbar()
+    plt.title('Rm FCT1D axis='+str(axis))
+    plt.show()
 
     # Calculate the limiter for each face
     face_limiter = np.where(corr >= 0., np.minimum(Rp, np.roll(Rm,1,axis)), np.minimum(np.roll(Rp,1,axis), Rm)) # at [i-1/2,j] if axis=0, at [i,j-1/2] if axis=1
@@ -228,13 +228,39 @@ def FCT(config, fields, it, flxfc_HO, flxcf_HO, **kwargs):
     #print('max bounded field after adimex upwind=', np.max(fields.tracer[it+1]))
     
     # Set extrema for each cell
-    #minx, maxx = set_extrema_1D(config, fields, it, fields.tracer[it+1], axis=0) # at [i,j]
-    #miny, maxy = set_extrema_1D(config, fields, it, fields.tracer[it+1], axis=1) # at [i,j]
+    minx, maxx = set_extrema_1D(config, fields, it, fields.tracer[it+1], axis=0) # at [i,j]
+    miny, maxy = set_extrema_1D(config, fields, it, fields.tracer[it+1], axis=1) # at [i,j]
 
-    # TEST - this could be it.
-    minx, maxx = set_extrema_2D(config, fields, it, fields.tracer[it+1]) # at [i,j]
-    miny, maxy = set_extrema_2D(config, fields, it, fields.tracer[it+1]) # at [i,j]
+    # Check whether I am taking the min max correctly:
 
+    #plt.contourf(fields.xcc, fields.ycc, fields.tracer[0])
+    #plt.colorbar()
+    #plt.title('initial field')
+    #plt.show()
+#
+    #plt.contourf(fields.xcc, fields.ycc, maxx - fields.tracer[0])
+    #plt.colorbar()
+    #plt.title('maxx - initial field')
+    #plt.show()
+#
+    #plt.contourf(fields.xcc, fields.ycc, maxy - fields.tracer[0])
+    #plt.colorbar()
+    #plt.title('maxy - initial field')
+    #plt.show()
+
+    #plt.contourf(fields.xcc, fields.ycc, fields.tracer[it+1] - fields.tracer[0])
+    #plt.colorbar()
+    #plt.title('difference between final and initial field')
+    #plt.show()
+#
+    #exit()
+
+
+
+    # TEST - this could be it. - don't think it makes much, if any impact compared to FCTred, and it is not what is described in the Zalesak paper
+    #minx, maxx = set_extrema_2D(config, fields, it, fields.tracer[it+1]) # at [i,j]
+    #miny, maxy = set_extrema_2D(config, fields, it, fields.tracer[it+1]) # at [i,j]
+#
 
     # Apply 1D FCT in both x and y directions. Gives the limited fluxes in each direction
     flx_corr_x = FCT1D(config, fields, flxfc_HO, flxfc_bounded, minx, maxx, fields.tracer[it+1], axis=0, d_axis=fields.dycc) # at [i-1/2,j]
@@ -288,22 +314,22 @@ def FCT(config, fields, it, flxfc_HO, flxcf_HO, **kwargs):
     #plt.title('flx_corr_fc - flx_corr_x after FCT2D')
     #plt.show()
 
-    if it%10 == 0:
-        plt.contourf(fields.xcf, fields.ycf, flx_corr_cf-flxcf_bounded)
-        plt.colorbar()
-        plt.title('flx_corr_cf - flxcf_bounded after FCT2D')
-        plt.show()
+    #if it%10 == 0:
+    #    plt.contourf(fields.xcf, fields.ycf, flx_corr_cf-flxcf_bounded)
+    #    plt.colorbar()
+    #    plt.title('flx_corr_cf - flxcf_bounded after FCT2D')
+    #    plt.show()
     finalfield = fields.tracer[it] + config.dt*(sch.fluxdiv(fields, flx_corr_fc, flx_corr_cf, 1., 1.)) # at [i,j]
 
     #plt.contourf(fields.xcc, fields.ycc, finalfield-fields.tracer[it])
     #plt.colorbar()
     #plt.title('final field - bounded after both FCT1D and FCT2D')
     #plt.show()`
-    # 
-    if finalfield.min() < minx.min() - 1e-12 or finalfield.min() < miny.min() - 1e-12 or finalfield.max() > maxx.max() + 1e-12 or finalfield.max() > maxy.max() + 1e-12:
-        print('FCT failed: final field is outside bounds')
-        print('final field min=', finalfield.min(), 'minx min=', minx.min(), 'miny min=', miny.min())
-        print('final field max=', finalfield.max(), 'maxx max=', maxx.max(), 'maxy max=', maxy.max())
+    ## 
+    #if finalfield.min() < minx.min() - 1e-12 or finalfield.min() < miny.min() - 1e-12 or finalfield.max() > maxx.max() + 1e-12 or finalfield.max() > maxy.max() + 1e-12:
+#        print('FCT failed: final field is outside bounds')
+#        print('final field min=', finalfield.min(), 'minx min=', minx.min(), 'miny min=', miny.min())
+#        print('final field max=', finalfield.max(), 'maxx max=', maxx.max(), 'maxy max=', maxy.max())
     
     ###listwrong = []
     ###for i in range(config.nx):
@@ -320,21 +346,21 @@ def FCT(config, fields, it, flxfc_HO, flxcf_HO, **kwargs):
     #plt.plot([p[0] for p in listwrong], [p[1] for p in listwrong], 'ro')
     #plt.show()
 
-    listwrong2D = []
-    for i in range(config.nx):
-        for j in range(config.ny):
-            if finalfield[i,j] < min2D[i,j] - 1e-12:
-                print('FCT failed: final field is outside bounds at point (',i,',',j,')')
-                print('final field value=', finalfield[i,j], 'min2D value=', min2D[i,j])   
-                listwrong2D.append((i,j))             
-            if finalfield[i,j] > max2D[i,j] + 1e-12:
-                print('FCT failed: final field is outside bounds at point (',i,',',j,')')
-                print('final field value=', finalfield[i,j], 'max2D value=', max2D[i,j])
-                listwrong2D.append((i,j))
-
-    #plt.plot([p[0] for p in listwrong2D], [p[1] for p in listwrong2D], 'ro')
-    #plt.show()
-    #
+    #listwrong2D = []
+    #for i in range(config.nx):
+    #    for j in range(config.ny):
+    #        if finalfield[i,j] < min2D[i,j] - 1e-12:
+    #            print('FCT failed: final field is outside bounds at point (',i,',',j,')')
+    #            print('final field value=', finalfield[i,j], 'min2D value=', min2D[i,j])   
+    #            listwrong2D.append((i,j))             
+    #        if finalfield[i,j] > max2D[i,j] + 1e-12:
+    #            print('FCT failed: final field is outside bounds at point (',i,',',j,')')
+    #            print('final field value=', finalfield[i,j], 'max2D value=', max2D[i,j])
+    #            listwrong2D.append((i,j))
+#
+    ##plt.plot([p[0] for p in listwrong2D], [p[1] for p in listwrong2D], 'ro')
+    ##plt.show()
+    ##
     #exit()
 
     return fields.tracer[it] + config.dt*(sch.fluxdiv(fields, flx_corr_fc, flx_corr_cf, 1., 1.)) # at [i,j]

@@ -18,7 +18,7 @@ starttime: 0.
 velocity_setting: swift_nondiv_streamfunction
 #constant_v: 20. 
 
-initial_tracer: sine_swift
+initial_tracer: sine_swift #square_wave_x #slotted_cylinders #sine_swift
 constant_tracer: 0.5
 
 #ujet_max: 1. #1.
