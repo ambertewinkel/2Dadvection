@@ -2,6 +2,7 @@ import numpy as np
 from functools import partial
 import src.solvers as sv
 import src.limiter as lim
+import scipy.sparse.linalg as sp
 
 ################# UPWIND SCHEME #################
 
@@ -65,7 +66,7 @@ def adimex_upwind_matrix_func(phi, config, fields, it, thetafc, thetacf):
     return phi - config.dt*fluxdiv_first(config, fields, it, phi, thetafc, thetacf) # at [i,j]
 
 
-def adimex_upwind(config, fields, it, **kwargs):
+def adimex_upwind(config, fields, it, tolerance=1e-6, kiter=10, jiter=5, **kwargs):
     """Implement the AdImEx upwind scheme for the given time step"""
 
     # Calculate the implicitness (1-1/(2C)) at each cell face
@@ -80,7 +81,17 @@ def adimex_upwind(config, fields, it, **kwargs):
     if np.any(fields.thetacc[it]): # avoids gmresm breaking down, only running the solver when there is a nonunit matrix
         matrix = partial(adimex_upwind_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it]) # at [i,j]
         solver = getattr(sv, config.solver)
-        fields.tracer[it+1] = solver(config, matrix, rhs, fields.tracer[it], kiter=10, jiter=10)
+        fields.tracer[it+1] = solver(config, matrix, rhs, fields.tracer[it], kiter=kiter, jiter=jiter, tolerance=tolerance)
+    #if np.any(fields.thetacc[it]): # avoids gmresm breaking down, only running the solver when there is a nonunit matrix
+    #    matrix = partial(adimex_upwind_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it]) # at [i,j]
+    #    #solver = getattr(sv, config.solver)
+    #
+    #    # Define matrix-free operator
+    #    A = sp.LinearOperator( # on second thought, I don't think the scipy.sparse.linalg.gmres solver will work for this as it wants 1D x and b arrays, not 2D like I have
+    #        shape=(fields.tracer[it].size, fields.tracer[it].size),
+    #        matvec=matrix
+    #    )
+    #    fields.tracer[it+1] = sp.gmres(A, rhs, fields.tracer[it], tol=tolerance, restart=jiter, maxiter=kiter) #kiter=kiter, jiter=jiter, tolerance=tolerance)
     else:
         fields.tracer[it+1] = rhs.copy()
 

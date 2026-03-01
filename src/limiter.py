@@ -58,7 +58,7 @@ def set_extrema_2D(config, fields, it, field_bounded):
 
     return fieldmin, fieldmax
 
-import matplotlib.pyplot as plt
+
 def FCT1D(config, fields, flx_HO, flx_bounded, fieldmin, fieldmax, field_bounded, axis, d_axis):
     """!!! update docstring 
     This function implements flux-corrected transport (FCT) in 1D. Either using global bounds or local bounds based on low-order bounded solution and optionally previous time step. Returns the limited field at the new time step. Assumes constant dxc and uf>0.
@@ -84,8 +84,8 @@ def FCT1D(config, fields, flx_HO, flx_bounded, fieldmin, fieldmax, field_bounded
     Pm = config.dt*(np.maximum(0, np.roll(corr,-1,axis)) - np.minimum(0, corr))
 
     # Calculate ratios of allowable (Q) to existing high-order (P) fluxes
-    Rp = np.where(Pp > 1e-12, np.minimum(1., Qp/np.maximum(Pp,1e-12)), 0.)
-    Rm = np.where(Pm > 1e-12, np.minimum(1., Qm/np.maximum(Pm,1e-12)), 0.)
+    Rp = np.where(Pp > 1e-15, np.minimum(1., Qp/np.maximum(Pp,1e-15)), 0.)
+    Rm = np.where(Pm > 1e-15, np.minimum(1., Qm/np.maximum(Pm,1e-15)), 0.)
 
     # Calculate the limiter for each face
     face_limiter = np.where(corr >= 0., np.minimum(Rp, np.roll(Rm,1,axis)), np.minimum(np.roll(Rp,1,axis), Rm)) # at [i-1/2,j] if axis=0, at [i,j-1/2] if axis=1
@@ -122,8 +122,8 @@ def FCT2D(config, fields, flxfc, flxfc_bounded, flxcf, flxcf_bounded, fieldmin, 
     Pm = config.dt*(np.maximum(0, np.roll(corrfc,-1,0)) - np.minimum(0, corrfc) + np.maximum(0, np.roll(corrcf,-1,1)) - np.minimum(0, corrcf))
 
     # Calculate ratios of allowable (Q) to existing high-order (P) fluxes
-    Rp = np.where(Pp > 1e-12, np.minimum(1., Qp/np.maximum(Pp,1e-12)), 0.)
-    Rm = np.where(Pm > 1e-12, np.minimum(1., Qm/np.maximum(Pm,1e-12)), 0.)
+    Rp = np.where(Pp > 1e-15, np.minimum(1., Qp/np.maximum(Pp,1e-15)), 0.)
+    Rm = np.where(Pm > 1e-15, np.minimum(1., Qm/np.maximum(Pm,1e-15)), 0.)
 
     # Calculate the limiter for each face
     face_limiter_fc = np.where(corrfc >= 0., np.minimum(Rp, np.roll(Rm,1,0)), np.minimum(np.roll(Rp,1,0), Rm)) # at [i-1/2,j]
@@ -140,7 +140,7 @@ def FCT(config, fields, it, flxfc_HO, flxcf_HO, **kwargs):
     # 2D FCT, should call the FCT1D function in x and y directions, and then call again combined to ensure monotonicity in both directions. Would need to consider how to set the extrema in 2D (probably based on the 8 surrounding cells and optionally previous time step).
 
     # Calculate 2D first-order solution if not using both global bounds
-    sch.adimex_upwind(config, fields, it, **kwargs) # at [i,j] # temporarily writes in fields.tracer[it+1] but will be overwritten by the FCT solution at the end of this function
+    sch.adimex_upwind(config, fields, it, tolerance=1e-15, kiter=100, jiter=5, **kwargs) # at [i,j] # temporarily writes in fields.tracer[it+1] but will be overwritten by the FCT solution at the end of this function
 
     flxfc_bounded = np.maximum(0.,fields.u[it])*(1.-fields.thetafc[it])*np.roll(fields.tracer[it],1,0) + np.minimum(0.,fields.u[it])*(1.-fields.thetafc[it])*fields.tracer[it] + np.maximum(0.,fields.u[it])*fields.thetafc[it]*np.roll(fields.tracer[it+1],1,0) + np.minimum(0.,fields.u[it])*fields.thetafc[it]*fields.tracer[it+1] # at [i-1/2,j]
     flxcf_bounded = np.maximum(0.,fields.v[it])*(1.-fields.thetacf[it])*np.roll(fields.tracer[it],1,1) + np.minimum(0.,fields.v[it])*(1.-fields.thetacf[it])*fields.tracer[it] + np.maximum(0.,fields.v[it])*fields.thetacf[it]*np.roll(fields.tracer[it+1],1,1) + np.minimum(0.,fields.v[it])*fields.thetacf[it]*fields.tracer[it+1] # at [i,j-1/2]
@@ -165,7 +165,7 @@ def FCT_reduced(config, fields, it, flxfc_HO, flxcf_HO, **kwargs): # only does o
     """
 
     # Calculate 2D first-order solution if not using both global bounds
-    sch.adimex_upwind(config, fields, it, **kwargs) # at [i,j] # temporarily writes in fields.tracer[it+1] but will be overwritten by the FCT solution at the end of this function
+    sch.adimex_upwind(config, fields, it, tolerance=1e-15, kiter=100, jiter=5, **kwargs) # at [i,j] # temporarily writes in fields.tracer[it+1] but will be overwritten by the FCT solution at the end of this function
 
     flxfc_bounded = np.maximum(0.,fields.u[it])*(1.-fields.thetafc[it])*np.roll(fields.tracer[it],1,0) + np.minimum(0.,fields.u[it])*(1.-fields.thetafc[it])*fields.tracer[it] + np.maximum(0.,fields.u[it])*fields.thetafc[it]*np.roll(fields.tracer[it+1],1,0) + np.minimum(0.,fields.u[it])*fields.thetafc[it]*fields.tracer[it+1] # at [i-1/2,j]
     flxcf_bounded = np.maximum(0.,fields.v[it])*(1.-fields.thetacf[it])*np.roll(fields.tracer[it],1,1) + np.minimum(0.,fields.v[it])*(1.-fields.thetacf[it])*fields.tracer[it] + np.maximum(0.,fields.v[it])*fields.thetacf[it]*np.roll(fields.tracer[it+1],1,1) + np.minimum(0.,fields.v[it])*fields.thetacf[it]*fields.tracer[it+1] # at [i,j-1/2]
