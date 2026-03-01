@@ -11,8 +11,8 @@ grid_y: uniform # linear #cosine4_topleft
 BC_x: periodic
 BC_y: periodic
 
-dt: 0.4 #2. #1. # s
-nt: 250 #1 #250 #50 #100
+dt: 0.8  #0.4 #4. #0.4 #2. #1. # s
+nt: 25 #250 #1 #250 #50 #100
 starttime: 0.
 
 velocity_setting: swift_nondiv_streamfunction
@@ -26,7 +26,7 @@ constant_tracer: 0.5
 T: 100. #10. 
 u0: 10. #0. #0.5 with T=100. and u=100. we have Cmax of order 20, which is difficult to converge to.
 
-FCT: True
+#FCT: True
 #FCT_reduced: True
 nondivergent: True
 #tracermin: 0.
