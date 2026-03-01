@@ -3,7 +3,7 @@ import logging
 import warnings
 
 
-def gcrk(config, A, b, x, kiter=10, jiter=5, tolerance=1e-6):
+def gcrk(A, b, x, kiter=10, jiter=5, tolerance=1e-6):
     """
     Matrixfree solution of linear Ax=b system using GCR(k) method. (matrixfree through a function that computes Ax with def A(x)))
     --- IN --- 
@@ -38,7 +38,7 @@ def gcrk(config, A, b, x, kiter=10, jiter=5, tolerance=1e-6):
             rmx = np.sqrt(np.max(r[:]*r[:])) # square root of max square residual
 
             if rmx < tolerance: 
-                if config.verbose: logging.info(f"Converged at k,j: {k}, {j} with residual: {rmx}")
+                logging.info(f"Converged at k,j: {k}, {j} with residual: {rmx}")
 
                 return x
 
@@ -48,7 +48,7 @@ def gcrk(config, A, b, x, kiter=10, jiter=5, tolerance=1e-6):
     return x
 
 
-def gmresm(config, A, b, x, kiter=10, jiter=5, tolerance=1e-6):
+def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6):
     """
     Matrixfree solution of linear Ax=b system using GMRES(m) method. (matrixfree through a function that computes Ax with def A(x))).
     However, GMRES(m) does need a small matrix H to be stored and solved (done here through np.linalg.solve). Apart from that, it currently stores a V matrix, arrays of size (m+1,N) where N is the size of the problem. This could be improved to reduce memory usage (memory usage is already improved with the restarting).

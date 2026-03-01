@@ -63,6 +63,12 @@ class Config():
         
         self.endtime = self.starttime + self.nt * self.dt
 
+        if self.nondivergent is False:
+            self.factordiv = 0.5
+        elif self.nondivergent is True:
+            self.factordiv = 1.
+        elif self.nondivergent is None:
+            print('Abort: nondivergent is not set - please specify whether the winds are nondivergent (True) or not (False).')
 
     @classmethod
     def from_file(cls, file):

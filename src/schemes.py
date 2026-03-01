@@ -49,13 +49,7 @@ def implicitness_adimex_upwind(config, fields, it, **kwargs):
     fields.Ccc[it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
 
     # Calculate implicitness at cell centers and faces
-    if config.nondivergent:
-        fields.thetacc[it] = np.maximum(0., 1. - 1./fields.Ccc[it]) # at [i,j] # for nondivergent winds: using C here preserves positivity in all cases for c_in and c_out
-    elif config.nondivergent == False:
-        fields.thetacc[it] = np.maximum(0., 1. - 0.5/fields.Ccc[it]) # at [i,j] # for divergent winds: using 2C here instead of C preserves positivity in all cases for c_in and c_out
-    elif config.nondivergent == None:
-        print('Abort: nondivergent is not set - please specify whether the winds are nondivergent (True) or not (False).')
-        
+    fields.thetacc[it] = np.maximum(0., 1. - config.factordiv/fields.Ccc[it]) # at [i,j] # for nondivergent winds: factordiv = 1.; for divergent winds: factordiv = 0.5; preserves positivity in all cases for c_in and c_out
     fields.thetafc[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,0)) # at [i-1/2,j]
     fields.thetacf[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,1)) # at [i,j-1/2]
 
@@ -81,17 +75,7 @@ def adimex_upwind(config, fields, it, tolerance=1e-6, kiter=10, jiter=5, **kwarg
     if np.any(fields.thetacc[it]): # avoids gmresm breaking down, only running the solver when there is a nonunit matrix
         matrix = partial(adimex_upwind_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it]) # at [i,j]
         solver = getattr(sv, config.solver)
-        fields.tracer[it+1] = solver(config, matrix, rhs, fields.tracer[it], kiter=kiter, jiter=jiter, tolerance=tolerance)
-    #if np.any(fields.thetacc[it]): # avoids gmresm breaking down, only running the solver when there is a nonunit matrix
-    #    matrix = partial(adimex_upwind_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it]) # at [i,j]
-    #    #solver = getattr(sv, config.solver)
-    #
-    #    # Define matrix-free operator
-    #    A = sp.LinearOperator( # on second thought, I don't think the scipy.sparse.linalg.gmres solver will work for this as it wants 1D x and b arrays, not 2D like I have
-    #        shape=(fields.tracer[it].size, fields.tracer[it].size),
-    #        matvec=matrix
-    #    )
-    #    fields.tracer[it+1] = sp.gmres(A, rhs, fields.tracer[it], tol=tolerance, restart=jiter, maxiter=kiter) #kiter=kiter, jiter=jiter, tolerance=tolerance)
+        fields.tracer[it+1] = solver(matrix, rhs, fields.tracer[it], kiter=kiter, jiter=jiter, tolerance=tolerance) # kiter, jiter, and tolerance can be set differently, e.g. for limiting
     else:
         fields.tracer[it+1] = rhs.copy()
 
@@ -205,7 +189,7 @@ def adhimex_ncp(config, fields, it, **kwargs):
         if ik == 4 and np.any(fields.thetacc[it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
             matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
             solver = getattr(sv, config.solver)
-            field_k = solver(config, matrix, rhs_k, field_k, kiter=10, jiter=10)
+            field_k = solver(matrix, rhs_k, field_k, kiter=10, jiter=5, tolerance=1e-6)
         else:
             field_k = rhs_k.copy()
 
@@ -254,7 +238,7 @@ def adhimex(config, fields, it, **kwargs):
         if ik == 4 and np.any(fields.thetacc[it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
             matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
             solver = getattr(sv, config.solver)
-            field_k = solver(config, matrix, rhs_k, field_k, kiter=10, jiter=10)
+            field_k = solver(matrix, rhs_k, field_k, kiter=10, jiter=5, tolerance=1e-6)
         else:
             field_k = rhs_k.copy()
                
