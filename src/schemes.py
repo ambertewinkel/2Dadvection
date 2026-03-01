@@ -139,6 +139,20 @@ def fifth_order(fields, it, phi):
     return flxfc, flxcf
 
 
+def third_order(fields, it, phi):
+    """Third-order spatial discretisation (potentially used for the matrix)"""
+    phi_BS_fc = 1./3.*phi + 5./6.*np.roll(phi,1,0) - 1./6.*np.roll(phi,2,0) # backward in space (upwind if u>0) flux at face in x direction
+    phi_FS_fc = 1./3.*np.roll(phi,1,0) + 5./6.*phi - 1./6.*np.roll(phi,-1,0) # forward in space (upwind if u<0) flux at face in x direction
+    phi_BS_cf = 1./3.*phi + 5./6.*np.roll(phi,1,1) - 1./6.*np.roll(phi,2,1) # backward in space (upwind if v>0) flux at face in y direction
+    phi_FS_cf = 1./3.*np.roll(phi,1,1) + 5./6.*phi - 1./6.*np.roll(phi,-1,1) # forward in space (upwind if v<0) flux at face in y direction
+
+    flxfc = np.maximum(0., fields.u[it]) * phi_BS_fc + np.minimum(0., fields.u[it]) * phi_FS_fc # at [i-1/2,j]
+
+    flxcf = np.maximum(0., fields.v[it]) * phi_BS_cf + np.minimum(0., fields.v[it]) * phi_FS_cf # at [i,j-1/2]
+
+    return flxfc, flxcf
+
+
 def fluxdiv_fifth(config, fields, it,  phi, factor_fc, factor_cf): # old code for adhimex_12 etc. Should do the same as fluxdiv() with fifth_order()
     """Calculating the fifth-order flux divergence for a certain phi, can be applied for bot the explicit and implicit parts (using different factors)"""
 
@@ -163,8 +177,11 @@ def fluxdiv(fields, flxfc, flxcf, factorfc, factorcf):
 
 def adhimex_matrix_func(phi, config, fields, it, thetafc, thetacf, alpha):
     """Matrix function for the implicit part of the AdHImEx scheme"""
-    
-    return phi - config.dt*alpha*fluxdiv(fields, *fifth_order(fields, it, phi), thetafc, thetacf) # at [i,j]
+
+    if config.thirdordermatrix: # Matrix with third-order spatial discretisation (unclear whether stable as of 01-03-2026)
+        return phi - config.dt*alpha*fluxdiv(fields, *third_order(fields, it, phi), thetafc, thetacf) # at [i,j]
+    else: # Default fifth-order spatial discretisation
+        return phi - config.dt*alpha*fluxdiv(fields, *fifth_order(fields, it, phi), thetafc, thetacf) # at [i,j]
 
 
 def adhimex_ncp(config, fields, it, **kwargs):

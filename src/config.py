@@ -30,6 +30,7 @@ class Config():
     starttime: float
 
     initial_tracer: str
+    thirdordermatrix: bool = False
     FCT: bool = False
     FCT_reduced: bool = False
     tracermin: float = None
