@@ -64,12 +64,25 @@ def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6):
     r0 = b - A(x)
 
     reltol = tolerance * np.linalg.norm(b) # relative tolerance; see GMRES slides https://www.dmsa.unipd.it/~berga/Teaching/Phd/gmres_slides.pdf and Wikipedia https://en.wikipedia.org/wiki/Generalized_minimal_residual_method; I think MATLAB and Python compare the residual to the relative tolerance as well: https://www.mathworks.com/help/matlab/ref/gmres.html and https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.gmres.html
-    oldresidual = np.linalg.norm(r0)
+    norm_oldres = np.linalg.norm(r0)
+    if norm_oldres < reltol:
+        print(f"Initial guess is already good enough with residual {norm_oldres} (relative tolerance {reltol}).")
+        return x
+    
+    #print(norm_oldres, np.linalg.norm(b), reltol)
+
+    converged = False
     for irestart in range(kiter):
         h = np.zeros((jiter+1, jiter), dtype=np.float64)
+        cols = h.shape[1]-1
         v = np.zeros((jiter+1, *np.shape(r0)), dtype=np.float64)
         v_hat = np.zeros(np.shape(r0), dtype=np.float64)
-        v[0] = r0/np.linalg.norm(r0)
+        v[0] = r0/norm_oldres
+
+        cos = np.zeros(jiter, dtype=np.float64)
+        sin = np.zeros(jiter, dtype=np.float64)
+        g = np.zeros(jiter+1, dtype=np.float64)
+        g[0] = norm_oldres # residual norm at start of restart loop
 
         for j in range(jiter):            
             Avj = A(v[j])
@@ -86,25 +99,76 @@ def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6):
                 break
             
             v[j+1] = v_hat/h[j+1,j]
-            
-        e1 = np.zeros(jiter+1)
-        e1[0] = oldresidual # np.linalg.norm(r0) # residual norm at start of restart loop
-        y = np.linalg.lstsq(h, e1, rcond=None)[0] # residual here is the norm of the previous residual
+
+            #print('h before rotation', h)
+
+            # Apply previous rotations
+            for i in range(j):
+                temp = cos[i]*h[i, j] - sin[i]*h[i+1, j]
+                h[i+1, j] = sin[i]*h[i, j] + cos[i]*h[i+1, j]
+                h[i, j] = temp
+
+            # Compute new rotation
+            denom = np.hypot(h[j+1, j], h[j, j]) # sqrt(h[j+1,j]*h[j+1,j] + h[j,j]*h[j,j])
+            cos[j], sin[j] = h[j, j]/denom, - h[j+1, j]/denom
+
+            # Rotating Hbar (builds R in Q Hbar = R factorisation)
+            h[j, j], h[j+1, j] = cos[j]*h[j, j] - sin[j]*h[j+1, j], sin[j]*h[j, j] + cos[j]*h[j+1, j]
+
+            #print('h after rotation', h)
+
+            # Apply rotation to g (effectively applying Q to g)
+            temp = cos[j] * g[j] - sin[j] * g[j+1]
+            g[j+1] = sin[j] * g[j] + cos[j] * g[j+1]
+            g[j] = temp
+
+            # Residual norm
+            print(norm_oldres)
+            residual = abs(g[j+1])
+            if residual < reltol: # !!! check if I need to use norm(r0) or norm(b) for the relative tolerance... It might just be a choice.
+                print(f"Converged after restart {irestart, j} with residual {residual} (relative tolerance {reltol}).")
+                converged = True
+                cols = min(j, h.shape[1])
+                break
+            else:
+                if residual > norm_oldres: # if residual increased after restart, print a warning (this can happen with GMRES(m) if m is too small or the problem is hard)
+                    print(f"Residual increased after restart {irestart} (residual: {residual}, old: {norm_oldres}). This may indicate a problem with the solver or the choice of parameters.")
+            norm_oldres = residual
+        #if irestart == 2: exit()
+
+                
+        #print(irestart, np.shape(h), np.shape(g), np.shape(v))
+        
+        #print(np.shape(h[:irestart+1, :irestart+1]), np.shape(g[:irestart+1]), np.shape(v[:irestart+1]))
+        #print(irestart)
+        #y = np.linalg.solve(h[:cols, :cols], g[:cols])
+        y = np.linalg.lstsq(h[:cols, :cols], g[:cols], rcond=None)[0]
 
         for i in range(len(y)):
             x += y[i] * v[i]
-
-        r0 = b - A(x)
-        residual = np.linalg.norm(r0)
-        #residual_minimised = np.linalg.norm(e1 - h @ y)
-     
-        if residual < reltol: #tolerance: #residual_minimised < tolerance: 
-            print(f"Converged after restart {irestart} with residual {residual} (relative tolerance {reltol}).")
+        if converged:
             break
-        else:
-            if residual > oldresidual: # if residual increased after restart, print a warning (this can happen with GMRES(m) if m is too small or the problem is hard)
-                print(f"Residual increased after restart {irestart} (residual: {residual}, old: {oldresidual}). This may indicate a problem with the solver or the choice of parameters.")
-        oldresidual = residual
+        #x += v[:irestart+1] @ y
+
+        ###e1 = np.zeros(jiter+1)
+        ###e1[0] = norm_oldres # np.linalg.norm(r0) # residual norm at start of restart loop
+        ###y = np.linalg.lstsq(h, e1, rcond=None)[0] # residual here is the norm of the previous residual
+###
+        ###for i in range(len(y)):
+        ###    x += y[i] * v[i]
+###
+        r0 = b - A(x)
+        
+        #residual = np.linalg.norm(r0)
+        ####residual_minimised = np.linalg.norm(e1 - h @ y)
+     ###
+        #if residual < reltol: #tolerance: #residual_minimised < tolerance: 
+        #    print(f"Converged after restart {irestart} with residual {residual} (relative tolerance {reltol}).")
+        #    break
+        #else:
+        #    if residual > norm_oldres: # if residual increased after restart, print a warning (this can happen with GMRES(m) if m is too small or the problem is hard)
+        #        print(f"Residual increased after restart {irestart} (residual: {residual}, old: {norm_oldres}). This may indicate a problem with the solver or the choice of parameters.")
+        #norm_oldres = residual
 
     if residual >= reltol: 
         print(f'GMRES(m) did not converge within the given iterations (ktotal,jtotal={kiter},{jiter}). Final residual: {residual}, relative tolerance: {reltol}')

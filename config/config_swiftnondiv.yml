@@ -28,7 +28,7 @@ u0: 10. #0. #0.5 with T=100. and u=100. we have Cmax of order 20, which is diffi
 
 thirdordermatrix: False #True #False
 #FCT: True
-FCT_reduced: True
+#FCT_reduced: True
 nondivergent: True
 #tracermin: 0.
 #tracermax: 1. 
