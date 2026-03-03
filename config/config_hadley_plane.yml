@@ -1,0 +1,37 @@
+scheme: adhimex #adimex_upwind #adhimex_adv #3_overwritek2
+
+nx: 180 #90 #64 #50 #10 #100
+ny: 180 #30 #64 #50 #10 #100
+xmin: -1.000789e7 #-90. #-1.e7 #-90. # deg #-500. # m -10,007,888
+xmax: 1.000789e7 #90. #1.e7 #90. # deg #500. # m 10,007,888
+ymin: 0. #-500. # m
+ymax: 1.2e4 #500. # m
+grid_x: uniform #cosine4_topleft
+grid_y: uniform #cosine #cosine # linear #cosine4_topleft
+BC_x: periodic
+BC_y: periodic
+
+dt: 450. #120. #1728. #864. #4320. #0.02 #6. # s
+nt: 20 #96 #192 #192 #192 #720  #50 #100 #5 #25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
+starttime: 0.
+
+velocity_setting: hadley_plane #doswell #double_rotation_rising_bubble_capped #constant_v #swift_nondiv_streamfunction #strong_convergence #swift_div_on_steroids #_streamfunction #swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation
+constant_v: 20. 
+
+initial_tracer: hadley #doswell #surface_cosine_bell #sine_swift #constant #sine_swift #constant #sine_swift #sine_swift #sine_swift #cosine_bell #gaussian_chenetal2017
+constant_tracer: 0.5
+
+#ujet_max: 1. #1.
+
+T: 100. #10. 
+u0: 10. #0. #0.5 with T=100. and u=100. we have Cmax of order 20, which is difficult to converge to.
+
+solver: gmresm #gcrk #gmresm
+#thirdordermatrix: True
+#FCT_reduced: True
+nondivergent: True #!!! needs adjusting in velocity code
+
+filename: chenetal2017
+verbose: True
+animate: True
+outputdir: test #hadley_adhimex3_ycos_nt192
