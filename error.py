@@ -23,19 +23,21 @@ def l2norm(numerical, analytic, V):
 
 def error():
     if len(argv) < 2:
-        print("Usage: python error.py <dir> <setting>")
+        print("Usage: python error.py <outputdir> <setting>")
         exit(1)
 
-    if argv[1] == 'test':
-        dir = dirname(__file__) + '/output/' + argv[1] +'/'
-    else:
-        dir = dirname(__file__) + '/output/dated/' + argv[1] +'/'
+    #if argv[1] == 'test':
+    #    dir = dirname(__file__) + '/output/' + argv[1] +'/'
+    #else:
+    #    dir = dirname(__file__) + '/output/dated/' + argv[1] +'/'
+
+    outputdir = dirname(__file__) + '/output/' + argv[1] +'/'
 
     # Get setting
     setting = argv[2]
 
     # Set up logging
-    logfile = dir + 'error.log'
+    logfile = outputdir + 'error.log'
 
     logging.basicConfig(
         filename=logfile,
@@ -44,16 +46,16 @@ def error():
         datefmt="%Y-%m-%d %H:%M:%S"
     )        
     print(f'See error log {logfile}')
-    print(f"Running error analysis for dir={dir} and setting={setting}")
-    logging.info(f"Error analysis for directory: {dir}")
+    print(f"Running error analysis for dir={outputdir} and setting={setting}")
+    logging.info(f"Error analysis for directory: {outputdir}")
 
     # Load config file
-    configfile = [str(p) for p in Path(dir).glob("*.yml")]
+    configfile = [str(p) for p in Path(outputdir).glob("*.yml")]
     if len(configfile) == 0:
-        print(f"No config file found in {dir}")
+        print(f"No config file found in {outputdir}")
         exit(1)
     elif len(configfile) > 1:
-        print(f"Multiple config files found in {dir}: {configfile}")
+        print(f"Multiple config files found in {outputdir}: {configfile}")
         exit(1)
     else: 
         print('Config file found: ' + configfile[0])
@@ -64,14 +66,14 @@ def error():
     # Load tracer and grid fields
     data, fieldnames = {}, ['tracer', 'dxcc', 'dycc']
     for f in fieldnames:
-        data[f] = np.load(dir + 'data/' + f + '.npy')
+        data[f] = np.load(outputdir + 'data/' + f + '.npy')
 
     if setting == 'finaltoinitial':
         print("Computing error at final time compared to initial condition...")
         # Load initial condition
         l2_error = l2norm(data['tracer'][-1], data['tracer'][0], data['dxcc']*data['dycc'])
         # Output l2 norms to file
-        with open(dir + 'l2norms.out', 'w') as f:
+        with open(outputdir + 'l2norms.out', 'w') as f:
             f.write('l2 norm (final compared to initial)\n')
             f.write(f'{l2_error:.6e}\n')
 

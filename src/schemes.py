@@ -89,6 +89,7 @@ def implicitness_adhimex(config, fields, it, **kwargs):
     sum_abs_velarea = (abs(fields.u[it]) + abs(np.roll(fields.u[it],-1,0)))*fields.dycc + (abs(fields.v[it]) + abs(np.roll(fields.v[it],-1,1)))*fields.dxcc # at [i,j]
     fields.Ccc[it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
     fields.thetacc[it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.4)) # at [i,j]
+    ###fields.thetacc[it] = np.full(np.shape(fields.Ccc[it]),1.) #1.  - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.4)) # at [i,j] # adjustment for CN result try
     fields.thetafc[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,0)) # at [i-1/2,j]
     fields.thetacf[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,1)) # at [i,j-1/2]
     fields.dthetafc[it] = np.roll(fields.thetafc[it],-1,0) - fields.thetafc[it] # at [i,j]
@@ -189,7 +190,7 @@ def adhimex_ncp(config, fields, it, **kwargs):
         if ik == 4 and np.any(fields.thetacc[it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
             matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
             solver = getattr(sv, config.solver)
-            field_k = solver(matrix, rhs_k, field_k, kiter=10, jiter=5, tolerance=1e-6)
+            field_k = solver(matrix, rhs_k, field_k, kiter=100, jiter=10, tolerance=1e-6)
         else:
             field_k = rhs_k.copy()
 
@@ -238,7 +239,7 @@ def adhimex(config, fields, it, **kwargs):
         if ik == 4 and np.any(fields.thetacc[it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
             matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
             solver = getattr(sv, config.solver)
-            field_k = solver(matrix, rhs_k, field_k, kiter=10, jiter=5, tolerance=1e-6)
+            field_k = solver(matrix, rhs_k, field_k, kiter=100, jiter=10, tolerance=1e-6)
         else:
             field_k = rhs_k.copy()
                

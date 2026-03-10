@@ -24,6 +24,7 @@ import sys
 from utils.animation import create_animation
 from src.config import Config
 from src.output import set_up_plots_directory
+import pycpt as pc
 
 
 def load_data(outputdir, field_to_plot):
@@ -90,7 +91,7 @@ def plot_fields(config, fieldnames, data, plots_dir, setting):
         # Plot the tracer initial condition if tracer is outputted (i.e. field_to_plot is 'all' or 'tracer')
         if 'tracer' in fieldnames:
             minval, maxval = np.min(data['tracer'][0]), np.max(data['tracer'][0])
-            plot_figure(data['xcc'], data['ycc'], data['tracer'][0], 'tracer at nt=0', 'x', 'y', 'viridis', plots_dir + f'tracer_nt0.svg', minval, maxval)
+            plot_figure(data['xcc'], data['ycc'], data['tracer'][0], 'tracer', 'tracer at nt=0', 'x', 'y', 'viridis', plots_dir + f'tracer_nt0.svg', minval, maxval)
         for field in fieldnames:
             minval, maxval = np.min(data[field][-1]), np.max(data[field][-1])
             if field == 'tracer':
@@ -98,35 +99,35 @@ def plot_fields(config, fieldnames, data, plots_dir, setting):
                     add_hatching, thetacc = True, data['thetacc'][-1] 
                 else:
                     add_hatching, thetacc = False, None
-                plot_figure(data['xcc'], data['ycc'], data[field][-1], f'{field} at nt={config.nt}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval, add_hatching, thetacc, True, data['tracer'][0])
+                plot_figure(data['xcc'], data['ycc'], data[field][-1], field, f'{field} at nt={config.nt}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval, add_hatching, thetacc, True, data['tracer'][0])
             elif field == 'Ccc' or field == 'thetacc' or field == 'dthetafc' or field == 'dthetacf':
-                plot_figure(data['xcc'], data['ycc'], data[field][-1], f'{field} at nt={config.nt}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval)
+                plot_figure(data['xcc'], data['ycc'], data[field][-1], field, f'{field} at nt={config.nt}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval)
             elif field == 'u' or field == 'thetafc':
-                plot_figure(data['xfc'], data['yfc'], data[field][-1], f'{field} at nt={config.nt}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval)
+                plot_figure(data['xfc'], data['yfc'], data[field][-1], field, f'{field} at nt={config.nt}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval)
             elif field == 'v' or field == 'thetacf':
-                plot_figure(data['xcf'], data['ycf'], data[field][-1], f'{field} at nt={config.nt}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval)
+                plot_figure(data['xcf'], data['ycf'], data[field][-1], field, f'{field} at nt={config.nt}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval)
             elif field == 'psi':
-                plot_figure(data['xffb'], data['yffb'], data[field][-1], f'{field} at nt={config.nt}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval)
+                plot_figure(data['xffb'], data['yffb'], data[field][-1], field, f'{field} at nt={config.nt}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval)
     elif setting == 'all':
         for field in fieldnames:
             minval, maxval, add_hatching = np.min(data[field]), np.max(data[field]), False
             if field == 'tracer' or field == 'density':
-                plot_figure(data['xcc'], data['ycc'], data[field][0], f'{field} at nt=0', 'x', 'y', 'viridis', plots_dir + f'{field}_nt0.svg', minval, maxval)
+                plot_figure(data['xcc'], data['ycc'], data[field][0], field, f'{field} at nt=0', 'x', 'y', 'viridis', plots_dir + f'{field}_nt0.svg', minval, maxval)
                 add_hatching = True if 'thetacc' in fieldnames else False
                 for it in range(1,config.nt+1):
-                    plot_figure(data['xcc'], data['ycc'], data[field][it], f'{field} at nt={it}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it}.svg', minval, maxval, add_hatching, data['thetacc'][it-1])
+                    plot_figure(data['xcc'], data['ycc'], data[field][it], field, f'{field} at nt={it}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it}.svg', minval, maxval, add_hatching, data['thetacc'][it-1])
             elif field == 'Ccc' or field == 'thetacc':
                 for it in range(config.nt):
-                    plot_figure(data['xcc'], data['ycc'], data[field][it], f'{field} at nt={it+0.5}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it+1}.svg', minval, maxval)
+                    plot_figure(data['xcc'], data['ycc'], data[field][it], field, f'{field} at nt={it+0.5}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it+1}.svg', minval, maxval)
             elif field == 'u' or field == 'thetafc':
                 for it in range(config.nt):
-                    plot_figure(data['xfc'], data['yfc'], data[field][it], f'{field} at nt={it+0.5}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it+1}.svg', minval, maxval)
+                    plot_figure(data['xfc'], data['yfc'], data[field][it], field, f'{field} at nt={it+0.5}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it+1}.svg', minval, maxval)
             elif field == 'v' or field == 'thetacf':
                 for it in range(config.nt):
-                    plot_figure(data['xcf'], data['ycf'], data[field][it], f'{field} at nt={it+0.5}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it+1}.svg', minval, maxval)
+                    plot_figure(data['xcf'], data['ycf'], data[field][it], field, f'{field} at nt={it+0.5}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it+1}.svg', minval, maxval)
             elif field == 'psi':
                 for it in range(config.nt):
-                    plot_figure(data['xffb'], data['yffb'], data[field][it], f'{field} at nt={it+0.5}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it+1}.svg', minval, maxval)
+                    plot_figure(data['xffb'], data['yffb'], data[field][it], field, f'{field} at nt={it+0.5}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it+1}.svg', minval, maxval)
     elif setting == 'anim':
         anim_dir = plots_dir + '../animations/'
         if not os.path.exists(anim_dir): os.mkdir(anim_dir)
@@ -135,13 +136,13 @@ def plot_fields(config, fieldnames, data, plots_dir, setting):
                 # Determine min and max values for consistent color scale
                 add_hatching, minval, maxval = False, np.min(data[field]), np.max(data[field])
                 if field == 'tracer' or field == 'density':
-                    plot_figure(data['xcc'], data['ycc'], data[field][0], f'{field} at nt=0', 'x', 'y', 'viridis', plots_dir + f'{field}_nt0.png', minval, maxval)
+                    plot_figure(data['xcc'], data['ycc'], data[field][0], field, f'{field} at nt=0', 'x', 'y', 'viridis', plots_dir + f'{field}_nt0.png', minval, maxval)
                     for it in range(1, config.nt+1):
                         if 'thetacc' in fieldnames:
                             add_hatching, thetacc = True, data['thetacc'][it-1]
                         else:
                             add_hatching, thetacc = False, None
-                        plot_figure(data['xcc'], data['ycc'], data[field][it], f'{field} at nt={it}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it}.png', minval, maxval, add_hatching, thetacc)
+                        plot_figure(data['xcc'], data['ycc'], data[field][it], field, f'{field} at nt={it}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it}.png', minval, maxval, add_hatching, thetacc)
                 else:
                     if field == 'Ccc' or field == 'thetacc':
                         x, y = data['xcc'], data['ycc']
@@ -152,21 +153,28 @@ def plot_fields(config, fieldnames, data, plots_dir, setting):
                     elif field == 'psi':
                         x, y = data['xffb'], data['yffb']
                     for it in range(config.nt):
-                        plot_figure(x, y, data[field][it], f'{field} at nt={it+0.5}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it+1}.png', minval, maxval)
+                        plot_figure(x, y, data[field][it], field, f'{field} at nt={it+0.5}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{it+1}.png', minval, maxval)
                 create_animation(config, plots_dir, anim_dir, field)
     else: 
         raise ValueError('Plotting setting not recognized.')
 
 
-def plot_figure(x, y, field, title, xlabel, ylabel, cmap, filename, minval, maxval, add_hatching=False, thetacc=None, add_initial=False, initialtracer=None):
+def plot_figure(x, y, fielddata, fieldname, title, xlabel, ylabel, cmap, filename, minval, maxval, add_hatching=False, thetacc=None, add_initial=False, initialtracer=None):
     plt.figure()
+    palette = pc.read('wh-bl-gr-ye-re.cpt') # read in a color palette
     diff = maxval - minval
+    extend = 'neither'
     if diff == 0.:
         contourlevels = None
     else:
-        contourlevels = list(np.linspace(minval, maxval, 20, endpoint=True))
+        if fieldname == 'tracer' or fieldname == 'density':
+            extend = 'both'
+            contourlevels = list(np.arange(-0.15, 1.16, 0.1)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
+        else: 
+            contourlevels = list(np.linspace(minval, maxval, 20, endpoint=True))
+        #contourlevels = list(np.linspace(minval, maxval, 20, endpoint=True)) #list(np.arange(-0.15, 1.15, 0.1)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
         #contourlevels = [minval, (minval + 0.15*diff), (minval + 0.25*diff), (minval + 0.35*diff), (minval + 0.45*diff), (minval + 0.55*diff), (minval + 0.65*diff), (minval + 0.75*diff), (minval + 0.85*diff), maxval]
-    plt.contourf(x, y, field, cmap=cmap, levels=contourlevels)
+    plt.contourf(x, y, fielddata, cmap=palette.cmap, levels=contourlevels, extend=extend)
     plt.colorbar()
     if add_initial:
         if diff == 0.:
