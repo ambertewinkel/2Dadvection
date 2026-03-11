@@ -6,13 +6,13 @@ xmin: -500. # m
 xmax: 500. # m
 ymin: -500. # m
 ymax: 500. # m
-grid_x: cosine4_topleft #cosine4_topleft
-grid_y: cosine4_topleft # linear #cosine4_topleft
+grid_x: lowerleft #cosine4_topleft #cosine4_topleft
+grid_y: lowerleft #cosine4_topleft # linear #cosine4_topleft
 BC_x: periodic
 BC_y: periodic
 
-dt: 0.2 #1. #2. #0.2 #2. #0.2 #2. #0.2 #2. #0.2 #2. #0.2 #0.25 #1. #0.2 #0.02 #6. # s
-nt: 500 #500 #400 #100 #000 #25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
+dt: 0.02 #1. #2. #0.2 #2. #0.2 #2. #0.2 #2. #0.2 #2. #0.2 #0.25 #1. #0.2 #0.02 #6. # s
+nt: 5000 #500 #400 #100 #000 #25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
 starttime: 0.
 
 velocity_setting: swift_nondiv_streamfunction #strong_convergence #swift_div_on_steroids #_streamfunction #swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation

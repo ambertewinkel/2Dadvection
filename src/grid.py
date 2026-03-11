@@ -191,3 +191,41 @@ def set_grid_y_linear(config,fields):
         fields.yf[i+1] = fields.yf[i] + fields.dyc[i]
 
     fields.yc = fields.yf + 0.5*fields.dyc
+
+
+def set_grid_x_lowerleft(config, fields):
+    """Create grid with higher resolution in the lower left corner by reducing a handful of grid spacings there."""
+
+    fields.dxc = np.ones(config.nx)
+    smll = int(0.15*config.nx)
+    fields.dxc[smll-4:(smll+6)%config.nx] = 0.5*fields.dxc[smll-4:(smll+6)%config.nx]
+    fields.dxc[smll-3:(smll+5)%config.nx] = 0.5*fields.dxc[smll-3:(smll+5)%config.nx]
+    fields.dxc[smll-2:(smll+4)%config.nx] = 0.5*fields.dxc[smll-2:(smll+4)%config.nx]
+    fields.dxc[smll-1:(smll+3)%config.nx] = 0.5*fields.dxc[smll-1:(smll+3)%config.nx]
+
+    Lx = config.xmax - config.xmin
+    fields.dxc = fields.dxc / np.sum(fields.dxc) * Lx
+    fields.xf[0] = config.xmin
+    for i in range(config.nx-1):
+        fields.xf[i+1] = fields.xf[i] + fields.dxc[i]
+
+    fields.xc = fields.xf + 0.5*fields.dxc
+
+
+def set_grid_y_lowerleft(config, fields):
+    """Create grid with higher resolution in the lower left corner by reducing a handful of grid spacings there."""
+
+    fields.dyc = np.ones(config.ny)
+    smll = int(0.32*config.ny)
+    fields.dyc[smll-4:(smll+6)%config.ny] = 0.5*fields.dyc[smll-4:(smll+6)%config.ny]
+    fields.dyc[smll-3:(smll+5)%config.ny] = 0.5*fields.dyc[smll-3:(smll+5)%config.ny]
+    fields.dyc[smll-2:(smll+4)%config.ny] = 0.5*fields.dyc[smll-2:(smll+4)%config.ny]
+    fields.dyc[smll-1:(smll+3)%config.ny] = 0.5*fields.dyc[smll-1:(smll+3)%config.ny]
+
+    Ly = config.ymax - config.ymin
+    fields.dyc = fields.dyc / np.sum(fields.dyc) * Ly
+    fields.yf[0] = config.ymin
+    for i in range(config.ny-1):
+        fields.yf[i+1] = fields.yf[i] + fields.dyc[i]
+
+    fields.yc = fields.yf + 0.5*fields.dyc
