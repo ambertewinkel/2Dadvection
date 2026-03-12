@@ -5,8 +5,8 @@ from src.fields import FieldContainer
 from src.grid import grid_coordinates
 from src.time_stepping import time_stepping
 from testcases.initial.tracer import initial_tracer
-from src.output import store_output_npy, set_up_logging, set_up_output_directory, store_config
-
+from src.output import store_output_npy, set_up_logging, set_up_output_directory, store_config, getminmax
+from logging import info
 
 def run(config, configfile, configname):
     """This function is called by run_model() and
@@ -33,3 +33,5 @@ def run(config, configfile, configname):
 
     # Store result in npy files
     store_output_npy(config, fields)
+
+    info('Min and max tracer at final time step: ' + str(getminmax(fields.tracer, -1)))
