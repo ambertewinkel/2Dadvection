@@ -7,12 +7,13 @@ xmax: 90. #1.e7 #90. # deg #500. # m
 ymin: 0. #-500. # m
 ymax: 1.2e4 #500. # m
 grid_x: uniform #cosine4_topleft
-grid_y: cosine #cosine # linear #cosine4_topleft
-BC_x: periodic
-BC_y: periodic
+grid_y: uniform #cosine #cosine # linear #cosine4_topleft
+BC_x: periodic #periodic or noflux # setup: keep both BC_x and BC_y at periodic or both at noflux
+BC_y: periodic #periodic or noflux
+#metric: sphericalvertslice # sphericalvertslice or uniform
 
 dt: 450. #120. #1728. #864. #4320. #0.02 #6. # s
-nt: 192 #720  #50 #100 #5 #25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
+nt: 19 #192 #720  #50 #100 #5 #25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
 starttime: 0.
 
 velocity_setting: hadley #doswell #double_rotation_rising_bubble_capped #constant_v #swift_nondiv_streamfunction #strong_convergence #swift_div_on_steroids #_streamfunction #swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation
@@ -34,4 +35,4 @@ nondivergent: True #!!! needs adjusting in velocity code
 filename: chenetal2017
 verbose: True
 animate: True
-outputdir: hadley_adhimex3_ycos_nt192 #adhimex_risingbubble_linear #test # nt1_checking_sine_monton_strongconvergence_imupwind_gcrk #adhimexadv_constIC_swiftnondiv_gmresm_unityconnectedtotolerance #test #adhimexadv_constIC_swiftnondiv_gcrk #adhimex12_0p5_uniform_field_swiftnondiv #sineswift_swiftnondivdouble_similar_to_presentationNOV2025 #test #swift_weakjet #test #ujet_reversal_umax3
+outputdir: test # hadley_adhimex3_ycos_nt192 #adhimex_risingbubble_linear #test # nt1_checking_sine_monton_strongconvergence_imupwind_gcrk #adhimexadv_constIC_swiftnondiv_gmresm_unityconnectedtotolerance #test #adhimexadv_constIC_swiftnondiv_gcrk #adhimex12_0p5_uniform_field_swiftnondiv #sineswift_swiftnondivdouble_similar_to_presentationNOV2025 #test #swift_weakjet #test #ujet_reversal_umax3

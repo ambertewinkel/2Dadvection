@@ -383,7 +383,9 @@ def hadley_plane(config, fields, it):
     #print(min(fields.xffb[:,0]/a), max(fields.xffb[:,0]/a))
 
     #fields.psi[it] = - w0/K*np.sin(K*np.radians(fields.xffb))*np.sin(np.pi*fields.yffb/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)
-    fields.psi[it] = - a*w0/K*np.sin(K*fields.xffb/a)*np.sin(np.pi*fields.yffb/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)
+    #fields.psi[it] = - a*w0/K*np.sin(K*fields.xffb/a)*np.sin(np.pi*fields.yffb/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)
+    fields.psi[it] = a*w0/K*np.sin(K*fields.xffb/a)*np.sin(np.pi*fields.yffb/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)
+    #fields.psi[it] = - a*w0/K*np.sin(K*fields.xffb*0.4*np.pi/a)*np.sin(np.pi*fields.yffb/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)
 
     velocities_from_streamfunction(config, fields, it) # assuming rho=rho0=1 for all of space
 
