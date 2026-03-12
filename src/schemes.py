@@ -205,10 +205,10 @@ def adhimex_ncp(config, fields, it, **kwargs):
         flxcf_HO += AEx[-1,ik]*(1 - fields.thetacf[it])*flxkcf + AIm[-1,ik]*fields.thetacf[it]*flxkcf # at [i,j-1/2]
 
     # Implement FCT if required
-    if config.FCT:
-        fields.tracer[it+1] = lim.FCT(config, fields, it, flxfc_HO, flxcf_HO)     
-    elif config.FCT_reduced:
-        fields.tracer[it+1] = lim.FCT_reduced(config, fields, it, flxfc_HO, flxcf_HO)
+    if config.FCT_2pass:
+        fields.tracer[it+1] = lim.FCT_2pass(config, fields, it, flxfc_HO, flxcf_HO)     
+    elif config.FCT:
+        fields.tracer[it+1] = lim.FCT(config, fields, it, flxfc_HO, flxcf_HO)
     else:     
         fields.tracer[it+1] = field_k.copy() 
 
@@ -256,10 +256,10 @@ def adhimex(config, fields, it, **kwargs):
         flxcf_HO += AEx[-1,ik]*(1 - fields.thetacf[it])*flxkcf + AIm[-1,ik]*fields.thetacf[it]*flxkcf # at [i,j-1/2]
 
     # Implement FCT if required
-    if config.FCT:
-        fields.tracer[it+1] = lim.FCT(config, fields, it, flxfc_HO, flxcf_HO)     
-    elif config.FCT_reduced:
-        fields.tracer[it+1] = lim.FCT_reduced(config, fields, it, flxfc_HO, flxcf_HO)
+    if config.FCT_2pass:
+        fields.tracer[it+1] = lim.FCT_2pass(config, fields, it, flxfc_HO, flxcf_HO)     
+    elif config.FCT:
+        fields.tracer[it+1] = lim.FCT(config, fields, it, flxfc_HO, flxcf_HO)
     else:     
         fields.tracer[it+1] = field_k.copy() 
 

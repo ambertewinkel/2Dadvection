@@ -31,8 +31,8 @@ class Config():
 
     initial_tracer: str
     thirdordermatrix: bool = False
+    FCT_2pass: bool = False
     FCT: bool = False
-    FCT_reduced: bool = False
     tracermin: float = None
     tracermax: float = None
 
