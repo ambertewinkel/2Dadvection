@@ -136,7 +136,7 @@ def FCT2D(config, fields, flxfc, flxfc_bounded, flxcf, flxcf_bounded, fieldmin, 
     return flx_corr_fc, flx_corr_cf
 
 
-def FCT(config, fields, it, flxfc_HO, flxcf_HO, **kwargs):
+def FCT_2pass(config, fields, it, flxfc_HO, flxcf_HO, **kwargs):
     # 2D FCT, should call the FCT1D function in x and y directions, and then call again combined to ensure monotonicity in both directions. Would need to consider how to set the extrema in 2D (probably based on the 8 surrounding cells and optionally previous time step).
 
     # Calculate 2D first-order solution if not using both global bounds
@@ -160,7 +160,7 @@ def FCT(config, fields, it, flxfc_HO, flxcf_HO, **kwargs):
     return fields.tracer[it] + config.dt*(sch.fluxdiv(fields, flx_corr_fc, flx_corr_cf, 1., 1.)) # at [i,j]
 
 
-def FCT_reduced(config, fields, it, flxfc_HO, flxcf_HO, **kwargs): # only does one pass
+def FCT(config, fields, it, flxfc_HO, flxcf_HO, **kwargs): # only does one pass
     """This function implements a reduced version of flux-corrected transport (FCT) that only does one pass (see Zalesak 1979 p.347-349). Returns the limited field at the new time step. Assumes constant dxc and uf>0.
     """
 
