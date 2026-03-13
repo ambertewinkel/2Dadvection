@@ -15,16 +15,16 @@ dt: 0.2 # s
 nt: 500
 starttime: 0.
 
-velocity_setting: swift_nondiv_streamfunction
+velocity_setting: swift_div
 
 initial_tracer: slotted_cylinders
 
 T: 100. # s
 u0: 10. # m/s
 
-#FCT: True
-nondivergent: True
+FCT: True
+nondivergent: False
 
 solver: gmresm
 
-outputdir: swiftnondiv_slotcyl_adhimex_ll_nt500
+outputdir: swiftdiv_slotcyl_adhimex_ll_nt500_FCT
