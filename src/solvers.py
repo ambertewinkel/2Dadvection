@@ -99,7 +99,7 @@ def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6):
         #residual_minimised = np.linalg.norm(e1 - h @ y)
      
         if residual < reltol: #tolerance: #residual_minimised < tolerance: 
-            print(f"Converged after restart {irestart} with residual {residual} (relative tolerance {reltol}).")
+            #print(f"Converged after restart {irestart} with residual {residual} (relative tolerance {reltol}).")
             break
         else:
             if residual > oldresidual: # if residual increased after restart, print a warning (this can happen with GMRES(m) if m is too small or the problem is hard)

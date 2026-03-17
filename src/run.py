@@ -7,6 +7,8 @@ from src.time_stepping import time_stepping
 from testcases.initial.tracer import initial_tracer
 from src.output import store_output_npy, set_up_logging, set_up_output_directory, store_config, getminmax
 from logging import info
+from error import l2norm
+import numpy as np
 
 def run(config, configfile, configname):
     """This function is called by run_model() and
@@ -32,6 +34,15 @@ def run(config, configfile, configname):
     time_stepping(config, fields)
 
     # Store result in npy files
-    store_output_npy(config, fields)
+    if config.timing == False: store_output_npy(config, fields)
+
+    if config.print_error: 
+        l2_error = l2norm(fields.tracer[-1], fields.tracer[0], fields.dxcc*fields.dycc)
+        info(f'l2norm = {l2_error}')
+        print(f'l2norm = {l2_error}')
 
     info('Min and max tracer at final time step: ' + str(getminmax(fields.tracer, -1)))
+    print('Min and max tracer at final time step: ' + str(getminmax(fields.tracer, -1)))
+
+    info(f'Minimum and maximum C over all times: {np.min(fields.Ccc)}, {np.max(fields.Ccc)}')    
+    print(f'Minimum and maximum C over all times: {np.min(fields.Ccc)}, {np.max(fields.Ccc)}')
