@@ -1,0 +1,31 @@
+scheme: adhimex
+
+nx: 136
+ny: 136
+xmin: -500. # m
+xmax: 500. # m
+ymin: -500. # m
+ymax: 500. # m
+grid_x: lowerleft
+grid_y: lowerleft
+BC_x: periodic
+BC_y: periodic
+
+dt: 0.08 # s
+nt: 1250
+starttime: 0.
+
+velocity_setting: swift_nondiv_streamfunction
+
+initial_tracer: sine_swift
+T: 100. # s
+u0: 10. # m/s
+
+#FCT: True
+nondivergent: True
+
+solver: gmresm 
+
+timing: True
+print_error: True
+outputdir: timingerror_swiftnondiv_sine_adhimex_ll_nt1250dt0_08
