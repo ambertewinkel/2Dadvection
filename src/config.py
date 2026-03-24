@@ -17,11 +17,11 @@ class Config():
     ymin: float
     ymax: float
 
-    grid_x: str # e.g., 'uniform' or 'cosine'
-    grid_y: str # e.g., 'uniform' or 'cosine'
+    grid_x: str # e.g., 'uniform' or 'cosine' or 'lowerleft' (and other options)
+    grid_y: str # e.g., 'uniform' or 'cosine' or 'lowerleft' (and other options)
 
-    BC_x: str # e.g., 'periodic'
-    BC_y: str # e.g., 'periodic'
+    BC_x: str # e.g., 'periodic' or 'noflux'
+    BC_y: str # e.g., 'periodic' or 'noflux'
 
     velocity_setting: str
 

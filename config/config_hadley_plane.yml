@@ -8,15 +8,15 @@ ymin: 0. #-500. # m
 ymax: 1.2e4 #500. # m
 grid_x: uniform #cosine4_topleft
 grid_y: uniform #cosine #cosine # linear #cosine4_topleft
-BC_x: periodic #periodic or noflux # setup: keep both BC_x and BC_y at periodic or both at noflux
-BC_y: periodic #periodic or noflux
+BC_x: noflux #periodic #periodic or noflux # setup: keep both BC_x and BC_y at periodic or both at noflux
+BC_y: noflux #periodic #periodic or noflux
 #metric: uniform # sphericalvertslice or uniform
 
-dt: 450. #120. #1728. #864. #4320. #0.02 #6. # s
-nt: 5 #19 # 192 #96 #192 #192 #192 #720  #50 #100 #5 #25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
+dt: 1728. #450. #120. #1728. #864. #4320. #0.02 #6. # s
+nt: 50 #192 #5 #19 # 192 #96 #192 #192 #192 #720  #50 #100 #5 #25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
 starttime: 0.
 
-velocity_setting: hadley_plane #doswell #double_rotation_rising_bubble_capped #constant_v #swift_nondiv_streamfunction #strong_convergence #swift_div_on_steroids #_streamfunction #swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation
+velocity_setting: hadley_plane #_plane #doswell #double_rotation_rising_bubble_capped #constant_v #swift_nondiv_streamfunction #strong_convergence #swift_div_on_steroids #_streamfunction #swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation
 constant_v: 20. 
 
 initial_tracer: hadley #doswell #surface_cosine_bell #sine_swift #constant #sine_swift #constant #sine_swift #sine_swift #sine_swift #cosine_bell #gaussian_chenetal2017
