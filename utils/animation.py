@@ -12,7 +12,7 @@ def create_animation(config, plots_dir, anim_dir, fieldname):
         for it in range(config.nt+1):
             images.append(imageio.imread(f'{plots_dir}{fieldname}_nt{it}.png'))
         anim_filename = f'{anim_dir}{fieldname}.gif'
-        imageio.mimsave(anim_filename, images, duration=60)
+        imageio.mimsave(anim_filename, images, duration=200) #60)
 
         # Remove .png files used to create the animation
         for it in range(config.nt+1):        
@@ -22,7 +22,7 @@ def create_animation(config, plots_dir, anim_dir, fieldname):
         for it in range(1, config.nt+1):
             images.append(imageio.imread(f'{plots_dir}{fieldname}_nt{it}.png'))
         anim_filename = f'{anim_dir}{fieldname}.gif'
-        imageio.mimsave(anim_filename, images, duration=60)
+        imageio.mimsave(anim_filename, images, duration=200) #60)
 
         # Remove .png files used to create the animation
         for it in range(1,config.nt+1):        
