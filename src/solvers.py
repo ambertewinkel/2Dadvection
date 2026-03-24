@@ -51,7 +51,8 @@ def gcrk(A, b, x, kiter=10, jiter=5, tolerance=1e-6):
 def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6):
     """
     Matrixfree solution of linear Ax=b system using GMRES(m) method. (matrixfree through a function that computes Ax with def A(x))).
-    However, GMRES(m) does need a small matrix H to be stored and solved (done here through np.linalg.solve). Apart from that, it currently stores a V matrix, arrays of size (m+1,N) where N is the size of the problem. This could be improved to reduce memory usage (memory usage is already improved with the restarting).
+    Semi-optimised version (i.e., implemented QR factorisation/least squares minimisation in Saad and Schultz 1986 p.860-862, but not the last step part).
+    However, GMRES(m) does need a small matrix H (R_k here) to be stored and solved. Apart from that, it currently stores a V matrix, arrays of size (m+1,N) where N is the size of the problem. This could be improved to reduce memory usage (memory usage is already improved with the restarting).
     --- IN --- 
     A: function to implement the A matrix
     b: N vector, rhs of equation
@@ -68,13 +69,11 @@ def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6):
     if norm_oldres < reltol:
         print(f"Initial guess is already good enough with residual {norm_oldres} (relative tolerance {reltol}).")
         return x
-    
-    #print(norm_oldres, np.linalg.norm(b), reltol)
 
     converged = False
     for irestart in range(kiter):
         h = np.zeros((jiter+1, jiter), dtype=np.float64)
-        cols = h.shape[1] # important bug fix: change h.shape[1]-1 to h.shape[1] (analysed this in 1D code gmres_m/btbs_gmres_m.py in auxiliary_phd_code)
+        cols = h.shape[1]
         v = np.zeros((jiter+1, *np.shape(r0)), dtype=np.float64)
         v_hat = np.zeros(np.shape(r0), dtype=np.float64)
         v[0] = r0/norm_oldres
@@ -83,6 +82,7 @@ def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6):
         sin = np.zeros(jiter, dtype=np.float64)
         g = np.zeros(jiter+1, dtype=np.float64)
         g[0] = norm_oldres # residual norm at start of restart loop
+        jend = jiter
 
         for j in range(jiter):            
             Avj = A(v[j])
@@ -100,8 +100,6 @@ def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6):
             
             v[j+1] = v_hat/h[j+1,j]
 
-            #print('h before rotation', h)
-
             # Apply previous rotations
             for i in range(j):
                 temp = cos[i]*h[i, j] - sin[i]*h[i+1, j]
@@ -115,62 +113,40 @@ def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6):
             # Rotating Hbar (builds R in Q Hbar = R factorisation)
             h[j, j], h[j+1, j] = cos[j]*h[j, j] - sin[j]*h[j+1, j], sin[j]*h[j, j] + cos[j]*h[j+1, j]
 
-            #print('h after rotation', h)
-
             # Apply rotation to g (effectively applying Q to g)
             temp = cos[j] * g[j] - sin[j] * g[j+1]
             g[j+1] = sin[j] * g[j] + cos[j] * g[j+1]
             g[j] = temp
 
             # Residual norm
-            print(norm_oldres)
             residual = abs(g[j+1])
-            if residual < reltol: # !!! check if I need to use norm(r0) or norm(b) for the relative tolerance... It might just be a choice.
+            if residual < reltol: # and (j == jiter-1): # !!! check if I need to use norm(r0) or norm(b) for the relative tolerance... It might just be a choice.
                 print(f"Converged after restart {irestart, j} with residual {residual} (relative tolerance {reltol}).")
                 converged = True
-                cols = min(j, h.shape[1])
+                jend = j
                 break
             else:
                 if residual > norm_oldres: # if residual increased after restart, print a warning (this can happen with GMRES(m) if m is too small or the problem is hard)
-                    print(f"Residual increased after restart {irestart} (residual: {residual}, old: {norm_oldres}). This may indicate a problem with the solver or the choice of parameters.")
+                    raise ValueError(f"Residual increased after restart {irestart} (residual: {residual}, old: {norm_oldres}). This may indicate a problem with the solver or the choice of parameters.")
             norm_oldres = residual
-        #if irestart == 2: exit()
 
-                
-        #print(irestart, np.shape(h), np.shape(g), np.shape(v))
-        
-        #print(np.shape(h[:irestart+1, :irestart+1]), np.shape(g[:irestart+1]), np.shape(v[:irestart+1]))
-        #print(irestart)
-        #y = np.linalg.solve(h[:cols, :cols], g[:cols])
-        y = np.linalg.lstsq(h[:cols, :cols], g[:cols], rcond=None)[0]
+        #y = np.linalg.lstsq(h[:cols, :cols], g[:cols], rcond=None)[0] # ! replace this (24-03-2026: I think h refers to R_k in the GMRES paper)
+
+        # h (or R_k) is an upper triangular matrix. To find y, we need to minimise ||g-R_k y ||_2. I believe this means solving R_k y = g. --> We need to backsubstitute to find the y values, this should be easy because R_k is upper triangular.
+
+        y = np.zeros(jiter)
+        for ji in range(jend - 1, -1, -1):
+            y[ji] = (g[ji] - np.dot(h[ji, ji + 1:], y[ji + 1:]))/h[ji, ji]
 
         for i in range(len(y)):
             x += y[i] * v[i]
+
         if converged:
             break
-        #x += v[:irestart+1] @ y
 
-        ###e1 = np.zeros(jiter+1)
-        ###e1[0] = norm_oldres # np.linalg.norm(r0) # residual norm at start of restart loop
-        ###y = np.linalg.lstsq(h, e1, rcond=None)[0] # residual here is the norm of the previous residual
-###
-        ###for i in range(len(y)):
-        ###    x += y[i] * v[i]
-###
         r0 = b - A(x)
-        
-        #residual = np.linalg.norm(r0)
-        ####residual_minimised = np.linalg.norm(e1 - h @ y)
-     ###
-        #if residual < reltol: #tolerance: #residual_minimised < tolerance: 
-        #    print(f"Converged after restart {irestart} with residual {residual} (relative tolerance {reltol}).")
-        #    break
-        #else:
-        #    if residual > norm_oldres: # if residual increased after restart, print a warning (this can happen with GMRES(m) if m is too small or the problem is hard)
-        #        print(f"Residual increased after restart {irestart} (residual: {residual}, old: {norm_oldres}). This may indicate a problem with the solver or the choice of parameters.")
-        #norm_oldres = residual
 
     if residual >= reltol: 
-        print(f'GMRES(m) did not converge within the given iterations (ktotal,jtotal={kiter},{jiter}). Final residual: {residual}, relative tolerance: {reltol}')
+        print(f'GMRES(m) tryopt did not converge within the given iterations (ktotal,jtotal={kiter},{jiter}). Final residual: {residual}, relative tolerance: {reltol}')
 
     return x
