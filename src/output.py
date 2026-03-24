@@ -76,3 +76,8 @@ def store_output_npy(config, fields):
     for field in variables:
         data = getattr(fields, field)
         np.save(config.outputdir + f'data/{field}.npy', data)
+
+
+def getminmax(field, it):
+    """Returns the minimum and maximum values of `field` at time step `it` for logging purposes."""
+    return np.min(field[it]), np.max(field[it])

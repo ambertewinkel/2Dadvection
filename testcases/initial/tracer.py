@@ -158,6 +158,15 @@ def doswell_adapted(config, fields, it):
     #fields.tracer[it] = - np.tanh((fields.ycc - config.ymin)/(config.ymax - config.ymin)) # adapted from paper to keep positive
 
 
+def hadley_HW(config, fields, it):
+    # Kent et al 2014: eq 41
+    
+    z1, z2 = 2000./1.2e4, 5000./1.2e4 # m, lower and upper boundary of tracer layer
+    z0 = 0.5*(z1 + z2)
+    fields.tracer[it] = 0.5*(1. + np.cos(2.*np.pi*(fields.ycc-z0)/(z2 - z1)))
+    fields.tracer[it] = np.where((fields.ycc < z1) | (fields.ycc > z2), 0., fields.tracer[it])#, np.where((fields.ycc < z1) | (fields.ycc > z2))] = 0.
+
+
 def hadley(config, fields, it):
     # Kent et al 2014: eq 41
     
