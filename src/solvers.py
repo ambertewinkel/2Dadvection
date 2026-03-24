@@ -74,7 +74,7 @@ def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6):
     converged = False
     for irestart in range(kiter):
         h = np.zeros((jiter+1, jiter), dtype=np.float64)
-        cols = h.shape[1]-1
+        cols = h.shape[1] # important bug fix: change h.shape[1]-1 to h.shape[1] (analysed this in 1D code gmres_m/btbs_gmres_m.py in auxiliary_phd_code)
         v = np.zeros((jiter+1, *np.shape(r0)), dtype=np.float64)
         v_hat = np.zeros(np.shape(r0), dtype=np.float64)
         v[0] = r0/norm_oldres
