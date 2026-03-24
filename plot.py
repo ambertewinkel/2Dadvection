@@ -14,7 +14,6 @@ Run as python plot.py <field> <setting> <outputdir>
 <outputdir> is the name of a specific output directory to take the data from (as specified in /output/)
 
 Author: Amber te Winkel
-Email: a.j.tewinkel@pgr.reading.ac.uk
 """
 
 import numpy as np

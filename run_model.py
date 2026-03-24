@@ -2,7 +2,6 @@
 # This file is run from the terminal with the config name as an argument
 # e.g. python run_model.py <config_name>
 # Author: Amber te Winkel
-# Email: a.j.tewinkel@pgr.reading.ac.uk
 
 
 from sys import argv, exit
