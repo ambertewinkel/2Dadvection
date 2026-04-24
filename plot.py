@@ -107,7 +107,8 @@ def plot_fields(config, fieldnames, data, plots_dir, setting):
                 #    add_hatching, thetacc = False, None
                 l2_error = l2norm(data['tracer'][-1], data['tracer'][0], data['dxcc']*data['dycc'])
                 #plot_figure(data['xcc'], data['ycc'], data[field][-1], field, f'$\\Psi$ at $n_t$ = {config.nt} \n min = {minval:.3f}, max = {maxval:.3f}, l2 = {l2_error:.3f}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval)#, add_hatching, thetacc, True, data['tracer'][0])
-                plot_figure(data['xcc'], data['ycc'], data[field][-1], field, f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$, $l_2$ = {l2_error:.5f}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.pdf', minval, maxval)#, add_hatching, thetacc, True, data['tracer'][0])
+                #plot_figure(data['xcc'], data['ycc'], data[field][-1], field, f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$, $l_2$ = {l2_error:.5f}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.pdf', minval, maxval)#, add_hatching, thetacc, True, data['tracer'][0])
+                plot_figure(data['xcc'], data['ycc'], data[field][-1], field, f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.pdf', minval, maxval)#, add_hatching, thetacc, True, data['tracer'][0])
             elif field == 'Ccc' or field == 'thetacc' or field == 'dthetafc' or field == 'dthetacf':
                 plot_figure(data['xcc'], data['ycc'], data[field][-1], field, f'{field} at $n_t$ = {config.nt}, min = {minval:.4f}, max = {maxval:.4f}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval)
             elif field == 'u' or field == 'thetafc':
@@ -168,21 +169,29 @@ def plot_fields(config, fieldnames, data, plots_dir, setting):
 
 
 def plot_figure(x, y, fielddata, fieldname, title, xlabel, ylabel, cmap, filename, minval, maxval, add_hatching=False, thetacc=None, add_initial=False, initialtracer=None):
-    plt.figure()
-    palette = pc.read('wh-bl-gr-ye-re.cpt') # read in a color palette
+    plt.figure(figsize=(10, 5))
+    #palette = pc.read('wh-bl-gr-ye-re.cpt') # read in a color palette
+    cmap = 'bwr'
     diff = maxval - minval
+    print(minval, maxval)
     extend = 'neither'
     if diff == 0.:
         contourlevels = None
     else:
         if fieldname == 'tracer' or fieldname == 'density':
             extend = 'both'
-            contourlevels = list(np.arange(-0.15, 1.16, 0.1)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
+            absextent = max(abs(minval-5.0E-1), abs(maxval-5.0E-1))
+            #contourlevels = list(np.linspace(-absextent, absextent, 20, endpoint=True))
+            contourlevels = list(np.linspace(-1.0E-9, 1.0E-9, 20, endpoint=True))
+            ##contourlevels = list(np.linspace(-maxval-0.5+1., maxval-0.5, 10)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
+            #contourlevels = list(np.arange(-0.15, 1.16, 0.1)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
+            #contourlevels = list(np.linspace(-maxval+1., maxval, 10)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
         else: 
             contourlevels = list(np.linspace(minval, maxval, 20, endpoint=True))
         #contourlevels = list(np.linspace(minval, maxval, 20, endpoint=True)) #list(np.arange(-0.15, 1.15, 0.1)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
         #contourlevels = [minval, (minval + 0.15*diff), (minval + 0.25*diff), (minval + 0.35*diff), (minval + 0.45*diff), (minval + 0.55*diff), (minval + 0.65*diff), (minval + 0.75*diff), (minval + 0.85*diff), maxval]
-    plt.contourf(x, y, fielddata, cmap=palette.cmap, levels=contourlevels, extend=extend)
+    #plt.contourf(x, y, fielddata, cmap=palette.cmap, levels=contourlevels, extend=extend)
+    plt.contourf(x, y, fielddata-5.0E-1, cmap=cmap, levels=contourlevels, extend=extend)
     cbar = plt.colorbar()
     cbar.ax.tick_params(labelsize=12)  # change colorbar tick label size
     if add_initial:
@@ -200,6 +209,7 @@ def plot_figure(x, y, fielddata, fieldname, title, xlabel, ylabel, cmap, filenam
     plt.xlabel(xlabel, size=15)
     plt.ylabel(ylabel, size=15)
     plt.tick_params(labelsize=12)
+    plt.gca().set_aspect('equal', adjustable='box')  # Ensures equal aspect ratio
     plt.tight_layout()
     plt.savefig(filename, dpi=150)
     plt.close()   

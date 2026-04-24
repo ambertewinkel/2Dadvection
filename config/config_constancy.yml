@@ -6,19 +6,19 @@ xmin: -500. # m
 xmax: 500. # m
 ymin: -500. # m
 ymax: 500. # m
-grid_x: uniform #cosine4_topleft
-grid_y: uniform # linear #cosine4_topleft
+grid_x: lowerleft #cosine4_topleft
+grid_y: lowerleft # linear #cosine4_topleft
 BC_x: periodic
 BC_y: periodic
 
-dt: 1. #2. #0.2 #2. #0.2 #2. #0.2 #0.25 #1. #0.2 #0.02 #6. # s
-nt: 10 #50 #400 #100 #000 #25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
+dt: 0.2 #1. #2. #0.2 #2. #0.2 #2. #0.2 #0.25 #1. #0.2 #0.02 #6. # s
+nt: 500 #50 #400 #100 #000 #25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
 starttime: 0.
 
 velocity_setting: swift_nondiv_streamfunction #strong_convergence #swift_div_on_steroids #_streamfunction #swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation
-constant_v: 20. 
+#constant_v: 20. 
 
-initial_tracer: slotted_cylinders #sine_swift #constant #sine_swift #constant #sine_swift #sine_swift #sine_swift #cosine_bell #gaussian_chenetal2017
+initial_tracer: constant
 constant_tracer: 0.5
 
 #ujet_max: 1. #1.
@@ -32,9 +32,9 @@ nondivergent: True
 #tracermin: 0.
 #tracermax: 1.
 
-solver: gcrk #gmresm
+solver: gmresm #gcrk #gmresm
 
 filename: chenetal2017
 verbose: True
 animate: True
-outputdir: test # slotted_cylinders_swift_adhimex_FCTred_nt50 #_global01
+outputdir: swiftnondiv_constant_adhimex #test # slotted_cylinders_swift_adhimex_FCTred_nt50 #_global01
