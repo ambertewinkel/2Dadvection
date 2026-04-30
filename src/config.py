@@ -36,6 +36,9 @@ class Config():
     tracermin: float = None
     tracermax: float = None
 
+    spherical: bool = False # If True: spherical slice (axisymmetric spherical flow). If False: Cartesian domain.
+    nlon: int = None
+
     timing: bool = False
     print_error: bool = False
     verbose: bool = False

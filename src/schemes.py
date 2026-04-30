@@ -16,7 +16,7 @@ def fluxdiv_first(config, fields, it, phi, factor_fc, factor_cf):
     flxx = factor_fc*(np.maximum(0., fields.u[it]) * phi_BS_fc + np.minimum(0., fields.u[it]) * phi_FS_fc) # at [i-1/2,j]
     flxy = factor_cf*(np.maximum(0., fields.v[it]) * phi_BS_cf + np.minimum(0., fields.v[it]) * phi_FS_cf) # at [i,j-1/2]
 
-    return (flxx - np.roll(flxx,-1,0))/fields.dxcc + (flxy - np.roll(flxy,-1,1))/fields.dycc # at [i,j]
+    return (flxx - np.roll(flxx,-1,0))/fields.dxcc + (flxy - np.roll(flxy,-1,1))/fields.dycc # at [i,j] !!! here
 
 
 def upwind(config, fields, it, **kwargs):
@@ -45,8 +45,8 @@ def implicitness_adimex_upwind(config, fields, it, **kwargs):
     #fields.Ccc[it] = 0.5*(Cincc + Coutcc) # at [i,j] (always nonnegative) 
     
     # assumes dy is constant in the x direction (should be defined at each face to multiply with the velocity to get the flux, but this is the same value as dycc at the cell center, so using that for simplicity) -- the same thing applies for dx in the y direction.
-    sum_abs_velarea = (abs(fields.u[it]) + abs(np.roll(fields.u[it],-1,0)))*fields.dycc + (abs(fields.v[it]) + abs(np.roll(fields.v[it],-1,1)))*fields.dxcc # at [i,j]
-    fields.Ccc[it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
+    sum_abs_velarea = (abs(fields.u[it]) + abs(np.roll(fields.u[it],-1,0)))*fields.dycc + (abs(fields.v[it]) + abs(np.roll(fields.v[it],-1,1)))*fields.dxcc # at [i,j] !!! here ?
+    fields.Ccc[it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition !!! here ?
 
     # Calculate implicitness at cell centers and faces
     fields.thetacc[it] = np.maximum(0., 1. - config.factordiv/fields.Ccc[it]) # at [i,j] # for nondivergent winds: factordiv = 1.; for divergent winds: factordiv = 0.5; preserves positivity in all cases for c_in and c_out
@@ -87,8 +87,8 @@ def implicitness_adhimex(config, fields, it, **kwargs):
 
     # assumes dy is constant in the x direction (should be defined at each face to multiply with the velocity to get the flux, but this is the same value as dycc at the cell center, so using that for simplicity) -- the same thing applies for dx in the y direction.
     # sum_abs_velarea like this is still fine in the nonperiodic BCs as the u and v at the boundaries are assumed zero (e.g. for Hadley circulation)
-    sum_abs_velarea = (abs(fields.u[it]) + abs(np.roll(fields.u[it],-1,0)))*fields.dycc + (abs(fields.v[it]) + abs(np.roll(fields.v[it],-1,1)))*fields.dxcc # at [i,j]
-    fields.Ccc[it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
+    sum_abs_velarea = (abs(fields.u[it]) + abs(np.roll(fields.u[it],-1,0)))*fields.dycc + (abs(fields.v[it]) + abs(np.roll(fields.v[it],-1,1)))*fields.dxcc # at [i,j] !!! here
+    fields.Ccc[it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition !!! here
     
     # print(np.max(fields.Ccc[it]))
 
@@ -172,7 +172,7 @@ def fluxdiv_fifth(config, fields, it,  phi, factor_fc, factor_cf): # old code fo
     flxx = factor_fc*(np.maximum(0., fields.u[it]) * phi_BS_fc + np.minimum(0., fields.u[it]) * phi_FS_fc) # at [i-1/2,j]
     flxy = factor_cf*(np.maximum(0., fields.v[it]) * phi_BS_cf + np.minimum(0., fields.v[it]) * phi_FS_cf) # at [i,j-1/2]
 
-    return (flxx - np.roll(flxx,-1,0))/fields.dxcc + (flxy - np.roll(flxy,-1,1))/fields.dycc # at [i,j] # would need adapting for arbitrary grid (and dx varying in y and dy varying in x)
+    return (flxx - np.roll(flxx,-1,0))/fields.dxcc + (flxy - np.roll(flxy,-1,1))/fields.dycc # at [i,j] # would need adapting for arbitrary grid (and dx varying in y and dy varying in x) !!! here ?
 
 
 def fluxdiv(fields, flxfc, flxcf, factorfc, factorcf):
@@ -181,7 +181,7 @@ def fluxdiv(fields, flxfc, flxcf, factorfc, factorcf):
     flxfactorfc = factorfc*flxfc # at [i-1/2,j]
     flxfactorcf = factorcf*flxcf # at [i,j-1/2]
 
-    return (flxfactorfc - np.roll(flxfactorfc,-1,0))/fields.dxcc + (flxfactorcf - np.roll(flxfactorcf,-1,1))/fields.dycc # at [i,j] # would need adapting for arbitrary grid (and dx varying in y and dy varying in x)
+    return (flxfactorfc - np.roll(flxfactorfc,-1,0))/fields.dxcc + (flxfactorcf - np.roll(flxfactorcf,-1,1))/fields.dycc # at [i,j] # would need adapting for arbitrary grid (and dx varying in y and dy varying in x) !!! here ?
 
 
 def adhimex_matrix_func(phi, config, fields, it, thetafc, thetacf, alpha):

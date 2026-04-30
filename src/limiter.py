@@ -73,10 +73,10 @@ def FCT1D(config, fields, flx_HO, flx_bounded, fieldmin, fieldmax, field_bounded
     nondivergent : whether the winds are nondivergent (True/False)
     """
     # Calculate high-order correction
-    corr = (flx_HO - flx_bounded)*d_axis # at [i-1/2,j] if axis=0, at [i,j-1/2] if axis=1
+    corr = (flx_HO - flx_bounded)*d_axis # at [i-1/2,j] if axis=0, at [i,j-1/2] if axis=1 !!! here
 
     # Calculate allowable mass I/O for max rise and fall
-    Qp = fields.dxcc*fields.dycc*(fieldmax - field_bounded) # at [i,j]
+    Qp = fields.dxcc*fields.dycc*(fieldmax - field_bounded) # at [i,j] !!! here
     Qm = fields.dxcc*fields.dycc*(field_bounded - fieldmin) # at [i,j]
 
     # Calculate I/O fluxes at cell centers
@@ -90,7 +90,7 @@ def FCT1D(config, fields, flx_HO, flx_bounded, fieldmin, fieldmax, field_bounded
     # Calculate the limiter for each face
     face_limiter = np.where(corr >= 0., np.minimum(Rp, np.roll(Rm,1,axis)), np.minimum(np.roll(Rp,1,axis), Rm)) # at [i-1/2,j] if axis=0, at [i,j-1/2] if axis=1
 
-    # Update the bounded flux and field
+    # Update the bounded flux and field !!! here
     flx_corr = flx_bounded + face_limiter*corr/d_axis
 
     return flx_corr
@@ -109,11 +109,11 @@ def FCT2D(config, fields, flxfc, flxfc_bounded, flxcf, flxcf_bounded, fieldmin, 
     ymin, ymax : allowable min and max values for the field. If None, local extrema are used.
     nondivergent : whether the winds are nondivergent (True/False)
     """
-    # Calculate high-order correction
+    # Calculate high-order correction !!! here
     corrfc = (flxfc - flxfc_bounded)*fields.dycc # at [i-1/2,j]
     corrcf = (flxcf - flxcf_bounded)*fields.dxcc # at [i,j-1/2]
 
-    # Calculate allowable mass I/O for max rise and fall
+    # Calculate allowable mass I/O for max rise and fall !!! here
     Qp = fields.dxcc*fields.dycc*(fieldmax - field_bounded) # at [i,j]
     Qm = fields.dxcc*fields.dycc*(field_bounded - fieldmin) # at [i,j]
 
@@ -130,7 +130,7 @@ def FCT2D(config, fields, flxfc, flxfc_bounded, flxcf, flxcf_bounded, fieldmin, 
     face_limiter_cf = np.where(corrcf >= 0., np.minimum(Rp, np.roll(Rm,1,1)), np.minimum(np.roll(Rp,1,1), Rm)) # at [i,j-1/2]
 
     # Update the bounded flux and field
-    flx_corr_fc = flxfc_bounded + face_limiter_fc*corrfc/fields.dycc # at [i-1/2,j]
+    flx_corr_fc = flxfc_bounded + face_limiter_fc*corrfc/fields.dycc # at [i-1/2,j] !!! here
     flx_corr_cf = flxcf_bounded + face_limiter_cf*corrcf/fields.dxcc # at [i,j-1/2]
 
     return flx_corr_fc, flx_corr_cf

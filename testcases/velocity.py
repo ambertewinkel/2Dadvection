@@ -298,6 +298,18 @@ def velocities_from_streamfunction(config, fields, it):
     fields.v[it] = (fields.psi[it][1:,:-1] - fields.psi[it][:-1,:-1])/fields.dxcc
 
 
+def velocities_from_streamfunction_spherical(config, fields, it):
+    """Deriving the u and v velocity components from the streamfunction psi.
+    psi[i,j] is defined at i-1/2, j-1/2 -> bottom left cell corner
+    
+    Assuming sphere of radius a (Earth's radius) + shallow-water approximation (z negligible compared to a)."""
+
+    a = 6.37122e6 # m Earth radius
+
+    fields.u[it] = - (fields.psi[it][:-1,1:] - fields.psi[it][:-1,:-1])/(fields.dycc*a*np.cos(0.5*np.pi*fields.xfc))
+    fields.v[it] = (fields.psi[it][1:,:-1] - fields.psi[it][:-1,:-1])/(fields.dxcc*a*a*np.cos(0.5*np.pi*fields.xcf))
+
+
 def double_rotation(config, fields, it):
     Lx = config.xmax - config.xmin # domain size in x direction (assumed square domain)
     Ly = config.ymax - config.ymin
@@ -416,6 +428,32 @@ def hadley_HW(config, fields, it):
     fields.psi[it] = 2.*w0*tau/(K*np.pi*ztop)*np.cos(np.pi*fields.xffb*0.5)*np.sin(K*np.pi*fields.xffb*0.5)*np.sin(np.pi*fields.yffb)*np.cos(np.pi*(it + 0.5)*config.dt)
 
     velocities_from_streamfunction(config, fields, it) # assuming rho=rho0=1 for all of space
+
+
+def hadley_HW_spherical(config, fields, it):
+    """See HW email 15-03-2026 - nondimensional - 26-04-2026 attempt to make spherical
+    Assuming sphere of radius a (Earth's radius) + shallow-water approximation (z negligible compared to a)."""
+
+    a = 6.37122e6 # m Earth radius
+    w0 = 0.15 # ms-1 reference vertical velocity
+    K = 5 # number of overturning cells
+    ztop = 1.2e4 # m height position of model top 
+    #p0 = 1.e5 # Pa reference pressure
+    #Rd = 287. # J kg-1 K-1 gas constant for dry air
+    #T0 = 300. # K isothermal atmospheric temperature
+    #rho0 = p0/(Rd*T0) # kg m-3 reference density
+    tau = 86400. # s period of motion (1 day)
+    #g = 9.80616 # ms-2 gravity
+    #H = Rd*T0/g # m scale height
+    #rhofc = rho0*np.exp(-fields.yfc/H)
+    #rhocf = rho0*np.exp(-fields.ycf/H)
+
+    #fields.u[it] = -a*w0*np.pi*rho0/(K*ztop*rhofc)*np.cos(np.radians(fields.xfc))*np.sin(K*np.radians(fields.xfc))*np.cos(np.pi*fields.yfc/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)/(360.*a)
+    #fields.v[it] = w0*rho0/(K*rhocf)*(-2.*np.sin(K*np.radians(fields.xcf))*np.sin(np.radians(fields.xcf)) + K*np.cos(np.radians(fields.xcf))*np.cos(K*np.radians(fields.xcf)))*np.sin(np.pi*fields.ycf/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)
+
+    fields.psi[it] = a*a*w0/K*np.cos(np.pi*fields.xffb*0.5)*np.sin(K*np.pi*fields.xffb*0.5)*np.sin(np.pi*fields.yffb/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)
+
+    velocities_from_streamfunction_spherical(config, fields, it) # assuming rho=rho0=1 for all of space
 
 
 def hadley_HW_differentscales(config, fields, it):
