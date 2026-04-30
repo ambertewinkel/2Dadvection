@@ -1,18 +1,18 @@
 scheme: adhimex
 
-nx: 136 
-ny: 136
+nx: 153 
+ny: 153
 xmin: -500. # m
 xmax: 500. # m
 ymin: -500. # m
 ymax: 500. # m
-grid_x: lowerleft
-grid_y: lowerleft
+grid_x: lowerleftGP
+grid_y: lowerleftGP
 BC_x: periodic
 BC_y: periodic
 
-dt: 0.2 # s
-nt: 500
+dt: 0.625 # s
+nt: 160
 starttime: 0.
 
 velocity_setting: swift_nondiv_streamfunction
@@ -28,4 +28,4 @@ solver: gmresm
 
 timing: True
 print_error: True
-outputdir: timingerror_swiftnondiv_sine_adhimex_ll_nt500
+outputdir: timingerror_swiftnondiv_sine_adhimex_ll_nt160dt0_625

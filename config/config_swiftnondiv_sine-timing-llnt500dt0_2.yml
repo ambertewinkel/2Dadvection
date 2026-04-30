@@ -11,8 +11,8 @@ grid_y: lowerleftGP
 BC_x: periodic
 BC_y: periodic
 
-dt: 0.04 # s
-nt: 2500
+dt: 0.2 # s
+nt: 500
 starttime: 0.
 
 velocity_setting: swift_nondiv_streamfunction
@@ -28,4 +28,4 @@ solver: gmresm
 
 timing: True
 print_error: True
-outputdir: timingerror_swiftnondiv_sine_adhimex_ll_nt2500dt0_04
+outputdir: timingerror_swiftnondiv_sine_adhimex_ll_nt500dt0_2

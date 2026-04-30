@@ -1,18 +1,18 @@
 scheme: adhimex # 08-02-2026: changed adhimex to be the constancy-preserving one and adhimex_ncp the non-CP one!
 
-nx: 128 #64 
-ny: 128 #64
+nx: 153 #128 #64 
+ny: 153 #128 #64
 xmin: -500. # m
 xmax: 500. # m
 ymin: -500. # m
 ymax: 500. # m
-grid_x: uniform #cosine4_topleft
-grid_y: uniform # linear #cosine4_topleft
+grid_x: lowerleftGP #uniform #cosine4_topleft
+grid_y: lowerleftGP #uniform # linear #cosine4_topleft
 BC_x: periodic
 BC_y: periodic
 
-dt: 1. #2. #0.2 #2. #0.2 #2. #0.2 #0.25 #1. #0.2 #0.02 #6. # s
-nt: 10 #50 #400 #100 #000 #25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
+dt: 0.2 #2. #0.2 #2. #0.2 #2. #0.2 #0.25 #1. #0.2 #0.02 #6. # s
+nt: 500 #1 #50 #400 #100 #000 #25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
 starttime: 0.
 
 velocity_setting: swift_nondiv_streamfunction #strong_convergence #swift_div_on_steroids #_streamfunction #swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation
@@ -32,7 +32,7 @@ nondivergent: True
 #tracermin: 0.
 #tracermax: 1.
 
-solver: gcrk #gmresm
+solver: gmresm
 
 filename: chenetal2017
 verbose: True
