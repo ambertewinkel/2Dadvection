@@ -48,7 +48,7 @@ def gcrk(A, b, x, kiter=10, jiter=5, tolerance=1e-6):
     return x
 
 
-def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6):
+def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6, irestarts_convergence=np.zeros(10), j_convergence=np.zeros(10), iterations_convergence=np.zeros(10), it=0):
     """
     Matrixfree solution of linear Ax=b system using GMRES(m) method. (matrixfree through a function that computes Ax with def A(x))).
     Semi-optimised version (i.e., implemented QR factorisation/least squares minimisation in Saad and Schultz 1986 p.860-862, but not the last step part).
@@ -121,9 +121,12 @@ def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6):
             # Residual norm
             residual = abs(g[j+1])
             if residual < reltol: # and (j == jiter-1): # !!! check if I need to use norm(r0) or norm(b) for the relative tolerance... It might just be a choice.
-                print(f"Converged after restart {irestart, j} with residual {residual} (relative tolerance {reltol}).")
+                #print(f"Converged after restart {irestart, j} with residual {residual} (relative tolerance {reltol}).")
                 converged = True
                 jend = j
+                irestarts_convergence[it] = irestart
+                j_convergence[it] = j
+                iterations_convergence[it] = jiter * irestart + j + 1
                 break
             else:
                 if residual > norm_oldres: # if residual increased after restart, print a warning (this can happen with GMRES(m) if m is too small or the problem is hard)

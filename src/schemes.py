@@ -216,7 +216,7 @@ def adhimex_ncp(config, fields, it, **kwargs):
         if ik == 4 and np.any(fields.thetacc[it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
             matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
             solver = getattr(sv, config.solver)
-            field_k = solver(matrix, rhs_k, field_k, kiter=100, jiter=10, tolerance=1e-6)
+            field_k = solver(matrix, rhs_k, field_k, kiter=200, jiter=5, tolerance=1e-6)
         else:
             field_k = rhs_k.copy()
 
@@ -239,7 +239,7 @@ def adhimex_ncp(config, fields, it, **kwargs):
         fields.tracer[it+1] = field_k.copy() 
 
 #import matplotlib.pyplot as plt
-def adhimex(config, fields, it, **kwargs):
+def adhimex(config, fields, it, irestarts_convergence=np.zeros(10), j_convergence=np.zeros(10), iterations_convergence=np.zeros(10), **kwargs):
     """Implement the AdHImEx scheme for the given time step - constancy-preserving version"""
 
     # Set up Butcher tableau
@@ -271,7 +271,7 @@ def adhimex(config, fields, it, **kwargs):
         if ik == 4 and np.any(fields.thetacc[it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
             matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
             solver = getattr(sv, config.solver)
-            field_k = solver(matrix, rhs_k, field_k, kiter=100, jiter=10, tolerance=1e-6)
+            field_k = solver(matrix, rhs_k, field_k, kiter=200, jiter=5, tolerance=1e-6, irestarts_convergence=irestarts_convergence, j_convergence=j_convergence, iterations_convergence=iterations_convergence, it=it)
         else:
             field_k = rhs_k.copy()
                

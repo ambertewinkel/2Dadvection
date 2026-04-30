@@ -40,9 +40,15 @@ def run(config, configfile, configname):
         l2_error = l2norm(fields.tracer[-1], fields.tracer[0], fields.dxcc*fields.dycc)
         info(f'l2norm = {l2_error}')
         print(f'l2norm = {l2_error}')
+        np.save(config.outputdir + f'data/l2_error.npy', l2_error)
 
     info('Min and max tracer at final time step: ' + str(getminmax(fields.tracer, -1)))
     print('Min and max tracer at final time step: ' + str(getminmax(fields.tracer, -1)))
+    np.save(config.outputdir + f'data/min_tracer.npy', getminmax(fields.tracer, -1)[0])
+    np.save(config.outputdir + f'data/max_tracer.npy', getminmax(fields.tracer, -1)[1])
 
     info(f'Minimum and maximum C over all times: {np.min(fields.Ccc)}, {np.max(fields.Ccc)}')    
     print(f'Minimum and maximum C over all times: {np.min(fields.Ccc)}, {np.max(fields.Ccc)}')
+    np.save(config.outputdir + f'data/min_Ccc.npy', np.min(fields.Ccc))
+    np.save(config.outputdir + f'data/max_Ccc.npy', np.max(fields.Ccc))
+

@@ -5,6 +5,7 @@ import src.schemes as sch
 import testcases.velocity
 from time import perf_counter
 from logging import info
+import numpy as np
 
 
 def time_stepping(config, fields, **kwargs):
@@ -13,6 +14,9 @@ def time_stepping(config, fields, **kwargs):
 
     if config.timing == False:
         # Time stepping loop
+        irestarts_convergence = np.zeros(config.nt)
+        j_convergence = np.zeros(config.nt)
+        iterations_convergence = np.zeros(config.nt)
         for it in range(config.nt):
             # Update velocity fields
             testcases.velocity.velocity(config, fields, it)
@@ -23,8 +27,12 @@ def time_stepping(config, fields, **kwargs):
             #print('Velocity at boundaries v top', fields.v[it,:,-1]) #not quite the top
             #exit()
             # Call the advection scheme
-            scheme(config, fields, it)
+            scheme(config, fields, it, irestarts_convergence=irestarts_convergence, j_convergence=j_convergence, iterations_convergence=iterations_convergence)
     else: 
+        irestarts_convergence = np.zeros(config.nt)
+        j_convergence = np.zeros(config.nt)
+        iterations_convergence = np.zeros(config.nt)
+
         time_total, time_total_velocity, time_total_scheme = 0., 0., 0.
         start_total = perf_counter()
         # Time stepping loop
@@ -38,7 +46,7 @@ def time_stepping(config, fields, **kwargs):
 
             start_scheme = perf_counter()
             # Call the advection scheme
-            scheme(config, fields, it)
+            scheme(config, fields, it, irestarts_convergence=irestarts_convergence, j_convergence=j_convergence, iterations_convergence=iterations_convergence)
             end_scheme = perf_counter()
             time_total_scheme += end_scheme - start_scheme
 
@@ -51,6 +59,24 @@ def time_stepping(config, fields, **kwargs):
         info(f'Time total time stepping: {time_total}')
         info(f'Time total velocity: {time_total_velocity}')
         info(f'Time total scheme: {time_total_scheme}')
+        np.save(config.outputdir + f'data/time_total.npy', time_total)
+        np.save(config.outputdir + f'data/time_total_velocity.npy', time_total_velocity)
+        np.save(config.outputdir + f'data/time_total_scheme.npy', time_total_scheme)
+
+        # Store iterations fields for convergence analysis
+        total_iterations_convergence = np.sum(iterations_convergence)
+        #print(f'irestarts_convergence={irestarts_convergence}') 
+        #print(f'j_convergence={j_convergence}')
+        #print(f'iterations_convergence={iterations_convergence}')
+        print(f'Total number of iterations over all times: {total_iterations_convergence}')
+        info(f'irestarts_convergence={irestarts_convergence}')
+        info(f'j_convergence={j_convergence}')
+        info(f'iterations_convergence={iterations_convergence}')
+        info(f'total_iterations_convergence: {total_iterations_convergence}')
+        np.save(config.outputdir + f'data/irestarts_convergence.npy', irestarts_convergence)
+        np.save(config.outputdir + f'data/j_convergence.npy', j_convergence)
+        np.save(config.outputdir + f'data/iterations_convergence.npy', iterations_convergence)
+        np.save(config.outputdir + f'data/total_iterations_convergence.npy', total_iterations_convergence)
 
 
             #print(f"Time step {it+1}/{config.nt} completed in {end - start:.4f} seconds.")
