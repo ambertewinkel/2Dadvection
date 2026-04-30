@@ -170,8 +170,8 @@ def plot_fields(config, fieldnames, data, plots_dir, setting):
 
 def plot_figure(x, y, fielddata, fieldname, title, xlabel, ylabel, cmap, filename, minval, maxval, add_hatching=False, thetacc=None, add_initial=False, initialtracer=None):
     plt.figure(figsize=(10, 5))
-    #palette = pc.read('wh-bl-gr-ye-re.cpt') # read in a color palette
-    cmap = 'bwr'
+    palette = pc.read('wh-bl-gr-ye-re.cpt') # read in a color palette
+    #cmap = 'bwr'
     diff = maxval - minval
     print(minval, maxval)
     extend = 'neither'
@@ -180,18 +180,18 @@ def plot_figure(x, y, fielddata, fieldname, title, xlabel, ylabel, cmap, filenam
     else:
         if fieldname == 'tracer' or fieldname == 'density':
             extend = 'both'
-            absextent = max(abs(minval-5.0E-1), abs(maxval-5.0E-1))
-            #contourlevels = list(np.linspace(-absextent, absextent, 20, endpoint=True))
-            contourlevels = list(np.linspace(-1.0E-9, 1.0E-9, 20, endpoint=True))
-            ##contourlevels = list(np.linspace(-maxval-0.5+1., maxval-0.5, 10)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
+            #absextent = max(abs(minval-5.0E-1), abs(maxval-5.0E-1))
+            ##contourlevels = list(np.linspace(-absextent, absextent, 20, endpoint=True))
+            #contourlevels = list(np.linspace(-1.0E-9, 1.0E-9, 20, endpoint=True))
+            #contourlevels = list(np.linspace(-maxval-0.5+1., maxval-0.5, 10)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
             #contourlevels = list(np.arange(-0.15, 1.16, 0.1)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
-            #contourlevels = list(np.linspace(-maxval+1., maxval, 10)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
+            contourlevels = list(np.linspace(-maxval+1., maxval, 10)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
         else: 
             contourlevels = list(np.linspace(minval, maxval, 20, endpoint=True))
         #contourlevels = list(np.linspace(minval, maxval, 20, endpoint=True)) #list(np.arange(-0.15, 1.15, 0.1)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
         #contourlevels = [minval, (minval + 0.15*diff), (minval + 0.25*diff), (minval + 0.35*diff), (minval + 0.45*diff), (minval + 0.55*diff), (minval + 0.65*diff), (minval + 0.75*diff), (minval + 0.85*diff), maxval]
-    #plt.contourf(x, y, fielddata, cmap=palette.cmap, levels=contourlevels, extend=extend)
-    plt.contourf(x, y, fielddata-5.0E-1, cmap=cmap, levels=contourlevels, extend=extend)
+    plt.contourf(x, y, fielddata, cmap=palette.cmap, levels=contourlevels, extend=extend)
+    #plt.contourf(x, y, fielddata-5.0E-1, cmap=cmap, levels=contourlevels, extend=extend)
     cbar = plt.colorbar()
     cbar.ax.tick_params(labelsize=12)  # change colorbar tick label size
     if add_initial:
@@ -209,7 +209,7 @@ def plot_figure(x, y, fielddata, fieldname, title, xlabel, ylabel, cmap, filenam
     plt.xlabel(xlabel, size=15)
     plt.ylabel(ylabel, size=15)
     plt.tick_params(labelsize=12)
-    plt.gca().set_aspect('equal', adjustable='box')  # Ensures equal aspect ratio
+    #plt.gca().set_aspect('equal', adjustable='box')  # Ensures equal aspect ratio
     plt.tight_layout()
     plt.savefig(filename, dpi=150)
     plt.close()   
