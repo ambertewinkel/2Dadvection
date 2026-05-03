@@ -20,7 +20,7 @@ def l2norm(numerical, analytic, V):
     denominator = np.sum(V*analytic*analytic)
     return np.sqrt(numerator/(denominator + 1.e-16))
     
-
+import matplotlib.pyplot as plt
 def error():
     if len(argv) < 2:
         print("Usage: python error.py <outputdir> <setting>")
@@ -71,11 +71,25 @@ def error():
     if setting == 'finaltoinitial':
         print("Computing error at final time compared to initial condition...")
         # Load initial condition
-        l2_error = l2norm(data['tracer'][-1], data['tracer'][0], data['dxcc']*data['dycc'])
+        #l2_error = l2norm(data['tracer'][-1], data['tracer'][0], data['dxcc']*data['dycc'])
+        l2_error = np.linalg.norm((data['tracer'][-1]-data['tracer'][0])*(data['dxcc']*data['dycc']))/np.linalg.norm(data['tracer'][0]*(data['dxcc']*data['dycc']))
+        #l2_error = np.linalg.norm((data['tracer'][-1]-data['tracer'][0])*(data['dxcc']*data['dycc'])*(data['dxcc']*data['dycc']))/np.linalg.norm(data['tracer'][0]*(data['dxcc']*data['dycc'])*(data['dxcc']*data['dycc']))
+        print(data['dxcc'])
+        #plt.plot(data['dxcc'][:,0])
+        #plt.show()
+        print()
+        print(data['dycc'])
+        #plt.plot(data['dycc'][0,:])
+        plt.contourf(data['tracer'][0])
+        plt.show()
+        plt.contourf(data['tracer'][-1]-data['tracer'][0])
+        plt.show()
+        #np.linalg.norm(np.abs(data['tracer'][-1]-data['tracer'][0])*data['dxcc']*data['dycc']/np.sum(data['tracer'][0]*data['dxcc']*data['dycc']))
         # Output l2 norms to file
-        with open(outputdir + 'l2norms.out', 'w') as f:
-            f.write('l2 norm (final compared to initial)\n')
-            f.write(f'{l2_error:.6e}\n')
+        print(l2_error)
+        #with open(outputdir + 'l2norms.out', 'w') as f:
+        #    f.write('l2 norm (final compared to initial)\n')
+        #    f.write(f'{l2_error:.6e}\n')
 
     #elif exact == 'analytic': # other option to perhaps include later
 
