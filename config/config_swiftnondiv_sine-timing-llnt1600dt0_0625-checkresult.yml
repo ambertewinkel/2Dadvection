@@ -28,4 +28,4 @@ solver: gmresm
 
 #timing: True
 #print_error: True
-outputdir: timingerror_swiftnondiv_sine_adhimex_ll_nt1600dt0_0625-checkresult
+outputdir: timingerror_swiftnondiv_sine_adhimex_ll_nt1600dt0_0625-checkresult-k3

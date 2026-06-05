@@ -267,11 +267,16 @@ def adhimex(config, fields, it, irestarts_convergence=np.zeros(10), j_convergenc
             rhs_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx_c[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_c[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
         else: 
             rhs_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx_f[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_f[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
-        
+
         if ik == 4 and np.any(fields.thetacc[it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
             matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
             solver = getattr(sv, config.solver)
-            field_k = solver(matrix, rhs_k, field_k, kiter=200, jiter=5, tolerance=1e-6, irestarts_convergence=irestarts_convergence, j_convergence=j_convergence, iterations_convergence=iterations_convergence, it=it)
+            #field_k = solver(matrix, rhs_k, field_k, kiter=200, jiter=5, tolerance=1e-6, irestarts_convergence=irestarts_convergence, j_convergence=j_convergence, iterations_convergence=iterations_convergence, it=it)
+            field_k = solver(matrix, rhs_k, field_3, kiter=200, jiter=5, tolerance=1e-6, irestarts_convergence=irestarts_convergence, j_convergence=j_convergence, iterations_convergence=iterations_convergence, it=it)
+            print('Cmax = ', np.max(fields.Ccc[it]), ' at stage ', ik, ' with ', irestarts_convergence[it], ' irestarts and ', j_convergence[it], ' j iterations.')
+        elif ik == 2:
+            field_3 = rhs_k.copy()
+            field_k = rhs_k.copy()
         else:
             field_k = rhs_k.copy()
                
