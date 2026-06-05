@@ -71,8 +71,8 @@ def error():
     if setting == 'finaltoinitial':
         print("Computing error at final time compared to initial condition...")
         # Load initial condition
-        #l2_error = l2norm(data['tracer'][-1], data['tracer'][0], data['dxcc']*data['dycc'])
-        l2_error = np.linalg.norm((data['tracer'][-1]-data['tracer'][0])*(data['dxcc']*data['dycc']))/np.linalg.norm(data['tracer'][0]*(data['dxcc']*data['dycc']))
+        l2_error = l2norm(data['tracer'][-1], data['tracer'][0], data['dxcc']*data['dycc'])
+        #l2_error = np.linalg.norm((data['tracer'][-1]-data['tracer'][0])*(data['dxcc']*data['dycc']))/np.linalg.norm(data['tracer'][0]*(data['dxcc']*data['dycc']))
         #l2_error = np.linalg.norm((data['tracer'][-1]-data['tracer'][0])*(data['dxcc']*data['dycc'])*(data['dxcc']*data['dycc']))/np.linalg.norm(data['tracer'][0]*(data['dxcc']*data['dycc'])*(data['dxcc']*data['dycc']))
         print(data['dxcc'])
         #plt.plot(data['dxcc'][:,0])
