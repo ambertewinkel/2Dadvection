@@ -69,6 +69,8 @@ def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6, irestarts_convergence=np.
     if norm_oldres < reltol:
         print(f"Initial guess is already good enough with residual {norm_oldres} (relative tolerance {reltol}).")
         return x
+    reduction_tolerance = 1e-5*norm_oldres
+    #print('values', norm_oldres, reltol, reduction_tolerance)
 
     converged = False
     for irestart in range(kiter):
@@ -119,8 +121,10 @@ def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6, irestarts_convergence=np.
             g[j] = temp
 
             # Residual norm
+            #print(g[j+1])
+            #print()
             residual = abs(g[j+1])
-            if residual < reltol: # and (j == jiter-1): # !!! check if I need to use norm(r0) or norm(b) for the relative tolerance... It might just be a choice.
+            if residual < reltol and residual < reduction_tolerance: # and (j == jiter-1): # !!! check if I need to use norm(r0) or norm(b) for the relative tolerance... It might just be a choice.
                 #print(f"Converged after restart {irestart, j} with residual {residual} (relative tolerance {reltol}).")
                 converged = True
                 jend = j
