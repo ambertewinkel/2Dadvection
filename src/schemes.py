@@ -92,10 +92,14 @@ def implicitness_adhimex(config, fields, it, **kwargs):
     
     # print(np.max(fields.Ccc[it]))
 
-    fields.thetacc[it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.4)) # at [i,j]
+    fields.thetacc[it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.)) # testing coefficients for theta # at [i,j]
+    #fields.thetacc[it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.3)) # testing coefficients for theta # at [i,j]
+    #fields.thetacc[it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.4)) # at [i,j]
     ###fields.thetacc[it] = np.full(np.shape(fields.Ccc[it]),1.) #1.  - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.4)) # at [i,j] # adjustment for CN result try
     fields.thetafc[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,0)) # at [i-1/2,j]
+    #fields.thetafc[it] = np.maximum.reduce((fields.thetacc[it], np.roll(fields.thetacc[it],1,0), np.roll(fields.thetacc[it],-1,0), np.roll(fields.thetacc[it],2,0), np.roll(fields.thetacc[it],-2,0), np.roll(fields.thetacc[it],3,0), np.roll(fields.thetacc[it],-3,0), np.roll(fields.thetacc[it],4,0), np.roll(fields.thetacc[it],-4,0), np.roll(fields.thetacc[it],5,0))) # at [i-1/2,j] # testing the stencil for theta (doesn't do much)
     fields.thetacf[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,1)) # at [i,j-1/2]
+    #fields.thetacf[it] = np.maximum.reduce((fields.thetacc[it], np.roll(fields.thetacc[it],1,1), np.roll(fields.thetacc[it],-1,1), np.roll(fields.thetacc[it],2,1), np.roll(fields.thetacc[it],-2,1), np.roll(fields.thetacc[it],3,1), np.roll(fields.thetacc[it],-3,1), np.roll(fields.thetacc[it],4,1), np.roll(fields.thetacc[it],-4,1), np.roll(fields.thetacc[it],5,1))) # at [i,j-1/2] # testing the stencil for theta (doesn't do much)
     if config.BC_x == 'periodic':
         fields.dthetafc[it] = np.roll(fields.thetafc[it],-1,0) - fields.thetafc[it] # at [i,j]
     else: # doesn't work properly for nonperiodic BC
