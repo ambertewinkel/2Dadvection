@@ -66,10 +66,10 @@ def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6, irestarts_convergence=np.
 
     reltol = tolerance * np.linalg.norm(b) # relative tolerance; see GMRES slides https://www.dmsa.unipd.it/~berga/Teaching/Phd/gmres_slides.pdf and Wikipedia https://en.wikipedia.org/wiki/Generalized_minimal_residual_method; I think MATLAB and Python compare the residual to the relative tolerance as well: https://www.mathworks.com/help/matlab/ref/gmres.html and https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.gmres.html
     norm_oldres = np.linalg.norm(r0)
-    if norm_oldres < reltol:
+    if norm_oldres < reltol: # This could also be a problem. Now we are doing more iterations once the tolerance has not been achieved yet - but if it has been achieved, we don't do anything (which is fair) - so now you have a good number of time steps where you would maybe preferably want a better solution as well but you don't get this. Could this explain the difficulty in reducing the error for small max C (just beyond the 1.4 threshold?)
         print(f"Initial guess is already good enough with residual {norm_oldres} (relative tolerance {reltol}).")
         return x
-    reduction_tolerance = 1e-5*norm_oldres
+    #reduction_tolerance = 1e-5*norm_oldres
     #print('values', norm_oldres, reltol, reduction_tolerance)
 
     converged = False
@@ -124,7 +124,7 @@ def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6, irestarts_convergence=np.
             #print(g[j+1])
             #print()
             residual = abs(g[j+1])
-            if residual < reltol and residual < reduction_tolerance: # and (j == jiter-1): # !!! check if I need to use norm(r0) or norm(b) for the relative tolerance... It might just be a choice.
+            if residual < reltol:# and residual < reduction_tolerance: # and (j == jiter-1): # !!! check if I need to use norm(r0) or norm(b) for the relative tolerance... It might just be a choice.
                 #print(f"Converged after restart {irestart, j} with residual {residual} (relative tolerance {reltol}).")
                 converged = True
                 jend = j
