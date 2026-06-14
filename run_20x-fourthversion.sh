@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Started script"
-sleep 3600
+sleep 2500
 echo "Started"
 
 for i in {1..20}
