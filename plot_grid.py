@@ -41,7 +41,7 @@ def plot_grid_with_inset_region():
     ax.set_ylim(-0.5,0.5)
 
     # Inset
-    x_range, y_range = [-0.395, -0.34], [-0.215, -0.16]
+    x_range, y_range = [-0.42, -0.38], [-0.22, -0.18]#[-0.395, -0.34], [-0.215, -0.16]
 
     inset = ax.inset_axes([0.3, 0.4, 0.55, 0.55])
     # Plot vertical grid lines
@@ -63,7 +63,7 @@ def plot_grid_with_inset_region():
     plt.tight_layout() 
     plt.savefig(outputdir + 'grid.pdf', dpi=300)
     plt.savefig(outputdir + 'grid.svg', dpi=300)
-
+    plt.show()
 
 if __name__ == "__main__":
     plot_grid_with_inset_region()

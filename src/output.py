@@ -74,8 +74,9 @@ def store_output_npy(config, fields):
     """Stores the output fields in .npy files."""
 
     for field in variables:
-        data = getattr(fields, field)
-        np.save(config.outputdir + f'data/{field}.npy', data)
+        if field == 'Ccc' or field == 'tracer' or field == 'dxcc' or field == 'dycc' or field == 'xcc' or field == 'ycc' or field == 'xfc' or field == 'ycf':
+            data = getattr(fields, field)
+            np.save(config.outputdir + f'data/{field}.npy', data)
 
 
 def getminmax(field, it):
