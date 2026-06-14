@@ -92,9 +92,9 @@ def implicitness_adhimex(config, fields, it, **kwargs):
     
     # print(np.max(fields.Ccc[it]))
 
-    fields.thetacc[it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.)) # testing coefficients for theta # at [i,j]
+    #fields.thetacc[it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.)) # testing coefficients for theta # at [i,j]
     #fields.thetacc[it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.3)) # testing coefficients for theta # at [i,j]
-    #fields.thetacc[it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.4)) # at [i,j]
+    fields.thetacc[it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.4)) # at [i,j]
     ###fields.thetacc[it] = np.full(np.shape(fields.Ccc[it]),1.) #1.  - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.4)) # at [i,j] # adjustment for CN result try
     fields.thetafc[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,0)) # at [i-1/2,j]
     #fields.thetafc[it] = np.maximum.reduce((fields.thetacc[it], np.roll(fields.thetacc[it],1,0), np.roll(fields.thetacc[it],-1,0), np.roll(fields.thetacc[it],2,0), np.roll(fields.thetacc[it],-2,0), np.roll(fields.thetacc[it],3,0), np.roll(fields.thetacc[it],-3,0), np.roll(fields.thetacc[it],4,0), np.roll(fields.thetacc[it],-4,0), np.roll(fields.thetacc[it],5,0))) # at [i-1/2,j] # testing the stencil for theta (doesn't do much)
@@ -224,6 +224,30 @@ def adhimex_ncp(config, fields, it, **kwargs):
         else:
             field_k = rhs_k.copy()
 
+            
+        # Analysis: calculating the Laplacian
+        ###hfc = 0.5*(fields.dxcc + np.roll(fields.dxcc,1,0)) # at [i-1/2,j]
+        ###hcf = 0.5*(fields.dycc + np.roll(fields.dycc,1,1)) # at [i,j-1/2]
+
+        ###lap_field_k = 2./(hfc + np.roll(hfc,-1,0))*(1./hfc*(np.roll(field_k,1,0) - field_k) + 1./np.roll(hfc,-1,0)*(np.roll(field_k,-1,0) - field_k)) + 2./(hcf + np.roll(hcf,-1,1))*(1./hcf*(np.roll(field_k,1,1) - field_k) + 1./np.roll(hcf,-1,1)*(np.roll(field_k,-1,1) - field_k))
+        
+        #plt.contourf(fields.xcc, fields.ycc, lap_field_k)
+        #plt.colorbar()
+        #plt.title(f'Laplacian of field at stage {ik+1}')
+        #plt.show()
+
+        #plt.contourf(fields.xcc, fields.ycc, lap_field_k**2)
+        #plt.colorbar()
+        #plt.title(f'Squared Laplacian of field at stage {ik+1}')
+        #plt.show()
+
+        #print(f'max difference with stage {ik+1} - IC: ', np.max(np.abs(field_k - fields.tracer[it])))
+        #plt.contourf(fields.xcc, fields.ycc, field_k - fields.tracer[it])
+        #plt.colorbar()
+        #plt.title(f'Stage {ik+1} - IC at time step {it}')
+        #plt.show()
+
+
         # Calculate the velocity times the fifth-order field approximation at faces
         flxkfc, flxkcf = fifth_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
 
@@ -265,7 +289,7 @@ def adhimex(config, fields, it, irestarts_convergence=np.zeros(10), j_convergenc
     flxfc_HO, flxcf_HO = np.zeros_like(field_k), np.zeros_like(field_k)
 
     for ik in range(nstages):
-
+        ###print(ik, AIm[ik,:ik])
         # Calculate the field at stage k      
         if ik == 1 or ik == 2:
             rhs_k = fields.tracer[it] + config.dt*(np.dot(np.rollaxis(fEx_c[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_c[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
@@ -277,12 +301,64 @@ def adhimex(config, fields, it, irestarts_convergence=np.zeros(10), j_convergenc
             solver = getattr(sv, config.solver)
             #field_k = solver(matrix, rhs_k, field_k, kiter=200, jiter=5, tolerance=1e-6, irestarts_convergence=irestarts_convergence, j_convergence=j_convergence, iterations_convergence=iterations_convergence, it=it)
             field_k = solver(matrix, rhs_k, field_3, kiter=200, jiter=5, tolerance=1e-6, irestarts_convergence=irestarts_convergence, j_convergence=j_convergence, iterations_convergence=iterations_convergence, it=it)
-            print('Cmax = ', np.max(fields.Ccc[it]), ' at stage ', ik, ' with ', irestarts_convergence[it], ' irestarts and ', j_convergence[it], ' j iterations.')
+            #print('Cmax = ', np.max(fields.Ccc[it]), ' at stage ', ik, ' with ', irestarts_convergence[it], ' irestarts and ', j_convergence[it], ' j iterations.')
         elif ik == 2:
             field_3 = rhs_k.copy()
             field_k = rhs_k.copy()
+        #elif ik == 3:
+        #    field_4 = rhs_k.copy()
+        #    field_k = rhs_k.copy()
         else:
             field_k = rhs_k.copy()
+
+        ###print('maximum Ccc at time step ', it, ': ', np.max(fields.Ccc[it]))
+        ##if ik == 4:
+        ##    plt.contourf(fields.xcc, fields.ycc, field_k - field_3)
+        ##    plt.colorbar()
+        ##    plt.title(f'Stage {ik+1} - stage 3 at time step {it}')
+        ##    plt.show()            
+        ##    plt.contourf(fields.xcc, fields.ycc, field_k - field_4)
+        ##    plt.colorbar()
+        ##    plt.title(f'Stage {ik+1} - stage 4 at time step {it}')
+        ##    plt.show()
+        ##    plt.contourf(fields.xcc, fields.ycc, field_4 - field_3)
+        ##    plt.colorbar()
+        ##    plt.title(f'Stage 4 - stage 3 at time step {it}')
+        ##    plt.show()
+
+        # Analysis: calculating the Laplacian
+        ###hfc = 0.5*(fields.dxcc + np.roll(fields.dxcc,1,0)) # at [i-1/2,j]
+        ###hcf = 0.5*(fields.dycc + np.roll(fields.dycc,1,1)) # at [i,j-1/2]
+
+        ###lap_field_k = 2./(hfc + np.roll(hfc,-1,0))*(1./hfc*(np.roll(field_k,1,0) - field_k) + 1./np.roll(hfc,-1,0)*(np.roll(field_k,-1,0) - field_k)) + 2./(hcf + np.roll(hcf,-1,1))*(1./hcf*(np.roll(field_k,1,1) - field_k) + 1./np.roll(hcf,-1,1)*(np.roll(field_k,-1,1) - field_k))
+        
+        ###plt.contourf(fields.xcc, fields.ycc, lap_field_k)
+        ###plt.colorbar()
+        ###plt.title(f'Laplacian of field at stage {ik+1}')
+        ###plt.show()
+        ###print(f'max Laplacian at stage {ik+1}: ', np.max(np.abs(lap_field_k)))
+
+        ##plt.contourf(fields.xcc, fields.ycc, fields.thetacc[it])
+        ##plt.colorbar()
+        ##plt.title(f'Theta at stage {ik+1}')
+        ##plt.show()
+
+        #plt.contourf(fields.xcc, fields.ycc, lap_field_k**2)
+        #plt.colorbar()
+        #plt.title(f'Squared Laplacian of field at stage {ik+1}')
+        #plt.show()
+
+        #print(f'max difference with stage {ik+1} - IC: ', np.max(np.abs(field_k - fields.tracer[it])))
+        #plt.contourf(fields.xcc, fields.ycc, field_k - fields.tracer[it])
+        #plt.colorbar()
+        #plt.title(f'Stage {ik+1} - IC at time step {it}')
+        #plt.show()
+        #if ik > 0 :
+        #    plt.contourf(fields.xcc, fields.ycc, field_k - field_k_old)
+        #    plt.colorbar()
+        #    plt.title(f'Stage {ik+1} - stage {ik} at time step {it}')
+        #    plt.show()
+        #field_k_old = field_k.copy() # for debugging convergence issues with GMRES, to check whether the solution is actually changing after the first few stages (when the matrix is full of zeros and GMRES is breaking down because of existing convergence)
                
         # Calculate the velocity times the fifth-order field approximation at faces
         flxkfc, flxkcf = fifth_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]

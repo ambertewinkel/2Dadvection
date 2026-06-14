@@ -143,7 +143,7 @@ def plot_timings(data):
 
 
 def main():
-    filename = "output_run_20x-fourthversion.txt"
+    filename = "singlerun_test_accuracy_timings-fourthversion-k3.txt" # "singlerun_test_accuracy_timings-fourthversion.txt" #"output_run_20x-fourthversion.txt"
     data = parse_file(filename)
     data = turn_into_np_arrays(data)
     data = add_mean_timings(data)

@@ -11,8 +11,8 @@ grid_y: lowerleftGP
 BC_x: periodic
 BC_y: periodic
 
-dt: 0.0625 # s
-nt: 1600
+dt: 0.0625 #0.125 #0.0625 # s # !!! adapted
+nt: 1600 #1 #1600 # 1600
 starttime: 0.
 
 velocity_setting: swift_nondiv_streamfunction
@@ -26,6 +26,6 @@ nondivergent: True
 
 solver: gmresm 
 
-#timing: True
-#print_error: True
-outputdir: timingerror_swiftnondiv_sine_adhimex_ll_nt1600dt0_0625-checkresult-k3-theta1_0
+timing: True
+print_error: True
+outputdir: test #timingerror_swiftnondiv_sine_adhimex_ll_nt1600dt0_0625-checkresult-oldgmres-k3

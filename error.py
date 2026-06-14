@@ -80,16 +80,16 @@ def error():
         print()
         print(data['dycc'])
         #plt.plot(data['dycc'][0,:])
-        plt.contourf(data['tracer'][0])
-        plt.show()
-        plt.contourf(data['tracer'][-1]-data['tracer'][0])
-        plt.show()
+        #plt.contourf(data['tracer'][0])
+        #plt.show()
+        #plt.contourf(data['tracer'][-1]-data['tracer'][0])
+        #plt.show()
         #np.linalg.norm(np.abs(data['tracer'][-1]-data['tracer'][0])*data['dxcc']*data['dycc']/np.sum(data['tracer'][0]*data['dxcc']*data['dycc']))
         # Output l2 norms to file
         print(l2_error)
-        #with open(outputdir + 'l2norms.out', 'w') as f:
-        #    f.write('l2 norm (final compared to initial)\n')
-        #    f.write(f'{l2_error:.6e}\n')
+        with open(outputdir + 'l2norms.out', 'w') as f:
+            f.write('l2 norm (final compared to initial)\n')
+            f.write(f'{l2_error:.6e}\n')
 
     #elif exact == 'analytic': # other option to perhaps include later
 
