@@ -143,7 +143,13 @@ def plot_timings(data):
 
 
 def main():
-    filename = "singlerun_test_accuracy_timings-fourthversion-k3.txt" # "singlerun_test_accuracy_timings-fourthversion.txt" #"output_run_20x-fourthversion.txt"
+    #filename = "output_timing_run_20x_fourthversion_20260615-itermin5-jiter5-k3.txt"#"singlerun_test_accuracy_timings-fourthversion-k3.txt" # "singlerun_test_accuracy_timings-fourthversion.txt" #"output_run_20x-fourthversion.txt"
+    filename = "output_timing_run_20x_fourthversion_20260616-itermin4-jiter4-nok3.txt" # best one!
+    #filename = "timing_test_20260614-itermin4.txt" # better (but also this one is the only average of two)
+    #filename = "test_timing_20260615-itermin4-jiter4-nok3.txt"
+    #filename = "test_timing_20260615-itermin3-jiter5-nok3.txt"
+    #filename = "timing_test_20260614-itermin4-jiter4.txt"
+    #filename = "timing_test_20260614-itermin5-jiter5.txt"
     data = parse_file(filename)
     data = turn_into_np_arrays(data)
     data = add_mean_timings(data)

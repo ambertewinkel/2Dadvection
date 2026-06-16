@@ -3,7 +3,7 @@ import logging
 import warnings
 
 
-def gcrk(A, b, x, kiter=10, jiter=5, tolerance=1e-6):
+def gcrk(A, b, x, kiter=10, jiter=4, tolerance=1e-6):
     """
     Matrixfree solution of linear Ax=b system using GCR(k) method. (matrixfree through a function that computes Ax with def A(x)))
     --- IN --- 
@@ -48,7 +48,7 @@ def gcrk(A, b, x, kiter=10, jiter=5, tolerance=1e-6):
     return x
 
 
-def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
+def gmresm(A, b, x, kiter=10, jiter=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
     """
     Matrixfree solution of linear Ax=b system using GMRES(m) method. (matrixfree through a function that computes Ax with def A(x))).
     Semi-optimised version (i.e., implemented QR factorisation/least squares minimisation in Saad and Schultz 1986 p.860-862, but not the last step part).
@@ -122,7 +122,7 @@ def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6, iterations_convergence=np
 
             no_iters += 1
             residual = abs(g[j+1])
-            if residual < reltol and no_iters > 4: #no_iters > 1:
+            if residual < reltol and no_iters > 3: #no_iters > 1:
                 #print(f"Converged after restart {irestart, j} with residual {residual} (relative tolerance {reltol}).")
                 converged = True
                 jend = j
@@ -151,7 +151,7 @@ def gmresm(A, b, x, kiter=10, jiter=5, tolerance=1e-6, iterations_convergence=np
     return x
 
 
-def gmresm_old(A, b, x, kiter=10, jiter=5, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
+def gmresm_old(A, b, x, kiter=10, jiter=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
     """
     Matrixfree solution of linear Ax=b system using GMRES(m) method. (matrixfree through a function that computes Ax with def A(x))).
     However, GMRES(m) does need a small matrix H to be stored and solved (done here through np.linalg.solve). Apart from that, it currently stores a V matrix, arrays of size (m+1,N) where N is the size of the problem. This could be improved to reduce memory usage (memory usage is already improved with the restarting).
