@@ -42,8 +42,8 @@ def plot_fields(config, fieldnames, data, plots_dir, plot_type):
         plot_figure(data, data['xcc'], data['ycc'], data[field][-1], field, f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$, $l_2 =${l2_error:.5f}', 'x (m)', 'y (m)', 'viridis', plots_dir + f'{field}_nt{config.nt}', minval, maxval, plot_type='swift')        
     elif plot_type == 'hadley':
         l2_error = l2norm(data['tracer'][-1], data['tracer'][0], data['dxcc']*data['dycc'])
-        #plot_figure(data, data['xcc']*90., data['ycc']*12., data[field][-1], field, f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$, $l_2 =${l2_error:.5f}', 'lat (deg)', 'z (km)', 'viridis', plots_dir + f'{field}_nt{config.nt}', minval, maxval, plot_type='hadley') # for final time
-        plot_figure(data, data['xcc']*90., data['ycc']*12., data[field][-1], field, f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$', 'lat (deg)', 'z (km)', 'viridis', plots_dir + f'{field}_nt{config.nt}', minval, maxval, plot_type='hadley') # for halftime
+        #plot_figure(data, data['xcc'], data['ycc']*1e-3, data[field][-1], field, f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$, $l_2 =${l2_error:.5f}', 'lat (deg)', 'z (km)', 'viridis', plots_dir + f'{field}_nt{config.nt}', minval, maxval, plot_type='hadley') # for final time
+        plot_figure(data, data['xcc'], data['ycc']*1e-3, data[field][-1], field, f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$', 'lat (deg)', 'z (km)', 'viridis', plots_dir + f'{field}_nt{config.nt}', minval, maxval, plot_type='hadley') # for halftime
     elif plot_type == 'constancy':
         plot_figure(data, data['xcc'], data['ycc'], data[field][-1], field, f'$\\Psi^{{ {config.nt} }}-0.5 \\in [{minval-0.5:.2e},{maxval-0.5:.2e}]$', 'x (m)', 'y (m)', 'viridis', plots_dir + f'{field}_nt{config.nt}', minval, maxval, plot_type='constancy')        
     else:
@@ -53,9 +53,9 @@ def plot_fields(config, fieldnames, data, plots_dir, plot_type):
 
 def plot_figure(data, x, y, fielddata, fieldname, title, xlabel, ylabel, cmap, filename, minval, maxval, add_hatching=False, thetacc=None, add_initial=False, initialtracer=None, plot_type='swift'):
     
-    no_x = True #False#False#True
-    no_y = True #False #True#False #True
-    no_colorbar = False#False #True #False #True
+    no_x = True #False #True #False #True #False #True #False#False#True
+    no_y = False #True #False #True #False #True#False #True
+    no_colorbar = True #False #True #False#False #True #False #True
     
     if plot_type == 'swift':
         plt.figure(figsize=(5.5,5))
@@ -63,7 +63,7 @@ def plot_figure(data, x, y, fielddata, fieldname, title, xlabel, ylabel, cmap, f
         cmap = palette.cmap
 
     elif plot_type == 'hadley':
-        plt.figure(figsize=(7,3.5))
+        plt.figure(figsize=(6,3.5)) # 6,3.5 for left plot, 7,3.5 for right plot
         palette = pc.read('wh-bl-gr-ye-re.cpt') # read in a color palette
         cmap = palette.cmap
 

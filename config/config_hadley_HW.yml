@@ -2,18 +2,18 @@ scheme: adhimex #adimex_upwind #adhimex_adv #3_overwritek2
 
 nx: 180 #90 #64 #50 #10 #100
 ny: 180 #30 #64 #50 #10 #100
-xmin: -1. #-90. #-1.e7 #-90. # deg #-500. # m
-xmax: 1. #90. #1.e7 #90. # deg #500. # m
+xmin: -90. #-1.57079633 #-1.e7 #-1.57079633 #-1. #-90. #-1.e7 #-90. # deg #-500. # m
+xmax: 90. #1.57079633 #1.e7 #1.57079633 #90. #1.e7 #90. # deg #500. # m
 ymin: 0. #-500. # m
-ymax: 1. #1.2e4 #500. # m
+ymax: 1.2e4 #1. #1.2e4 #500. # m
 grid_x: uniform #cosine4_topleft
 grid_y: uniform #cosine #cosine # linear #cosine4_topleft
 BC_x: noflux #periodic #periodic or noflux # setup: keep both BC_x and BC_y at periodic or both at noflux
 BC_y: noflux #periodic #periodic or noflux
 #metric: sphericalvertslice # sphericalvertslice or uniform
 
-dt: 0.005 #864. #0.05 #1 #0.005 #450. #120. #1728. #864. #4320. #0.02 #6. # s
-nt: 100 #80 #100 #19 #192 #720  #50 #100 #5 #25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
+dt: 432. #864. #0.05 #1 #0.005 #450. #120. #1728. #864. #4320. #0.02 #6. # s
+nt: 200 #80 #100 #19 #192 #720  #50 #100 #5 #25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
 starttime: 0.
 
 velocity_setting: hadley_HW #_differentscales #doswell #double_rotation_rising_bubble_capped #constant_v #swift_nondiv_streamfunction #strong_convergence #swift_div_on_steroids #_streamfunction #swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation
@@ -35,4 +35,4 @@ nondivergent: True #!!! needs adjusting in velocity code
 #filename: chenetal2017
 #verbose: True
 #animate: True
-outputdir: hadley_HW_nt200halftime # hadley_adhimex3_ycos_nt192 #adhimex_risingbubble_linear #test # nt1_checking_sine_monton_strongconvergence_imupwind_gcrk #adhimexadv_constIC_swiftnondiv_gmresm_unityconnectedtotolerance #test #adhimexadv_constIC_swiftnondiv_gcrk #adhimex12_0p5_uniform_field_swiftnondiv #sineswift_swiftnondivdouble_similar_to_presentationNOV2025 #test #swift_weakjet #test #ujet_reversal_umax3
+outputdir: hadley_HW_nt200 # hadley_adhimex3_ycos_nt192 #adhimex_risingbubble_linear #test # nt1_checking_sine_monton_strongconvergence_imupwind_gcrk #adhimexadv_constIC_swiftnondiv_gmresm_unityconnectedtotolerance #test #adhimexadv_constIC_swiftnondiv_gcrk #adhimex12_0p5_uniform_field_swiftnondiv #sineswift_swiftnondivdouble_similar_to_presentationNOV2025 #test #swift_weakjet #test #ujet_reversal_umax3

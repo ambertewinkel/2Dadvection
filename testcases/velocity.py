@@ -413,9 +413,27 @@ def hadley_HW(config, fields, it):
     #fields.u[it] = -a*w0*np.pi*rho0/(K*ztop*rhofc)*np.cos(np.radians(fields.xfc))*np.sin(K*np.radians(fields.xfc))*np.cos(np.pi*fields.yfc/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)/(360.*a)
     #fields.v[it] = w0*rho0/(K*rhocf)*(-2.*np.sin(K*np.radians(fields.xcf))*np.sin(np.radians(fields.xcf)) + K*np.cos(np.radians(fields.xcf))*np.cos(K*np.radians(fields.xcf)))*np.sin(np.pi*fields.ycf/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)
 
-    fields.psi[it] = 2.*w0*tau/(K*np.pi*ztop)*np.cos(np.pi*fields.xffb*0.5)*np.sin(K*np.pi*fields.xffb*0.5)*np.sin(np.pi*fields.yffb)*np.cos(np.pi*(it + 0.5)*config.dt)
+    #fields.psi[it] = 2.*w0*tau/(K*np.pi*ztop)*np.cos(np.pi*fields.xffb*0.5)*np.sin(K*np.pi*fields.xffb*0.5)*np.sin(np.pi*fields.yffb)*np.cos(np.pi*(it + 0.5)*config.dt)
+    #######fields.psi[it] = 2.*w0*tau/(K*np.pi*ztop)*np.cos(fields.xffb)*np.sin(K*fields.xffb)*np.sin(np.pi*fields.yffb/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)
+    #fields.psi[it] = w0/a*tau/K*np.cos(fields.xffb)*np.sin(K*fields.xffb)*np.sin(np.pi*fields.yffb/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)
+    #fields.psi[it] = w0/a/K*np.cos(fields.xffb)*np.sin(K*fields.xffb)*np.sin(np.pi*fields.yffb/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)
+
+
+    #fields.psi[it] = 2.*w0*tau/(K*np.pi*np.pi*ztop)*np.cos(fields.xffb)*np.sin(K*fields.xffb)*np.sin(np.pi*fields.yffb/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)
+    
+    #Gtilde = w0/K*a
+    #fields.psi[it] = Gtilde*np.cos(fields.xffb/a)*np.sin(K*fields.xffb/a)*np.sin(np.pi*fields.yffb/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)
+    G = w0/K
+    fields.psi[it] = 180./np.pi*G*np.cos(np.radians(fields.xffb))*np.sin(K*np.radians(fields.xffb))*np.sin(np.pi*fields.yffb/ztop)*np.cos(np.pi*(it + 0.5)*config.dt/tau)
 
     velocities_from_streamfunction(config, fields, it) # assuming rho=rho0=1 for all of space
+
+
+
+    #12000
+    #86400
+    #0.15
+
 
 
 def hadley_HW_differentscales(config, fields, it):
