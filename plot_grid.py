@@ -18,13 +18,13 @@ def plot_grid_with_inset_region():
     outputdir = dirname(__file__) + '/output/' + argv[1] +'/'
     
     # Load data
-    xf = 0.001*np.load(outputdir + 'data/xfc.npy')[:,0]
-    yf = 0.001*np.load(outputdir + 'data/ycf.npy')[0,:]
+    xf = np.load(outputdir + 'data/xfc.npy')[:,0]
+    yf = np.load(outputdir + 'data/ycf.npy')[0,:]
 
-    xf = np.append(xf, 0.5)
-    yf = np.append(yf, 0.5)
+    xf = np.append(xf, 500.)
+    yf = np.append(yf, 500.)
 
-    fig, ax = plt.subplots(figsize=(6,5.8))
+    fig, ax = plt.subplots(figsize=(5.5,5))#(6,5.8))
 
     # Plot vertical grid lines
     for x in xf:
@@ -35,13 +35,14 @@ def plot_grid_with_inset_region():
         ax.plot([xf[0], xf[-1]], [y, y], color='grey', linewidth=0.5)
 
     ax.set_aspect('equal')
-    ax.set_xlabel("x (km)")
-    ax.set_ylabel("y (km)")
-    ax.set_xlim(-0.5,0.5)
-    ax.set_ylim(-0.5,0.5)
+    ax.set_xlabel("x (m)", fontsize=15)
+    #ax.tick_params(axis='x', labelcolor='none') # if I don't want anything apart from the tickmarks in the plot
+    ax.set_ylabel("y (m)", fontsize=15)
+    ax.set_xlim(-500.,500.)
+    ax.set_ylim(-500.,500.)
 
     # Inset
-    x_range, y_range = [-0.42, -0.38], [-0.22, -0.18]#[-0.395, -0.34], [-0.215, -0.16]
+    x_range, y_range = [-419, -379], [-227, -177]#[-0.395, -0.34], [-0.215, -0.16]
 
     inset = ax.inset_axes([0.3, 0.4, 0.55, 0.55])
     # Plot vertical grid lines
@@ -63,6 +64,8 @@ def plot_grid_with_inset_region():
     plt.tight_layout() 
     plt.savefig(outputdir + 'grid.pdf', dpi=300)
     plt.savefig(outputdir + 'grid.svg', dpi=300)
+    #plt.savefig('grid.pdf', dpi=300)
+    #plt.savefig('grid.svg', dpi=300)
     plt.show()
 
 if __name__ == "__main__":

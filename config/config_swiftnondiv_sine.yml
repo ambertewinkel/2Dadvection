@@ -1,17 +1,17 @@
 scheme: adhimex
 
-nx: 128 
-ny: 128
+nx: 153 #128 
+ny: 153 #128
 xmin: -500. # m
 xmax: 500. # m
 ymin: -500. # m
 ymax: 500. # m
-grid_x: uniform
-grid_y: uniform
+grid_x: lowerleftGP #uniform
+grid_y: lowerleftGP #uniform
 BC_x: periodic
 BC_y: periodic
 
-dt: 2. # s
+dt: 2. #0.2 #2. # s
 nt: 50
 starttime: 0.
 
@@ -26,4 +26,4 @@ nondivergent: True
 
 solver: gmresm 
 
-outputdir: swiftnondiv_sine_adhimex_unif_nt50
+outputdir: swiftnondiv_sine_adhimex_llgp_nt50

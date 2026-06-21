@@ -94,51 +94,64 @@ def plot_timings(data):
     
     # Extract data
     dt = np.array([data[nt]["dt"] for nt in nts])
-    C  = np.array([data[nt]["C"]  for nt in nts])
+    Cmax  = np.array([data[nt]["C_max"]  for nt in nts])
     
     l2 = np.array([data[nt]["l2norm"] for nt in nts])
     time_scheme = np.array([np.mean(data[nt]["time_scheme"]) for nt in nts])
     total_iters = np.array([data[nt]["total_iters"] for nt in nts])
     
     time_per_step = time_scheme / np.array(nts)
+    iterations_per_step = total_iters / np.array(nts)
+    meanCmaxoverdt = np.mean(Cmax/dt)
     
     # ---- Plot ----
-    fig, axs = plt.subplots(4, 1, figsize=(7, 10), sharex=True)
+    fig, axs = plt.subplots(5, 1, figsize=(4.5, 10), sharex=True)
    
     # 1) l2 norm
     axs[0].plot(dt, l2, marker='o')
-    axs[0].set_ylabel("l2 norm")
+    axs[0].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
+    axs[0].set_ylabel("$l_2$ norm")
     axs[0].set_xscale("log")
     axs[0].set_yscale("log")
     axs[0].grid(True, which="both", ls="--", alpha=0.5)
     
     # 2) total scheme time
     axs[1].plot(dt, time_scheme, marker='o')
-    axs[1].set_ylabel("time (scheme)")
+    axs[1].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
+    axs[1].set_ylabel("Total scheme\nwall-clock time (s)")
     axs[1].set_xscale("log")
     axs[1].grid(True, which="both", ls="--", alpha=0.5)
     
     # 3) time per step
     axs[2].plot(dt, time_per_step, marker='o')
-    axs[2].set_ylabel("time / nt")
+    axs[2].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
+    axs[2].set_ylabel("Scheme wall-clock time\nper time step (s)")
+    axs[2].set_yscale("log")
     axs[2].set_xscale("log")
     axs[2].grid(True, which="both", ls="--", alpha=0.5)
     
     # 4) total iterations
     axs[3].plot(dt, total_iters, marker='o')
-    axs[3].set_ylabel("total iterations")
-    axs[3].set_xlabel("dt")
+    axs[3].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
+    axs[3].set_ylabel("Total iterations")
     axs[3].set_xscale("log")
-    axs[3].grid(True, which="both", ls="--", alpha=0.5)
+    axs[3].grid(True, which="both", ls="--", alpha=0.5)    
 
-    
-    #secax = axs[-1].secondary_xaxis('top', functions=(dt_to_C, C_to_dt))
-    #secax.set_xlabel("C")
+    # 5) iterations per step
+    axs[4].plot(dt[:-4], iterations_per_step[:-4], marker='o')
+    axs[4].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
+    axs[4].set_ylabel("Iterations\nper time step")
+    axs[4].set_xlabel("$\Delta t$")
+    axs[0].secondary_xaxis('top', functions=(lambda x: meanCmaxoverdt*x, lambda x: meanCmaxoverdt*x)).set_xlabel("$C_{max}$")
+    axs[4].set_yscale("log")
+    axs[4].set_xscale("log")
+    axs[4].grid(True, which="both", ls="--", alpha=0.5)
 
-    # add cmax and cmin x axes
-    
     plt.tight_layout()
-    plt.show()
+    figname = "timing_plot-20260616-itermin4-jiter4-nok3-log"
+    plt.savefig(f"{figname}.pdf", dpi=300)
+    plt.savefig(f"{figname}.svg", dpi=300)
+    #plt.show()
 
 
 

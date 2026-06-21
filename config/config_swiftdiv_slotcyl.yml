@@ -1,13 +1,13 @@
 scheme: adhimex
 
-nx: 136 #128 
-ny: 136 #128 
+nx: 153 #128 
+ny: 153 #128 
 xmin: -500. # m
 xmax: 500. # m
 ymin: -500. # m
 ymax: 500. # m
-grid_x: lowerleft #uniform
-grid_y: lowerleft #uniform
+grid_x: lowerleftGP #uniform
+grid_y: lowerleftGP #uniform
 BC_x: periodic
 BC_y: periodic
 
@@ -27,4 +27,4 @@ nondivergent: False
 
 solver: gmresm
 
-outputdir: swiftdiv_slotcyl_adhimex_ll_nt500_FCT
+outputdir: swiftdiv_slotcyl_adhimex_llgp_nt500_FCT

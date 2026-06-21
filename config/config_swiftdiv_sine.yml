@@ -1,13 +1,13 @@
 scheme: adhimex
 
-nx: 136 #128 
-ny: 136 #128
+nx: 128 
+ny: 128
 xmin: -500. # m
 xmax: 500. # m
 ymin: -500. # m
 ymax: 500. # m
-grid_x: lowerleft
-grid_y: lowerleft
+grid_x: uniform
+grid_y: uniform
 BC_x: periodic
 BC_y: periodic
 
@@ -26,4 +26,4 @@ nondivergent: False
 
 solver: gmresm 
 
-outputdir: swiftdiv_sine_adhimex_ll_nt500
+outputdir: swiftdiv_sine_adhimex_unif_nt500

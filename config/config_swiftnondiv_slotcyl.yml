@@ -1,7 +1,7 @@
 scheme: adhimex
 
-nx: 153 #136 #128 
-ny: 153 #136 #128 
+nx: 153 #128 
+ny: 153 #128 
 xmin: -500. # m
 xmax: 500. # m
 ymin: -500. # m
@@ -11,8 +11,8 @@ grid_y: lowerleftGP #uniform
 BC_x: periodic
 BC_y: periodic
 
-dt: 2. # s
-nt: 50
+dt: 2. #2. # s
+nt: 50 #50
 starttime: 0.
 
 velocity_setting: swift_nondiv_streamfunction
@@ -22,9 +22,9 @@ initial_tracer: slotted_cylinders
 T: 100. # s
 u0: 10. # m/s
 
-#FCT: True
+FCT: True
 nondivergent: True
 
 solver: gmresm
 
-outputdir: swiftnondiv_slotcyl_adhimex_llgp_nt50
+outputdir: swiftnondiv_slotcyl_adhimex_llgp_nt50_FCT
