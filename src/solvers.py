@@ -122,7 +122,7 @@ def gmresm(A, b, x, kiter=10, jiter=4, tolerance=1e-6, iterations_convergence=np
 
             no_iters += 1
             residual = abs(g[j+1])
-            if residual < reltol and no_iters > 3: #no_iters > 1:
+            if residual < reltol:# and no_iters > 3: #no_iters > 1:
                 #print(f"Converged after restart {irestart, j} with residual {residual} (relative tolerance {reltol}).")
                 converged = True
                 jend = j

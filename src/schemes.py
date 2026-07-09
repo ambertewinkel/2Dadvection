@@ -261,9 +261,9 @@ def adhimex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
         if ik == 4 and np.any(fields.thetacc[it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
             matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
             solver = getattr(sv, config.solver)
-            #guess = fields.tracer[it].copy()
-            #field_k = solver(matrix, rhs_k, guess, kiter=200, jiter=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
-            field_k = solver(matrix, rhs_k, field_k, kiter=200, jiter=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
+            guess = fields.tracer[it].copy()
+            field_k = solver(matrix, rhs_k, guess, kiter=200, jiter=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
+            #field_k = solver(matrix, rhs_k, field_k, kiter=200, jiter=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
             #field_k = solver(matrix, rhs_k, field_3, kiter=200, jiter=5, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
         #elif ik == 2:
         #    field_3 = rhs_k.copy()
