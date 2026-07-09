@@ -37,4 +37,4 @@ solver: gmresm #gcrk #gmresm
 #filename: chenetal2017
 #verbose: True
 #animate: True
-outputdir: swiftnondiv_constant_adhimex_tol1em9 #test # slotted_cylinders_swift_adhimex_FCTred_nt50 #_global01
+outputdir: swiftnondiv_constant_adhimex_IGk4 #n #tol1em9 #test # slotted_cylinders_swift_adhimex_FCTred_nt50 #_global01

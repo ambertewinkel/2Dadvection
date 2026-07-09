@@ -53,9 +53,9 @@ def plot_fields(config, fieldnames, data, plots_dir, plot_type):
 
 def plot_figure(data, x, y, fielddata, fieldname, title, xlabel, ylabel, cmap, filename, minval, maxval, add_hatching=False, thetacc=None, add_initial=False, initialtracer=None, plot_type='swift'):
     
-    no_x = True #False #True #False #True #False #True #False#False#True
+    no_x = False #True #False #True #False #True #False #True #False#False#True
     no_y = False #True #False #True #False #True#False #True
-    no_colorbar = True #False #True #False#False #True #False #True
+    no_colorbar = False #True #False #True #False#False #True #False #True
     
     if plot_type == 'swift':
         plt.figure(figsize=(5.5,5))

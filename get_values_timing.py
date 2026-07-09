@@ -105,7 +105,7 @@ def plot_timings(data):
     meanCmaxoverdt = np.mean(Cmax/dt)
     
     # ---- Plot ----
-    fig, axs = plt.subplots(5, 1, figsize=(4.5, 10), sharex=True)
+    fig, axs = plt.subplots(4, 1, figsize=(4.5, 7.5), sharex=True)
    
     # 1) l2 norm
     axs[0].plot(dt, l2, marker='o')
@@ -130,24 +130,25 @@ def plot_timings(data):
     axs[2].set_xscale("log")
     axs[2].grid(True, which="both", ls="--", alpha=0.5)
     
-    # 4) total iterations
-    axs[3].plot(dt, total_iters, marker='o')
-    axs[3].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
-    axs[3].set_ylabel("Total iterations")
-    axs[3].set_xscale("log")
-    axs[3].grid(True, which="both", ls="--", alpha=0.5)    
+    ## 4) total iterations
+    #axs[3].plot(dt, total_iters, marker='o')
+    #axs[3].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
+    #axs[3].set_ylabel("Total iterations")
+    #axs[3].set_xscale("log")
+    #axs[3].grid(True, which="both", ls="--", alpha=0.5)    
 
     # 5) iterations per step
-    axs[4].plot(dt[:-4], iterations_per_step[:-4], marker='o')
-    axs[4].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
-    axs[4].set_ylabel("Iterations\nper time step")
-    axs[4].set_xlabel("$\Delta t$")
+    axs[3].plot(dt[:-4], iterations_per_step[:-4], marker='o')
+    axs[3].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
+    axs[3].set_ylabel("Iterations\nper time step")
+    axs[3].set_xlabel("$\Delta t$")
     axs[0].secondary_xaxis('top', functions=(lambda x: meanCmaxoverdt*x, lambda x: meanCmaxoverdt*x)).set_xlabel("$C_{max}$")
-    axs[4].set_yscale("log")
-    axs[4].set_xscale("log")
-    axs[4].grid(True, which="both", ls="--", alpha=0.5)
+    axs[3].set_yscale("log")
+    axs[3].set_xscale("log")
+    axs[3].grid(True, which="both", ls="--", alpha=0.5)
 
     plt.tight_layout()
+    #figname = "timing_plot-20260622-itermin4-jiter4-nok3-log-thirdordermatrix"
     figname = "timing_plot-20260616-itermin4-jiter4-nok3-log"
     plt.savefig(f"{figname}.pdf", dpi=300)
     plt.savefig(f"{figname}.svg", dpi=300)
@@ -158,6 +159,7 @@ def plot_timings(data):
 def main():
     #filename = "output_timing_run_20x_fourthversion_20260615-itermin5-jiter5-k3.txt"#"singlerun_test_accuracy_timings-fourthversion-k3.txt" # "singlerun_test_accuracy_timings-fourthversion.txt" #"output_run_20x-fourthversion.txt"
     filename = "output_timing_run_20x_fourthversion_20260616-itermin4-jiter4-nok3.txt" # best one!
+    #filename = "output_timing_run_20x_fourthversion_20260622-itermin4-jiter4-nok3-thirdordermatrix.txt"
     #filename = "timing_test_20260614-itermin4.txt" # better (but also this one is the only average of two)
     #filename = "test_timing_20260615-itermin4-jiter4-nok3.txt"
     #filename = "test_timing_20260615-itermin3-jiter5-nok3.txt"
