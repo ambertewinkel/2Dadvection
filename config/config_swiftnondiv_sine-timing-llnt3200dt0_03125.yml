@@ -20,7 +20,7 @@ velocity_setting: swift_nondiv_streamfunction
 initial_tracer: sine_swift
 T: 100. # s
 u0: 10. # m/s
-thirdordermatrix: True
+#thirdordermatrix: True
 
 #FCT: True
 nondivergent: True
