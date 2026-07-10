@@ -48,7 +48,7 @@ def gcrk(A, b, x, kiter=10, jiter=4, tolerance=1e-6):
     return x
 
 
-def gmresm(A, b, x, kiter=10, jiter=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
+def gmresm_opt(A, b, x, kiter=10, jiter=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
     """
     Matrixfree solution of linear Ax=b system using GMRES(m) method. (matrixfree through a function that computes Ax with def A(x))).
     Semi-optimised version (i.e., implemented QR factorisation/least squares minimisation in Saad and Schultz 1986 p.860-862, but not the last step part).
@@ -151,7 +151,7 @@ def gmresm(A, b, x, kiter=10, jiter=4, tolerance=1e-6, iterations_convergence=np
     return x
 
 
-def gmresm_old(A, b, x, kiter=10, jiter=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
+def gmresm(A, b, x, kiter=10, jiter=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
     """
     Matrixfree solution of linear Ax=b system using GMRES(m) method. (matrixfree through a function that computes Ax with def A(x))).
     However, GMRES(m) does need a small matrix H to be stored and solved (done here through np.linalg.solve). Apart from that, it currently stores a V matrix, arrays of size (m+1,N) where N is the size of the problem. This could be improved to reduce memory usage (memory usage is already improved with the restarting).
@@ -206,9 +206,12 @@ def gmresm_old(A, b, x, kiter=10, jiter=4, tolerance=1e-6, iterations_convergenc
             x += y[i] * v[i]
 
         r0 = b - A(x)
-        residual = np.linalg.norm(r0)
+
+        #residual = np.linalg.norm(r0)
         #residual_minimised = np.linalg.norm(e1 - h @ y)
-     
+        maxr0 = np.max(np.abs(r0))
+        residual = maxr0
+
         if residual < reltol: #tolerance: #residual_minimised < tolerance: 
             #print(f"Converged after restart {irestart} with residual {residual} (relative tolerance {reltol}).")
             iterations_convergence[it] = no_iters
