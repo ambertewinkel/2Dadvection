@@ -114,11 +114,14 @@ def plot_timings(data):
     axs[0].set_xscale("log")
     axs[0].set_yscale("log")
     axs[0].grid(True, which="both", ls="--", alpha=0.5)
-    
-    # 2) total scheme time
-    axs[1].plot(dt, time_scheme, marker='o')
+
+    # 2) iterations per step
+    axs[1].plot(dt[:-4], iterations_per_step[:-4], marker='o')
     axs[1].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
-    axs[1].set_ylabel("Total scheme\nwall-clock time (s)")
+    axs[1].set_ylabel("Iterations\nper time step")
+    axs[1].set_xlabel("$\Delta t$")
+    axs[0].secondary_xaxis('top', functions=(lambda x: meanCmaxoverdt*x, lambda x: meanCmaxoverdt*x)).set_xlabel("$C_{max}$")
+    axs[1].set_yscale("log")
     axs[1].set_xscale("log")
     axs[1].grid(True, which="both", ls="--", alpha=0.5)
     
@@ -130,6 +133,13 @@ def plot_timings(data):
     axs[2].set_xscale("log")
     axs[2].grid(True, which="both", ls="--", alpha=0.5)
     
+    # 4) total scheme time
+    axs[3].plot(dt, time_scheme, marker='o')
+    axs[3].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
+    axs[3].set_ylabel("Total scheme\nwall-clock time (s)")
+    axs[3].set_xscale("log")
+    axs[3].grid(True, which="both", ls="--", alpha=0.5)
+    
     ## 4) total iterations
     #axs[3].plot(dt, total_iters, marker='o')
     #axs[3].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
@@ -137,21 +147,13 @@ def plot_timings(data):
     #axs[3].set_xscale("log")
     #axs[3].grid(True, which="both", ls="--", alpha=0.5)    
 
-    # 5) iterations per step
-    axs[3].plot(dt[:-4], iterations_per_step[:-4], marker='o')
-    axs[3].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
-    axs[3].set_ylabel("Iterations\nper time step")
-    axs[3].set_xlabel("$\Delta t$")
-    axs[0].secondary_xaxis('top', functions=(lambda x: meanCmaxoverdt*x, lambda x: meanCmaxoverdt*x)).set_xlabel("$C_{max}$")
-    axs[3].set_yscale("log")
-    axs[3].set_xscale("log")
-    axs[3].grid(True, which="both", ls="--", alpha=0.5)
 
     plt.tight_layout()
     #figname = "timing_plot-20260622-itermin4-jiter4-nok3-log-thirdordermatrix"
     #figname = "timing_plot-20260616-itermin4-jiter4-nok3-log"
     #figname = "timing_plot-20260709-noitermin_jiter4_IGn-log"
-    figname = "timing_plot-20260709-noitermin_jiter4_IGn_maxres-log"
+    #figname = "timing_plot-20260709-noitermin_jiter4_IGn_maxres-log"
+    figname = "timing_plot-20260719try-noitermin_jiter4_IGn_normresandmaxres-log"
     plt.savefig(f"{figname}.pdf", dpi=300)
     plt.savefig(f"{figname}.svg", dpi=300)
     #plt.show()
@@ -161,7 +163,7 @@ def plot_timings(data):
 def main():
     #filename = "output_timing_run_20x_fourthversion_20260615-itermin5-jiter5-k3.txt"#"singlerun_test_accuracy_timings-fourthversion-k3.txt" # "singlerun_test_accuracy_timings-fourthversion.txt" #"output_run_20x-fourthversion.txt"
     ###filename = "output_timing_run_20x_fourthversion_20260616-itermin4-jiter4-nok3.txt" # best one! (prior)
-    filename = "output_timing_run_20x_fourthversion_20260718-noitermin_jiter4_IGn_maxres.txt"
+    filename = "output_timing_run_20x_fourthversion_20260719try-noitermin_jiter4_IGn_normresandmaxres.txt"
     #filename = "output_timing_run_20x_fourthversion_20260622-itermin4-jiter4-nok3-thirdordermatrix.txt"
     #filename = "timing_test_20260614-itermin4.txt" # better (but also this one is the only average of two)
     #filename = "test_timing_20260615-itermin4-jiter4-nok3.txt"

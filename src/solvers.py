@@ -207,12 +207,12 @@ def gmresm(A, b, x, kiter=10, jiter=4, tolerance=1e-6, iterations_convergence=np
 
         r0 = b - A(x)
 
-        #residual = np.linalg.norm(r0)
+        residual = np.linalg.norm(r0)
         #residual_minimised = np.linalg.norm(e1 - h @ y)
-        residual = np.max(np.abs(r0)) # = maxr0
+        maxr0 = np.max(np.abs(r0)) # = maxr0
         #residual = maxr0
 
-        if residual < reltol: #tolerance: #residual_minimised < tolerance: 
+        if residual < reltol or maxr0 < reltol: #tolerance: #residual_minimised < tolerance: 
             #print(f"Converged after restart {irestart} with residual {residual} (relative tolerance {reltol}).")
             iterations_convergence[it] = no_iters
             break
@@ -221,7 +221,7 @@ def gmresm(A, b, x, kiter=10, jiter=4, tolerance=1e-6, iterations_convergence=np
                 print(f"Residual increased after restart {irestart} (residual: {residual}, old: {oldresidual}). This may indicate a problem with the solver or the choice of parameters.")
         oldresidual = residual
 
-    if residual >= reltol: 
+    if residual >= reltol and maxr0 >= reltol: # This second part wasn't here yet for the trial run.
         print(f'GMRES(m) did not converge within the given iterations (ktotal,jtotal={kiter},{jiter}). Final residual: {residual}, relative tolerance: {reltol}')
 
     #print(f'Number of iterations: {no_iters}')

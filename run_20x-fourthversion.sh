@@ -4,7 +4,7 @@ echo "Started script"
 sleep 7200
 echo "Started"
 
-for i in {1..20}
+for i in {1..20} #{1..2}
 do
     echo "Runs #$i"
     echo ""
