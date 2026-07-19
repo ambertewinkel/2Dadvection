@@ -209,8 +209,8 @@ def gmresm(A, b, x, kiter=10, jiter=4, tolerance=1e-6, iterations_convergence=np
 
         #residual = np.linalg.norm(r0)
         #residual_minimised = np.linalg.norm(e1 - h @ y)
-        maxr0 = np.max(np.abs(r0))
-        residual = maxr0
+        residual = np.max(np.abs(r0)) # = maxr0
+        #residual = maxr0
 
         if residual < reltol: #tolerance: #residual_minimised < tolerance: 
             #print(f"Converged after restart {irestart} with residual {residual} (relative tolerance {reltol}).")
