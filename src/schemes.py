@@ -91,6 +91,7 @@ def implicitness_adhimex(config, fields, it, **kwargs):
     fields.Ccc[it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
     
     fields.thetacc[it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.4)) # at [i,j]
+    #fields.thetacc[it] = np.zeros(np.shape(fields.thetacc[it]))
     fields.thetafc[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,0)) # at [i-1/2,j]
     fields.thetacf[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,1)) # at [i,j-1/2]
     if config.BC_x == 'periodic':

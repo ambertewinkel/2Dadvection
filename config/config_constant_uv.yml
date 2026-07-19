@@ -15,7 +15,9 @@ dt: 0.2 #0.2 #2. #2. # s
 nt: 500 #0 #50 #50
 starttime: 0.
 
-velocity_setting: swift_nondiv_streamfunction
+velocity_setting: constant_uv #swift_nondiv_streamfunction
+constant_u: 10.
+constant_v: 10.
 
 initial_tracer: slotted_cylinders
 
@@ -28,4 +30,4 @@ nondivergent: True
 
 solver: gmresm
 
-outputdir: swiftnondiv_slotcyl_ex_llgp_nt500
+outputdir: constantuv_slotcyl_ex_llgp_nt500
