@@ -75,9 +75,13 @@ def plot_figure(data, x, y, fielddata, fieldname, title, xlabel, ylabel, cmap, f
     extend = 'neither'
     if diff == 0.:
         contourlevels = None
+        extend = 'both'
         if plot_type == 'constancy':
-            absextent = max(abs(minval-5.0E-1), abs(maxval-5.0E-1))
-            contourlevels = list(np.linspace(-absextent, absextent, 20, endpoint=True))
+            #absextent = max(abs(minval-5.0E-1), abs(maxval-5.0E-1))
+            #contourlevels = list(np.linspace(-absextent, absextent, 20, endpoint=True))
+            #contourlevels = [-0.02,-0.015,-0.01,-0.005,-0.000000001,0.000000001,0.005,0.01,0.015,0.02]
+            contourlevels = [-0.02,-0.001,0.001,0.02]
+            #contourlevels = [-0.02,-0.015,-0.01,-0.005,-0.001,0.001,0.005,0.01,0.015,0.02]
             plt.contourf(x, y, fielddata-5.0E-1, cmap=cmap, levels=contourlevels, extend=extend)
     else:
         extend = 'both'
@@ -85,8 +89,11 @@ def plot_figure(data, x, y, fielddata, fieldname, title, xlabel, ylabel, cmap, f
             contourlevels = list(np.arange(-0.15, 1.16, 0.1)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
             plt.contourf(x, y, fielddata, cmap=cmap, levels=contourlevels, extend=extend)
         elif plot_type == 'constancy':
-            absextent = max(abs(minval-5.0E-1), abs(maxval-5.0E-1))
-            contourlevels = list(np.linspace(-absextent, absextent, 20, endpoint=True))
+            #absextent = max(abs(minval-5.0E-1), abs(maxval-5.0E-1))
+            #contourlevels = list(np.linspace(-absextent, absextent, 20, endpoint=True))
+            #contourlevels = [-0.02,-0.015,-0.01,-0.005,-0.000000001,0.000000001,0.005,0.01,0.015,0.02]
+            contourlevels = [-0.02,-0.001,0.001,0.02]
+            #contourlevels = [-0.02,-0.015,-0.01,-0.005,-0.001,0.001,0.005,0.01,0.015,0.02]
             plt.contourf(x, y, fielddata-5.0E-1, cmap=cmap, levels=contourlevels, extend=extend)
     if not no_colorbar: 
         cbar = plt.colorbar(fraction=0.046, pad=0.04)
