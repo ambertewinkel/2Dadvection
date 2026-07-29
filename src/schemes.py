@@ -263,7 +263,8 @@ def adhimex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
             matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
             solver = getattr(sv, config.solver)
             guess = fields.tracer[it].copy()
-            field_k = solver(matrix, rhs_k, guess, kiter=200, jiter=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
+            #field_k = solver(matrix, rhs_k, guess, kiter=200, jiter=2, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
+            field_k = solver(matrix, rhs_k, guess, kiter=800, jiter=1, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
             #field_k = solver(matrix, rhs_k, field_k, kiter=200, jiter=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
             #field_k = solver(matrix, rhs_k, field_3, kiter=200, jiter=5, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
         #elif ik == 2:

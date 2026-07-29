@@ -1,10 +1,10 @@
 #!/bin/bash
 
 echo "Started script"
-sleep 7200
+#sleep 10800
 echo "Started"
 
-for i in {1..20} #{1..2}
+for i in {1..20}
 do
     echo "Runs #$i"
     echo ""
