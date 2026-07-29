@@ -120,19 +120,23 @@ def adhimex_butcher():
 
 def fifth_order(config, fields, it, phi):
     """Fifth-order spatial discretisation"""
-    if config.BC_x == 'periodic' and config.BC_y == 'periodic':
-        phi_BS_fc = -1./20*np.roll(phi,-1,0) + 9./20.*phi + 47./60.*np.roll(phi,1,0) - 13./60.*np.roll(phi,2,0) + 1./30.*np.roll(phi,3,0) # backward in space (upwind if u>0) flux at face in x direction
-        phi_FS_fc = -1./20*np.roll(phi,2,0) + 9./20.*np.roll(phi,1,0) + 47./60.*phi - 13./60.*np.roll(phi,-1,0) + 1./30.*np.roll(phi,-2,0) # forward in space (upwind if u<0) flux at face in x direction
-        phi_BS_cf = -1./20*np.roll(phi,-1,1) + 9./20.*phi + 47./60.*np.roll(phi,1,1) - 13./60.*np.roll(phi,2,1) + 1./30.*np.roll(phi,3,1) # backward in space (upwind if v>0) flux at face in y direction
-        phi_FS_cf = -1./20*np.roll(phi,2,1) + 9./20.*np.roll(phi,1,1) + 47./60.*phi - 13./60.*np.roll(phi,-1,1) + 1./30.*np.roll(phi,-2,1) # forward in space (upwind if v<0) flux at face in y direction
-    elif config.BC_x == 'noflux' and config.BC_y == 'noflux':
+    if config.BC_x == 'periodic' and config.BC_y == 'periodic': #temporary third
+        #fifth: phi_BS_fc = -1./20*np.roll(phi,-1,0) + 9./20.*phi + 47./60.*np.roll(phi,1,0) - 13./60.*np.roll(phi,2,0) + 1./30.*np.roll(phi,3,0) # backward in space (upwind if u>0) flux at face in x direction
+        #fifth: phi_FS_fc = -1./20*np.roll(phi,2,0) + 9./20.*np.roll(phi,1,0) + 47./60.*phi - 13./60.*np.roll(phi,-1,0) + 1./30.*np.roll(phi,-2,0) # forward in space (upwind if u<0) flux at face in x direction
+        #fifth: phi_BS_cf = -1./20*np.roll(phi,-1,1) + 9./20.*phi + 47./60.*np.roll(phi,1,1) - 13./60.*np.roll(phi,2,1) + 1./30.*np.roll(phi,3,1) # backward in space (upwind if v>0) flux at face in y direction
+        #fifth: phi_FS_cf = -1./20*np.roll(phi,2,1) + 9./20.*np.roll(phi,1,1) + 47./60.*phi - 13./60.*np.roll(phi,-1,1) + 1./30.*np.roll(phi,-2,1) # forward in space (upwind if v<0) flux at face in y direction
+        phi_BS_fc = 1./3.*phi + 5./6.*np.roll(phi,1,0) - 1./6.*np.roll(phi,2,0) # backward in space (upwind if u>0) flux at face in x direction
+        phi_FS_fc = 1./3.*np.roll(phi,1,0) + 5./6.*phi - 1./6.*np.roll(phi,-1,0) # forward in space (upwind if u<0) flux at face in x direction
+        phi_BS_cf = 1./3.*phi + 5./6.*np.roll(phi,1,1) - 1./6.*np.roll(phi,2,1) # backward in space (upwind if v>0) flux at face in y direction
+        phi_FS_cf = 1./3.*np.roll(phi,1,1) + 5./6.*phi - 1./6.*np.roll(phi,-1,1) # forward in space (upwind if v<0) flux at face in y direction
+    elif config.BC_x == 'noflux' and config.BC_y == 'noflux': #temporary third
         phi = phi
         phi_temp = np.append(phi, np.array([phi[-1,:],phi[-1,:],phi[0,:],phi[0,:]]), axis=0)
         phi_temp = np.append(phi_temp, np.array([phi_temp[:,-1],phi_temp[:,-1],phi_temp[:,0],phi_temp[:,0]]).T, axis=1)
-        phi_temp_BS_fc = -1./20*np.roll(phi_temp,-1,0) + 9./20.*phi_temp + 47./60.*np.roll(phi_temp,1,0) - 13./60.*np.roll(phi_temp,2,0) + 1./30.*np.roll(phi_temp,3,0) # backward in space (upwind if u>0) flux at face in x direction
-        phi_temp_FS_fc = -1./20*np.roll(phi_temp,2,0) + 9./20.*np.roll(phi_temp,1,0) + 47./60.*phi_temp - 13./60.*np.roll(phi_temp,-1,0) + 1./30.*np.roll(phi_temp,-2,0) # forward in space (upwind if u<0) flux at face in x direction
-        phi_temp_BS_cf = -1./20*np.roll(phi_temp,-1,1) + 9./20.*phi_temp + 47./60.*np.roll(phi_temp,1,1) - 13./60.*np.roll(phi_temp,2,1) + 1./30.*np.roll(phi_temp,3,1) # backward in space (upwind if v>0) flux at face in y direction
-        phi_temp_FS_cf = -1./20*np.roll(phi_temp,2,1) + 9./20.*np.roll(phi_temp,1,1) + 47./60.*phi_temp - 13./60.*np.roll(phi_temp,-1,1) + 1./30.*np.roll(phi_temp,-2,1) # forward in space (upwind if v<0) flux at face in y direction
+        phi_temp_BS_fc = 1./3.*phi_temp + 5./6.*np.roll(phi_temp,1,0) - 1./6.*np.roll(phi_temp,2,0) # backward in space (upwind if u>0) flux at face in x direction
+        phi_temp_FS_fc = 1./3.*np.roll(phi_temp,1,0) + 5./6.*phi_temp - 1./6.*np.roll(phi_temp,-1,0) # forward in space (upwind if u<0) flux at face in x direction
+        phi_temp_BS_cf = 1./3.*phi_temp + 5./6.*np.roll(phi_temp,1,1) - 1./6.*np.roll(phi_temp,2,1) # backward in space (upwind if v>0) flux at face in y direction
+        phi_temp_FS_cf = 1./3.*np.roll(phi_temp,1,1) + 5./6.*phi_temp - 1./6.*np.roll(phi_temp,-1,1) # forward in space (upwind if v<0) flux at face in y direction
         phi_BS_fc = phi_temp_BS_fc[:-4,:-4]
         phi_FS_fc = phi_temp_FS_fc[:-4,:-4]
         phi_BS_cf = phi_temp_BS_cf[:-4,:-4]
@@ -144,6 +148,25 @@ def fifth_order(config, fields, it, phi):
     flxcf = np.maximum(0., fields.v[it]) * phi_BS_cf + np.minimum(0., fields.v[it]) * phi_FS_cf # at [i,j-1/2]
 
     return flxfc, flxcf
+
+
+
+#
+#def thirdfactor(kdx):
+#    """This function returns  the amplification factor for the derivative of cubic in space without the division by dx (this is included in C outside of this function)."""
+#    return 1./3.*np.exp(1j*kdx) + 0.5 - np.exp(-1j*kdx) + 1./6.*np.exp(-2j*kdx)
+#
+#
+#def fourth301factor(kdx):
+#    """This function returns the amplification factor for the derivative of the fourth301 method without the division by dx (this is included in C outside of this function)."""
+#    return (3*np.exp(1j*kdx) + 10 - 18*np.exp(-1j*kdx) + 6*np.exp(-2j*kdx) - np.exp(-3j*kdx))/12. 
+#
+#
+#def fifth302factor(kdx):
+#    """This function returns the amplification factor for the derivative of the fifth302 method without the division by dx (this is included in C outside of this function)."""
+#    return -1/20*np.exp(2j*kdx) + 0.5*np.exp(1j*kdx) + 1/3 - np.exp(-1j*kdx) + 0.25*np.exp(-2j*kdx) - 1/30*np.exp(-3j*kdx)
+#
+
 
 
 def third_order(fields, it, phi):

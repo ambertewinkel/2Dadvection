@@ -23,9 +23,9 @@ T: 100. # s
 u0: 10. # m/s
 #thirdordermatrix: True
 
-#FCT: True
+FCT: True
 nondivergent: True
 
 solver: gmresm
 
-outputdir: swiftnondiv_slotcyl_ex_llgp_nt500
+outputdir: swiftnondiv_slotcyl_llgp_nt500_FCT_adhimexcubic

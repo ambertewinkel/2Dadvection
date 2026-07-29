@@ -42,8 +42,8 @@ def plot_fields(config, fieldnames, data, plots_dir, plot_type):
         plot_figure(data, data['xcc'], data['ycc'], data[field][-1], field, f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$, $l_2 =${l2_error:.5f}', 'x (m)', 'y (m)', 'viridis', plots_dir + f'{field}_nt{config.nt}', minval, maxval, plot_type='swift')        
     elif plot_type == 'hadley':
         l2_error = l2norm(data['tracer'][-1], data['tracer'][0], data['dxcc']*data['dycc'])
-        #plot_figure(data, data['xcc'], data['ycc']*1e-3, data[field][-1], field, f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$, $l_2 =${l2_error:.5f}', 'lat (deg)', 'z (km)', 'viridis', plots_dir + f'{field}_nt{config.nt}', minval, maxval, plot_type='hadley') # for final time
-        plot_figure(data, data['xcc'], data['ycc']*1e-3, data[field][-1], field, f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$', 'lat (deg)', 'z (km)', 'viridis', plots_dir + f'{field}_nt{config.nt}', minval, maxval, plot_type='hadley') # for halftime
+        plot_figure(data, data['xcc'], data['ycc']*1e-3, data[field][-1], field, f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$, $l_2 =${l2_error:.5f}', 'lat (deg)', 'z (km)', 'viridis', plots_dir + f'{field}_nt{config.nt}', minval, maxval, plot_type='hadley') # for final time
+        #plot_figure(data, data['xcc'], data['ycc']*1e-3, data[field][-1], field, f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$', 'lat (deg)', 'z (km)', 'viridis', plots_dir + f'{field}_nt{config.nt}', minval, maxval, plot_type='hadley') # for halftime
     elif plot_type == 'constancy':
         plot_figure(data, data['xcc'], data['ycc'], data[field][-1], field, f'$\\Psi^{{ {config.nt} }}-0.5 \\in [{minval-0.5:.2e},{maxval-0.5:.2e}]$', 'x (m)', 'y (m)', 'viridis', plots_dir + f'{field}_nt{config.nt}', minval, maxval, plot_type='constancy')        
     else:
