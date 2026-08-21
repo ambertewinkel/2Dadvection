@@ -150,11 +150,11 @@ def plot_timings(data):
 
     plt.tight_layout()
     #figname = "timing_plot-20260622-itermin4-jiter4-nok3-log-thirdordermatrix"
-    #figname = "timing_plot-20260616-itermin4-jiter4-nok3-log"
+    figname = "timing_plot-20260616-itermin4-jiter4-nok3-log"
     #figname = "timing_plot-20260709-noitermin_jiter4_IGn-log"
     #figname = "timing_plot-20260709-noitermin_jiter4_IGn_maxres-log"
     #figname = "timing_plot-20260719try2-noitermin_jiter4_IGn_normresandmaxres-log"
-    figname = "timing_plot-20260720-noitermin_jiter4_IGn_normresandmaxres-log"
+    ###figname = "timing_plot-20260720-noitermin_jiter4_IGn_normresandmaxres-log"
     #figname = "timing_plot-20260721-noitermin_jiter2_IGn_normresandmaxres-log"
     plt.savefig(f"{figname}.pdf", dpi=300)
     plt.savefig(f"{figname}.svg", dpi=300)
@@ -164,9 +164,9 @@ def plot_timings(data):
 
 def main():
     #filename = "output_timing_run_20x_fourthversion_20260615-itermin5-jiter5-k3.txt"#"singlerun_test_accuracy_timings-fourthversion-k3.txt" # "singlerun_test_accuracy_timings-fourthversion.txt" #"output_run_20x-fourthversion.txt"
-    ###filename = "output_timing_run_20x_fourthversion_20260616-itermin4-jiter4-nok3.txt" # best one! (prior)
+    filename = "output_timing_run_20x_fourthversion_20260616-itermin4-jiter4-nok3.txt" # best one! (prior)
     #filename = "output_timing_run_20x_fourthversion_20260719try2-noitermin_jiter4_IGn_normresandmaxres.txt"
-    filename = "output_timing_run_20x_fourthversion_20260720-noitermin_jiter4_IGn_normresandmaxres.txt"
+    ###filename = "output_timing_run_20x_fourthversion_20260720-noitermin_jiter4_IGn_normresandmaxres.txt"
     #filename = "output_timing_run_20x_fourthversion_20260721-noitermin_jiter2_IGn_normresandmaxres.txt"
     #filename = "output_timing_run_20x_fourthversion_20260622-itermin4-jiter4-nok3-thirdordermatrix.txt"
     #filename = "timing_test_20260614-itermin4.txt" # better (but also this one is the only average of two)

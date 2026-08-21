@@ -12,7 +12,7 @@ BC_x: periodic
 BC_y: periodic
 
 dt: 0.2 #0.2 #2. #2. # s
-nt: 500 #0 #50 #50
+nt: 1 #500 #0 #50 #50
 starttime: 0.
 
 velocity_setting: swift_nondiv_streamfunction
