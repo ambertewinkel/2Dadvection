@@ -19,11 +19,6 @@ def time_stepping(config, fields, **kwargs):
             # Update velocity fields
             testcases.velocity.velocity(config, fields, it)
 
-            #print('Velocity at boundaries u left', fields.u[it,0,:]) # needs to go to zero but doesnt, but that is done with the cos phi factor I think
-            #print('Velocity at boundaries u right', fields.u[it,-1,:]) # needs to go to zero but doesnt, but that is done with the cos phi factor I think
-            #print('Velocity at boundaries v bottom', fields.v[it,:,0])
-            #print('Velocity at boundaries v top', fields.v[it,:,-1]) #not quite the top
-            #exit()
             # Call the advection scheme
             scheme(config, fields, it, iterations_convergence=iterations_convergence)
     else: 
@@ -62,23 +57,6 @@ def time_stepping(config, fields, **kwargs):
         # Store iterations fields for convergence analysis
         total_iterations_convergence = np.sum(iterations_convergence)
         print(f'Total number of iterations over all times: {total_iterations_convergence}')
-        info(f'iterations_convergence={iterations_convergence}')
         info(f'total_iterations_convergence: {total_iterations_convergence}')
         np.save(config.outputdir + f'data/iterations_convergence.npy', iterations_convergence)
         np.save(config.outputdir + f'data/total_iterations_convergence.npy', total_iterations_convergence)
-
-
-            #print(f"Time step {it+1}/{config.nt} completed in {end - start:.4f} seconds.")
-            # preconditioner?
-
-            #time_avg += end - start
-            #print('Min Courant number: ', fields.Ccc[it].min())
-            #print('Max Courant number: ', fields.Ccc[it].max())
-
-            # (None of these results are final, just first explorations)
-            # 10x larger time step takes about 10x longer
-            # velocity calc seems to be a small part of the time
-            # see what happens with third order matrix!!!
-            # GMRES(m) seems to be about 5 times faster than GCR(k)
-    
-        #print(f"Average time per time step: {time_avg / config.nt:.4f} seconds.")

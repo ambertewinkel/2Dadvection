@@ -32,7 +32,6 @@ grid_nodes_xy_boundaries = [
 
 fieldnames_nodes_xy_init = [
                       "tracer",
-                      #"density",
 ]
 
 fieldnames_nodes_xy =   [ 
@@ -42,8 +41,6 @@ fieldnames_nodes_xy =   [
                       "thetacc", # implicitness at cell centers
                       "thetafc", # implicitness at faces in x, centers in y
                       "thetacf",  # implicitness at centers in x, faces in y
-                      "dthetafc",  # implicitness x difference at cell centers
-                      "dthetacf",  # implicitness y difference at cell centers
                      ]
 
 fieldnames_nodes_xy_boundaries =   [

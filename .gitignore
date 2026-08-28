@@ -171,3 +171,5 @@ cython_debug/
 .vscode/settings.json
 output
 output/*
+output_paper
+output_paper/*

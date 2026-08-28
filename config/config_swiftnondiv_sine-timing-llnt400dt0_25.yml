@@ -20,13 +20,11 @@ velocity_setting: swift_nondiv_streamfunction
 initial_tracer: sine_swift
 T: 100. # s
 u0: 10. # m/s
-#thirdordermatrix: True
 
-#FCT: True
 nondivergent: True
 
 solver: gmresm 
 
 timing: True
 print_error: True
-outputdir: timingerror_swiftnondiv_sine_adhimex_ll_nt400dt0_25
+outputdir: timing_swiftnondiv_sine_adhimex_ll_nt400dt0_25

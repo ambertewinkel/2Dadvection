@@ -1,0 +1,30 @@
+scheme: adhimex
+
+nx: 153  
+ny: 153
+xmin: -500. # m
+xmax: 500. # m
+ymin: -500. # m
+ymax: 500. # m
+grid_x: lowerleftGP #cosine4_topleft
+grid_y: lowerleftGP # linear #cosine4_topleft
+BC_x: periodic
+BC_y: periodic
+
+dt: 0.2 # s
+nt: 500
+starttime: 0.
+
+velocity_setting: swift_nondiv_streamfunction 
+
+initial_tracer: constant
+constant_tracer: 0.5
+
+T: 100.
+u0: 10.
+
+nondivergent: True
+
+solver: gmresm 
+
+outputdir: swiftnondiv_constant_adhimex

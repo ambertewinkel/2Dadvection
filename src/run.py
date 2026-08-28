@@ -42,8 +42,6 @@ def run(config, configfile, configname):
         print(f'l2norm = {l2_error}')
         np.save(config.outputdir + f'data/l2_error.npy', l2_error)
 
-    info('Min and max tracer at final time step: ' + str(getminmax(fields.tracer, -1)))
-    print('Min and max tracer at final time step: ' + str(getminmax(fields.tracer, -1)))
     np.save(config.outputdir + f'data/min_tracer.npy', getminmax(fields.tracer, -1)[0])
     np.save(config.outputdir + f'data/max_tracer.npy', getminmax(fields.tracer, -1)[1])
 

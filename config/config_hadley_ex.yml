@@ -1,0 +1,26 @@
+scheme: adhimex
+
+nx: 180
+ny: 180
+xmin: -90. # deg
+xmax: 90. # deg
+ymin: 0. # m
+ymax: 1.2e4 # m
+grid_x: uniform 
+grid_y: uniform 
+BC_x: noflux
+BC_y: noflux
+
+dt: 432. # s
+nt: 200
+starttime: 0.
+
+velocity_setting: hadley
+
+initial_tracer: hadley
+
+solver: gmresm 
+
+nondivergent: True
+
+outputdir: hadley_ex

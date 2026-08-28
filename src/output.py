@@ -5,36 +5,31 @@ import os
 import logging
 import shutil
 from src.fields import variables
-from datetime import date
 
 
 def set_up_output_directory(config):
-    """Sets up the output directory for storing results."""
+    """Sets up the output directory for storing results.""" 
 
-    if not os.path.exists('./output/'):
-        os.mkdir('./output/')
-    if config.outputdir == 'test':
-        config.outputdir = './output/test/'
-        if not os.path.exists(config.outputdir):
-            os.mkdir(config.outputdir)
-            os.mkdir(config.outputdir + 'data/')        
+    outputdirname = './output_paper/'
+    if not os.path.exists(outputdirname):
+        os.mkdir(outputdirname)
+    if config.timing:
+        outputdirname = outputdirname + 'timing/'
+        if not os.path.exists(outputdirname):
+            os.mkdir(outputdirname)
+
+    config.outputdir = outputdirname + config.outputdir
+    if not os.path.exists(config.outputdir):
+        os.mkdir(config.outputdir)
+        config.outputdir = config.outputdir + '/'
+        os.mkdir(config.outputdir + 'data/')        
     else:
-        config.outputdir = f'./output/dated/{date.today().strftime("%Y%m%d")}/' + config.outputdir
-        if not os.path.exists(f'./output/dated/'):
-            os.mkdir(f'./output/dated/')
-        if not os.path.exists(f'./output/dated/{date.today().strftime("%Y%m%d")}/'):
-            os.mkdir(f'./output/dated/{date.today().strftime("%Y%m%d")}/')
-        if not os.path.exists(config.outputdir):
-            os.mkdir(config.outputdir)
-            config.outputdir = config.outputdir + '/'
-            os.mkdir(config.outputdir + 'data/')        
-        else:
-            i = 1
-            while os.path.exists(config.outputdir + f"_{i}"):
-                i += 1
-            os.mkdir(config.outputdir + f"_{i}")
-            config.outputdir = config.outputdir + f"_{i}" + '/'
-            os.mkdir(config.outputdir + 'data/')        
+        i = 1
+        while os.path.exists(config.outputdir + f"_{i}"):
+            i += 1
+        os.mkdir(config.outputdir + f"_{i}")
+        config.outputdir = config.outputdir + f"_{i}" + '/'
+        os.mkdir(config.outputdir + 'data/')        
 
 
 def set_up_plots_directory(outputdir):

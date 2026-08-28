@@ -30,21 +30,16 @@ class Config():
     starttime: float
 
     initial_tracer: str
-    thirdordermatrix: bool = False
-    FCT_2pass: bool = False
     FCT: bool = False
     tracermin: float = None
     tracermax: float = None
 
     timing: bool = False
     print_error: bool = False
-    verbose: bool = False
     outputdir: str = 'test'
 
-    solver: str = 'gmresm' #gcrk or gmresm --- both matrixfree (gmresm kinda)
+    solver: str = 'gmresm'
     constant_tracer: float = 1.
-    constant_u: float = 1.
-    constant_v: float = 1.
     nondivergent: bool = None
 
     # SWIFT defaults (u0 and T also used for other testcases, with potentially different values)
@@ -52,10 +47,6 @@ class Config():
     mmag: float = 0.5 # kg kg-1
     u0: float = 10. # m s-1    
     T: float = 100. # s
-
-    # Jet testcase defaults
-    ujet_max: float = 1. # maximum jet velocity magnitude
-
 
     def __post_init__(self):
 
