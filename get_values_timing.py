@@ -114,14 +114,12 @@ def plot_timings(data):
     axs[0].set_xscale("log")
     axs[0].set_yscale("log")
     axs[0].grid(True, which="both", ls="--", alpha=0.5)
-
-    # 2) iterations per step
-    axs[1].plot(dt[:-4], iterations_per_step[:-4], marker='o')
-    axs[1].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
-    axs[1].set_ylabel("Iterations\nper time step")
-    axs[1].set_xlabel("$\Delta t$")
     axs[0].secondary_xaxis('top', functions=(lambda x: meanCmaxoverdt*x, lambda x: meanCmaxoverdt*x)).set_xlabel("$C_{max}$")
-    axs[1].set_yscale("log")
+    
+    # 2) total scheme time
+    axs[1].plot(dt, time_scheme, marker='o')
+    axs[1].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
+    axs[1].set_ylabel("Total scheme\nwall-clock time (s)")
     axs[1].set_xscale("log")
     axs[1].grid(True, which="both", ls="--", alpha=0.5)
     
@@ -133,13 +131,15 @@ def plot_timings(data):
     axs[2].set_xscale("log")
     axs[2].grid(True, which="both", ls="--", alpha=0.5)
     
-    # 4) total scheme time
-    axs[3].plot(dt, time_scheme, marker='o')
+    # 4) iterations per step
+    axs[3].plot(dt[:-4], iterations_per_step[:-4], marker='o')
     axs[3].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
-    axs[3].set_ylabel("Total scheme\nwall-clock time (s)")
+    axs[3].set_ylabel("Iterations\nper time step")
+    axs[3].set_xlabel("$\Delta t$")
+    axs[3].set_yscale("log")
     axs[3].set_xscale("log")
     axs[3].grid(True, which="both", ls="--", alpha=0.5)
-    
+
     ## 4) total iterations
     #axs[3].plot(dt, total_iters, marker='o')
     #axs[3].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')

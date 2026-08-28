@@ -2,7 +2,6 @@ import numpy as np
 from functools import partial
 import src.solvers as sv
 import src.limiter as lim
-import scipy.sparse.linalg as sp
 
 ################# UPWIND SCHEME #################
 
@@ -83,7 +82,7 @@ def adimex_upwind(config, fields, it, tolerance=1e-6, kiter=10, jiter=4, **kwarg
 ################# ADHIMEX SCHEME #################
 
 def implicitness_adhimex(config, fields, it, **kwargs):
-    """Calculate Courant numbers at cell centers and implicitness at cell centers and faces for AdHImEx scheme"""
+    """Calculate Courant numbers at cell centers and implicitness at cell centers and faces for AdHImEx scheme. Assumes nondivergent winds, and that dy is constant in x and dx is constant in y"""
 
     # assumes dy is constant in the x direction (should be defined at each face to multiply with the velocity to get the flux, but this is the same value as dycc at the cell center, so using that for simplicity) -- the same thing applies for dx in the y direction.
     # sum_abs_velarea like this is still fine in the nonperiodic BCs as the u and v at the boundaries are assumed zero (e.g. for Hadley circulation)
@@ -214,7 +213,9 @@ def adhimex_ncp(config, fields, it, **kwargs):
         if ik == 4 and np.any(fields.thetacc[it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
             matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
             solver = getattr(sv, config.solver)
-            field_k = solver(matrix, rhs_k, field_k, kiter=200, jiter=4, tolerance=1e-6)
+            #field_k = solver(matrix, rhs_k, field_k, kiter=200, jiter=4, tolerance=1e-6)
+            guess = fields.tracer[it].copy()
+            field_k = solver(matrix, rhs_k, guess, kiter=200, jiter=4, tolerance=1e-6, it=it)
         else:
             field_k = rhs_k.copy()
 
@@ -234,9 +235,9 @@ def adhimex_ncp(config, fields, it, **kwargs):
     elif config.FCT:
         fields.tracer[it+1] = lim.FCT(config, fields, it, flxfc_HO, flxcf_HO)
     else:     
-        fields.tracer[it+1] = field_k.copy() 
+        fields.tracer[it+1] = field_k.copy()
 
-#import matplotlib.pyplot as plt
+
 def adhimex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
     """Implement the AdHImEx scheme for the given time step - constancy-preserving version"""
 
@@ -263,13 +264,7 @@ def adhimex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
             matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[it], thetacf=fields.thetacf[it], alpha=AIm[ik,ik]) # at [i,j]
             solver = getattr(sv, config.solver)
             guess = fields.tracer[it].copy()
-            #field_k = solver(matrix, rhs_k, guess, kiter=200, jiter=2, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
-            field_k = solver(matrix, rhs_k, guess, kiter=800, jiter=1, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
-            #field_k = solver(matrix, rhs_k, field_k, kiter=200, jiter=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
-            #field_k = solver(matrix, rhs_k, field_3, kiter=200, jiter=5, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
-        #elif ik == 2:
-        #    field_3 = rhs_k.copy()
-        #    field_k = rhs_k.copy()
+            field_k = solver(matrix, rhs_k, guess, kiter=200, jiter=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
         else:
             field_k = rhs_k.copy()
 
