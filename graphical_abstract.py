@@ -103,6 +103,8 @@ def plot_tracer(ax, data, label, cmap):
             size=LABELSIZE, color=LABELCOLOUR, weight='bold')
     ax.text(0.96, 0.04, f'$\\ell_2 =${l2_error:.4f}', transform=ax.transAxes,
             ha='right', va='bottom', size=L2SIZE, color=LABELCOLOUR)
+    ax.text(0.04, 0.04, f'$C \leq${data['Ccc'].max():.2f}', transform=ax.transAxes,
+            ha='left', va='bottom', size=L2SIZE, color=LABELCOLOUR)
 
     ax.set_xlim(*XLIM)
     ax.set_ylim(*YLIM)
