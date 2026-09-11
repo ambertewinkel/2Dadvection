@@ -1,4 +1,4 @@
-scheme: adhimex
+scheme: adimex_upwind #adhimex
 
 nx: 153 #128 
 ny: 153 #128
@@ -12,7 +12,7 @@ BC_x: periodic
 BC_y: periodic
 
 dt: 0.2 #2. #0.2 #2. # s
-nt: 1 #500
+nt: 500
 starttime: 0.
 
 velocity_setting: swift_nondiv_streamfunction
@@ -20,10 +20,11 @@ velocity_setting: swift_nondiv_streamfunction
 initial_tracer: sine_swift
 T: 100. # s
 u0: 10. # m/s
-thirdordermatrix: True
+#thirdordermatrix: True
 #FCT: True
 nondivergent: True
+theta_anisotropic: False #True
 
 solver: gmresm 
 
-outputdir: test #swiftnondiv_sine_adhimex_llgp_nt500
+outputdir: swiftnondiv_sine_adimexupwind_llgp_nt500

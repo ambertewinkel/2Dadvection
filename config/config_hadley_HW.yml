@@ -1,4 +1,4 @@
-scheme: adhimex #adimex_upwind #adhimex_adv #3_overwritek2
+scheme: adimex_upwind #adhimex
 
 nx: 180 #90 #64 #50 #10 #100
 ny: 180 #30 #64 #50 #10 #100
@@ -36,4 +36,4 @@ theta_anisotropic: True
 #filename: chenetal2017
 #verbose: True
 #animate: True
-outputdir: hadley_HW_adhimex_anis_nt20
+outputdir: hadley_HW_adimexupwind_anis_nt20

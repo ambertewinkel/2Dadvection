@@ -1,4 +1,4 @@
-scheme: adhimex
+scheme: adimex_upwind #adhimex
 
 nx: 153 #128 
 ny: 153 #128 
@@ -19,7 +19,7 @@ velocity_setting: constant_uv #swift_nondiv_streamfunction
 constant_u: 10.
 constant_v: 10.
 
-initial_tracer: sine_swift #slotted_cylinders
+initial_tracer: slotted_cylinders
 
 T: 100. # s
 u0: 10. # m/s
@@ -29,6 +29,6 @@ u0: 10. # m/s
 nondivergent: True
 
 solver: gmresm
-theta_anisotropic: True
+theta_anisotropic: False #True
 
-outputdir: constantuv_sine_adhimex_anis_llgp_nt500
+outputdir: constantuv_slotcyl_adimexupwind_llgp_nt500
