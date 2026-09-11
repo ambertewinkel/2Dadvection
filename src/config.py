@@ -46,6 +46,7 @@ class Config():
     constant_u: float = 1.
     constant_v: float = 1.
     nondivergent: bool = None
+    theta_anisotropic: bool = False
 
     # SWIFT defaults (u0 and T also used for other testcases, with potentially different values)
     mref: float = 0.5 # kg kg-1

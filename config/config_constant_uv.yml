@@ -12,14 +12,14 @@ BC_x: periodic
 BC_y: periodic
 
 dt: 0.2 #0.2 #2. #2. # s
-nt: 500 #0 #50 #50
+nt: 500 #500 #0 #50 #50
 starttime: 0.
 
 velocity_setting: constant_uv #swift_nondiv_streamfunction
 constant_u: 10.
 constant_v: 10.
 
-initial_tracer: slotted_cylinders
+initial_tracer: sine_swift #slotted_cylinders
 
 T: 100. # s
 u0: 10. # m/s
@@ -29,5 +29,6 @@ u0: 10. # m/s
 nondivergent: True
 
 solver: gmresm
+theta_anisotropic: True
 
-outputdir: constantuv_slotcyl_ex_llgp_nt500
+outputdir: constantuv_sine_adhimex_anis_llgp_nt500

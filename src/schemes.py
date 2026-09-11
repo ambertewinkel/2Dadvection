@@ -81,6 +81,7 @@ def adimex_upwind(config, fields, it, tolerance=1e-6, kiter=10, jiter=4, **kwarg
 
 ################# ADHIMEX SCHEME #################
 
+import matplotlib.pyplot as plt
 def implicitness_adhimex(config, fields, it, **kwargs):
     """Calculate Courant numbers at cell centers and implicitness at cell centers and faces for AdHImEx scheme. Assumes nondivergent winds, and that dy is constant in x and dx is constant in y"""
 
@@ -89,10 +90,58 @@ def implicitness_adhimex(config, fields, it, **kwargs):
     sum_abs_velarea = (abs(fields.u[it]) + abs(np.roll(fields.u[it],-1,0)))*fields.dycc + (abs(fields.v[it]) + abs(np.roll(fields.v[it],-1,1)))*fields.dxcc # at [i,j]
     fields.Ccc[it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
     
-    fields.thetacc[it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.4)) # at [i,j]
-    #fields.thetacc[it] = np.zeros(np.shape(fields.thetacc[it]))
-    fields.thetafc[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,0)) # at [i-1/2,j]
-    fields.thetacf[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,1)) # at [i,j-1/2]
+    if config.theta_anisotropic: # anisotropic implicitness (different in x and y directions)
+        Cfc = config.dt*(0.5*(fields.u[it] + abs(fields.u[it]))*fields.dycc/(np.roll(fields.dxcc,1,0)*fields.dycc) + 0.5*(-fields.u[it] + abs(fields.u[it]))*fields.dycc/(fields.dxcc*fields.dycc)) # assumes an orthogonal grid (dyfc = dycc etc). #  always positive # at [i-1/2,j] 
+        Ccf = config.dt*(0.5*(fields.v[it] + abs(fields.v[it]))*fields.dxcc/(fields.dxcc*np.roll(fields.dycc,1,1)) + 0.5*(-fields.v[it] + abs(fields.v[it]))*fields.dxcc/(fields.dxcc*fields.dycc)) # assumes an orthogonal grid (dyfc = dycc etc). #  always positive # at [i,j-1/2]
+        plot=False
+        if plot:
+            fig, axes = plt.subplots(1, 3, figsize=(15, 5), constrained_layout=True)
+            contour = axes[0].contourf(fields.xcc, fields.ycc, fields.Ccc[it])
+            axes[0].set_title('Ccc')
+            fig.colorbar(contour, ax=axes[0])
+            contour = axes[1].contourf(fields.xfc, fields.yfc, Cfc)
+            axes[1].set_title('Cfc')
+            fig.colorbar(contour, ax=axes[1])
+            contour = axes[2].contourf(fields.xcf, fields.ycf, Ccf)
+            axes[2].set_title('Ccf')
+            fig.colorbar(contour, ax=axes[2])
+            plt.show()
+        fields.thetafc[it] = 1. - 1./(1. + 0.7*np.maximum(0., 2.*Cfc - 1.4)) # at [i-1/2,j] 
+        fields.thetacf[it] = 1. - 1./(1. + 0.7*np.maximum(0., 2.*Ccf - 1.4)) # at [i,j-1/2]
+        #fields.thetacc[it] = np.maximum.reduce([fields.thetafc[it], np.roll(fields.thetafc[it],-1,0), fields.thetacf[it], np.roll(fields.thetacf[it],-1,1)]) # at [i,j] # Needed to activate the matrix solve + for the fEx_c and fIm_c parts needed for constancy. This works, it seems to be stable for uniform uv and hadley and swift nondiv cases. 
+        fields.thetacc[it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.4)) # at [i,j] # Needed to activate the matrix solve + for the fEx_c and fIm_c parts needed for constancy. This works, it seems to be stable for uniform uv and hadley and swift nondiv cases. 
+
+        # For comparison: previous settings:
+        if plot:
+            thetacc2 = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.4)) # at [i,j]
+            thetafc2 = np.maximum(thetacc2, np.roll(thetacc2,1,0)) # at [i-1/2,j]
+            thetacf2 = np.maximum(thetacc2, np.roll(thetacc2,1,1)) # at [i,j-1/2]
+
+            fig, axes = plt.subplots(1, 6, figsize=(25, 5), constrained_layout=True)
+            contour = axes[0].contourf(fields.xfc, fields.yfc, fields.thetafc[it])
+            axes[0].set_title('thetafc1')
+            fig.colorbar(contour, ax=axes[0])
+            contour = axes[1].contourf(fields.xfc, fields.yfc, thetafc2)
+            axes[1].set_title('thetafc2')
+            fig.colorbar(contour, ax=axes[1])
+            contour = axes[2].contourf(fields.xfc, fields.yfc, fields.thetafc[it] - thetafc2)
+            axes[2].set_title('thetafc1 - thetafc2')
+            fig.colorbar(contour, ax=axes[2])
+            contour = axes[3].contourf(fields.xcf, fields.ycf, fields.thetacf[it])
+            axes[3].set_title('thetacf1')
+            fig.colorbar(contour, ax=axes[3])
+            contour = axes[4].contourf(fields.xcf, fields.ycf, thetacf2)
+            axes[4].set_title('thetacf2')
+            fig.colorbar(contour, ax=axes[4])        
+            contour = axes[5].contourf(fields.xcf, fields.ycf, fields.thetacf[it] - thetacf2)
+            axes[5].set_title('thetacf1 - thetacf2')
+            fig.colorbar(contour, ax=axes[5])
+            plt.show()
+    else:
+        fields.thetacc[it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[it] - 1.4)) # at [i,j]
+        fields.thetafc[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,0)) # at [i-1/2,j]
+        fields.thetacf[it] = np.maximum(fields.thetacc[it], np.roll(fields.thetacc[it],1,1)) # at [i,j-1/2]
+    
     if config.BC_x == 'periodic':
         fields.dthetafc[it] = np.roll(fields.thetafc[it],-1,0) - fields.thetafc[it] # at [i,j]
     else: # doesn't work properly for nonperiodic BC
