@@ -1,7 +1,7 @@
 scheme: adhimex
 
 nx: 128 
-ny: 128 
+ny: 1280 
 xmin: -500. # m
 xmax: 500. # m
 ymin: -500. # m
@@ -11,8 +11,8 @@ grid_y: uniform
 BC_x: periodic
 BC_y: periodic
 
-dt: 0.2 #0.2 #2. #2. # s
-nt: 500 #500 #0 #50 #50
+dt: 0.2 # s
+nt: 500
 starttime: 0.
 
 velocity_setting: constant_uv
@@ -26,6 +26,6 @@ u0: 10. # m/s
 nondivergent: True
 
 solver: gmresm
-theta_anisotropic: False #True
+theta_anisotropic: False
 
-outputdir: constantuv_sine_unif_adhimex_nt500
+outputdir: constantuv_sine_unif_ny1280dt0_2
