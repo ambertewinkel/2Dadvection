@@ -83,6 +83,12 @@ def sine_swift(config, fields, it):
     fields.tracer[it] = config.mref + config.mmag*np.sin(2.*np.pi*fields.xcc/Lx)*np.sin(2.*np.pi*fields.ycc/Ly)
 
 
+def sine_swift_analytic(xmin, xmax, ymin, ymax, mref, mmag, xcc, ycc, u, v, t):
+    Lx = xmax - xmin
+    Ly = ymax - ymin
+    return mref + mmag*np.sin(2.*np.pi*(xcc - u*t)/Lx)*np.sin(2.*np.pi*(ycc - v*t)/Ly)
+
+
 def sine_x(config, fields, it):
     Lx = config.xmax - config.xmin
     fields.tracer[it] = config.mref + config.mmag*np.sin(2.*np.pi*fields.xcc/Lx)

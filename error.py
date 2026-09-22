@@ -7,6 +7,8 @@ from src.config import Config
 from os.path import dirname
 import logging
 from pathlib import Path
+import yaml
+import testcases.initial.tracer as it
 
 
 
@@ -19,17 +21,23 @@ def l2norm(numerical, analytic, V):
     numerator = np.sum(V*(numerical - analytic)*(numerical - analytic))
     denominator = np.sum(V*analytic*analytic)
     return np.sqrt(numerator/(denominator + 1.e-16))
-    
+
+
+def load_config(path) -> dict:
+    if not path.exists():
+        raise FileNotFoundError(f"Config file not found: {path}")
+
+    with path.open("r", encoding="utf-8") as f:
+        config = yaml.safe_load(f) or {}
+
+    return config
+
+
 import matplotlib.pyplot as plt
 def error():
     if len(argv) < 2:
         print("Usage: python error.py <outputdir> <setting>")
         exit(1)
-
-    #if argv[1] == 'test':
-    #    dir = dirname(__file__) + '/output/' + argv[1] +'/'
-    #else:
-    #    dir = dirname(__file__) + '/output/dated/' + argv[1] +'/'
 
     outputdir = dirname(__file__) + '/output/' + argv[1] +'/'
 
@@ -64,7 +72,7 @@ def error():
     logging.info(f"Config loaded: {config}")
 
     # Load tracer and grid fields
-    data, fieldnames = {}, ['tracer', 'dxcc', 'dycc']
+    data, fieldnames = {}, ['tracer', 'dxcc', 'dycc', 'xcc', 'ycc']
     for f in fieldnames:
         data[f] = np.load(outputdir + 'data/' + f + '.npy')
 
@@ -72,26 +80,56 @@ def error():
         print("Computing error at final time compared to initial condition...")
         # Load initial condition
         l2_error = l2norm(data['tracer'][-1], data['tracer'][0], data['dxcc']*data['dycc'])
-        #l2_error = np.linalg.norm((data['tracer'][-1]-data['tracer'][0])*(data['dxcc']*data['dycc']))/np.linalg.norm(data['tracer'][0]*(data['dxcc']*data['dycc']))
-        #l2_error = np.linalg.norm((data['tracer'][-1]-data['tracer'][0])*(data['dxcc']*data['dycc'])*(data['dxcc']*data['dycc']))/np.linalg.norm(data['tracer'][0]*(data['dxcc']*data['dycc'])*(data['dxcc']*data['dycc']))
-        print(data['dxcc'])
-        #plt.plot(data['dxcc'][:,0])
-        #plt.show()
-        print()
-        print(data['dycc'])
-        #plt.plot(data['dycc'][0,:])
-        #plt.contourf(data['tracer'][0])
-        #plt.show()
-        #plt.contourf(data['tracer'][-1]-data['tracer'][0])
-        #plt.show()
-        #np.linalg.norm(np.abs(data['tracer'][-1]-data['tracer'][0])*data['dxcc']*data['dycc']/np.sum(data['tracer'][0]*data['dxcc']*data['dycc']))
+
         # Output l2 norms to file
         print(l2_error)
         with open(outputdir + 'l2norms.out', 'w') as f:
             f.write('l2 norm (final compared to initial)\n')
             f.write(f'{l2_error:.6e}\n')
+    elif setting == 'finaltoanalytic':
+        # Find arguments from config file
+        config_loaded = load_config(Path(configfile[0]))
+        #print(config_loaded.nt)
+        #exit()
 
-    #elif exact == 'analytic': # other option to perhaps include later
+        # Access values with .get() to fall back on defaults for optional keys.
+        nt = config_loaded.get("nt")
+        dt = config_loaded.get("dt")
+        xmin = config_loaded.get("xmin")
+        xmax = config_loaded.get("xmax")
+        ymin = config_loaded.get("ymin")
+        ymax = config_loaded.get("ymax")
+        mref = config_loaded.get("mref", 0.5)
+        mmag = config_loaded.get("mmag", 0.5)
+        xcc = data['xcc']
+        ycc = data['ycc']
+
+        initial_tracer_func = config_loaded.get("initial_tracer") + '_analytic' # only implemented for sine_swift
+        velocity_setting = config_loaded.get("velocity_setting")
+        if velocity_setting == 'constant_uv':
+            u = config_loaded.get("constant_u")
+            v = config_loaded.get("constant_v")
+        elif velocity_setting == 'constant_u':
+            u = config_loaded.get("constant_u")
+            v = 0.
+        elif velocity_setting == 'constant_v':
+            u = 0.
+            v = config_loaded.get("constant_v")
+        else:
+            print('ERROR: No valid velocity setting.')
+            exit()
+
+        # Calculate analytic solution
+        analytic = getattr(it, initial_tracer_func)(xmin, xmax, ymin, ymax, mref, mmag, xcc, ycc, u, v, nt*dt)
+
+        # Calculate error difference with analytic solution
+        l2_error = l2norm(data['tracer'][-1], analytic, data['dxcc']*data['dycc'])
+
+        # Output l2 norms to file
+        print(l2_error)
+        with open(outputdir + 'l2norms.out', 'w') as f:
+            f.write(f'l2 norm (final compared to analytic at time t={nt*dt})\n')
+            f.write(f'{l2_error:.6e}\n')
 
     print('Done')
 

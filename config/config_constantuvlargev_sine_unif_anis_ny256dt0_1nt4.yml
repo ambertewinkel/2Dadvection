@@ -1,0 +1,31 @@
+scheme: adhimex
+
+nx: 256 
+ny: 256
+xmin: -500. # m
+xmax: 500. # m
+ymin: -500. # m
+ymax: 500. # m
+grid_x: uniform
+grid_y: uniform
+BC_x: periodic
+BC_y: periodic
+
+dt: 0.1 # s
+nt: 4
+starttime: 0.
+
+velocity_setting: constant_uv
+constant_u: 10.
+constant_v: 100.
+
+initial_tracer: sine_swift
+
+T: 100. # s
+u0: 10. # m/s
+nondivergent: True
+
+solver: gmresm
+theta_anisotropic: True
+
+outputdir: constantuvlargev_sine_unif_anis_ny256dt0_1nt4
