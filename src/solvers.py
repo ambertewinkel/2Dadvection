@@ -66,8 +66,8 @@ def gmresm(A, b, x, kiter=10, jiter=4, tolerance=1e-6, iterations_convergence=np
 
     reltol = tolerance * np.linalg.norm(b) # relative tolerance; see GMRES slides https://www.dmsa.unipd.it/~berga/Teaching/Phd/gmres_slides.pdf and Wikipedia https://en.wikipedia.org/wiki/Generalized_minimal_residual_method; I think MATLAB and Python compare the residual to the relative tolerance as well: https://www.mathworks.com/help/matlab/ref/gmres.html and https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.gmres.html
     norm_oldres = np.linalg.norm(r0)
-    
-    if norm_oldres < reltol:
+
+    if norm_oldres <= reltol:
         print(f"Initial guess is already good enough with residual {norm_oldres} (relative tolerance {reltol}).")
         return x
     converged = False

@@ -40,6 +40,7 @@ class Config():
     print_error: bool = False
     verbose: bool = False
     outputdir: str = 'test'
+    store_all_timesteps: bool = False
 
     solver: str = 'gmresm' #gcrk or gmresm --- both matrixfree (gmresm kinda)
     constant_tracer: float = 1.

@@ -5,7 +5,8 @@ import numpy as np
 
 def initial_tracer(config, fields):
     try:
-       globals()[config.initial_tracer](config, fields, it=0)
+        globals()[config.initial_tracer](config, fields, it=0)
+        if config.store_all_timesteps == False: fields.tracer[1] = fields.tracer[0].copy()
     except KeyError:
         raise ValueError(f"Unknown initial tracer: {config.initial_tracer}")
 
@@ -56,7 +57,7 @@ def cosine_bell_x(config, fields, it):
     # Apply cosine bell formula
     fields.tracer[it] = np.where(r < radius, 0.5 * (1 + np.cos(np.pi * r / radius)), 0)
 
-    
+
 def cosine_bell_y(config, fields, it):
     """
     Create a 1D cosine bell profile centered at (0.5*ymax) with given radius uniform in x.
@@ -75,7 +76,7 @@ def cosine_bell_y(config, fields, it):
     # Apply cosine bell formula
     fields.tracer[it] = np.where(r < radius, 0.5 * (1 + np.cos(np.pi * r / radius)), 0)
 
-#def slotted_cylinder_swift(config,):
+
 def sine_swift(config, fields, it):
     Lx = config.xmax - config.xmin
     Ly = config.ymax - config.ymin

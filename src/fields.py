@@ -65,8 +65,17 @@ class FieldContainer:
         for field in grid_nodes_xy_boundaries:
             setattr(self, field, np.zeros((config.nx+1, config.ny+1), dtype=self.dtype))
         for field in fieldnames_nodes_xy_init:
-            setattr(self, field, np.zeros((config.nt+1, config.nx, config.ny), dtype=self.dtype))
+            if config.store_all_timesteps:
+                setattr(self, field, np.zeros((config.nt+1, config.nx, config.ny), dtype=self.dtype))
+            else:
+                setattr(self, field, np.zeros((2, config.nx, config.ny), dtype=self.dtype))
         for field in fieldnames_nodes_xy:
-            setattr(self, field, np.zeros((config.nt, config.nx, config.ny), dtype=self.dtype))        
+            if config.store_all_timesteps:
+                setattr(self, field, np.zeros((config.nt, config.nx, config.ny), dtype=self.dtype))      
+            else:
+                setattr(self, field, np.zeros((1, config.nx, config.ny), dtype=self.dtype))  
         for field in fieldnames_nodes_xy_boundaries:
-            setattr(self, field, np.zeros((config.nt, config.nx+1, config.ny+1), dtype=self.dtype))
+            if config.store_all_timesteps:
+                setattr(self, field, np.zeros((config.nt, config.nx+1, config.ny+1), dtype=self.dtype))
+            else:
+                setattr(self, field, np.zeros((1, config.nx+1, config.ny+1), dtype=self.dtype))
