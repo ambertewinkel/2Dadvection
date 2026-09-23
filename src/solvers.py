@@ -3,7 +3,7 @@ import logging
 import warnings
 
 
-def gcrk(A, b, x, kiter=10, jiter=4, tolerance=1e-6):
+def gcrk(A, b, x, kiter=200, jiter=4, tolerance=1e-6):
     """
     Matrixfree solution of linear Ax=b system using GCR(k) method. (matrixfree through a function that computes Ax with def A(x)))
     --- IN --- 
@@ -48,7 +48,7 @@ def gcrk(A, b, x, kiter=10, jiter=4, tolerance=1e-6):
     return x
 
 
-def gmresm(A, b, x, kiter=10, jiter=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
+def gmresm(A, b, x, kiter=200, jiter=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
     """
     Matrixfree solution of linear Ax=b system using GMRES(m) method. (matrixfree through a function that computes Ax with def A(x))).
     Semi-optimised version (i.e., implemented QR factorisation/least squares minimisation in Saad and Schultz 1986 p.860-862, but not the last step part).
@@ -148,12 +148,12 @@ def gmresm(A, b, x, kiter=10, jiter=4, tolerance=1e-6, iterations_convergence=np
         r0 = b - A(x)
 
     if residual >= reltol: 
-        print(f'GMRES(m) tryopt did not converge within the given iterations (ktotal,jtotal={kiter},{jiter}). Final residual: {residual}, relative tolerance: {reltol}')
+        print(f'GMRES(m) did not converge within the given iterations (ktotal,jtotal={kiter},{jiter}). Final residual: {residual}, relative tolerance: {reltol}')
 
     return x
 
 
-def gmresm_nonopt(A, b, x, kiter=10, jiter=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
+def gmresm_nonopt(A, b, x, kiter=200, jiter=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
     """
     Matrixfree solution of linear Ax=b system using GMRES(m) method. (matrixfree through a function that computes Ax with def A(x))).
     However, GMRES(m) does need a small matrix H to be stored and solved (done here through np.linalg.solve). Apart from that, it currently stores a V matrix, arrays of size (m+1,N) where N is the size of the problem. This could be improved to reduce memory usage (memory usage is already improved with the restarting).
