@@ -52,49 +52,52 @@ def implicitness_adimex_upwind(config, fields, it, **kwargs):
         noutc_Cfc = config.dt*(0.5*(fields.u[config.store_all_timesteps*it] + abs(fields.u[config.store_all_timesteps*it]))*np.roll(n_out_c,1,0)*fields.dycc/(np.roll(fields.dxcc,1,0)*fields.dycc) + 0.5*(-fields.u[config.store_all_timesteps*it] + abs(fields.u[config.store_all_timesteps*it]))*n_out_c*fields.dycc/(fields.dxcc*fields.dycc)) # assumes an orthogonal grid (dyfc = dycc etc). #  always positive # at [i-1/2,j] 
         noutc_Ccf = config.dt*(0.5*(fields.v[config.store_all_timesteps*it] + abs(fields.v[config.store_all_timesteps*it]))*np.roll(n_out_c,1,1)*fields.dxcc/(fields.dxcc*np.roll(fields.dycc,1,1)) + 0.5*(-fields.v[config.store_all_timesteps*it] + abs(fields.v[config.store_all_timesteps*it]))*n_out_c*fields.dxcc/(fields.dxcc*fields.dycc)) # assumes an orthogonal grid (dyfc = dycc etc). #  always positive # at [i,j-1/2]
 
-        plot=False
-        if plot:
-            fig, axes = plt.subplots(1, 3, figsize=(15, 5), constrained_layout=True)
-            contour = axes[0].contourf(fields.xcc, fields.ycc, fields.Ccc[config.store_all_timesteps*it])
-            axes[0].set_title('Ccc')
-            fig.colorbar(contour, ax=axes[0])
-            contour = axes[1].contourf(fields.xfc, fields.yfc, Cfc)
-            axes[1].set_title('Cfc')
-            fig.colorbar(contour, ax=axes[1])
-            contour = axes[2].contourf(fields.xcf, fields.ycf, Ccf)
-            axes[2].set_title('Ccf')
-            fig.colorbar(contour, ax=axes[2])
-            plt.show()
+        #plot=False #True
+        #if plot:
+        #    fig, axes = plt.subplots(1, 3, figsize=(15, 5), constrained_layout=True)
+        #    contour = axes[0].contourf(fields.xcc, fields.ycc, fields.Ccc[config.store_all_timesteps*it])
+        #    axes[0].set_title('Ccc')
+        #    fig.colorbar(contour, ax=axes[0])
+        #    contour = axes[1].contourf(fields.xfc, fields.yfc, Cfc)
+        #    axes[1].set_title('Cfc')
+        #    fig.colorbar(contour, ax=axes[1])
+        #    contour = axes[2].contourf(fields.xcf, fields.ycf, Ccf)
+        #    axes[2].set_title('Ccf')
+        #    fig.colorbar(contour, ax=axes[2])
+        #    plt.show()
         fields.thetafc[config.store_all_timesteps*it] = np.maximum(0., 1. - config.factordiv/(noutc_Cfc + 1e-16)) # at [i-1/2,j] 
         fields.thetacf[config.store_all_timesteps*it] = np.maximum(0., 1. - config.factordiv/(noutc_Ccf + 1e-16)) # at [i,j-1/2]
         fields.thetacc[config.store_all_timesteps*it] = np.maximum(0., 1. - config.factordiv/(fields.Ccc[config.store_all_timesteps*it] + 1e-16)) # at [i,j] # Needed to activate the matrix solve
 
         # For comparison: previous settings:
-        if plot:
-            thetacc2 = np.maximum(0., 1. - config.factordiv/(fields.Ccc[config.store_all_timesteps*it] + 1e-16))
-            thetafc2 = np.maximum(thetacc2, np.roll(thetacc2,1,0)) # at [i-1/2,j]
-            thetacf2 = np.maximum(thetacc2, np.roll(thetacc2,1,1)) # at [i,j-1/2]
-
-            fig, axes = plt.subplots(1, 6, figsize=(25, 5), constrained_layout=True)
-            contour = axes[0].contourf(fields.xfc, fields.yfc, fields.thetafc[config.store_all_timesteps*it])
-            axes[0].set_title('thetafc1')
-            fig.colorbar(contour, ax=axes[0])
-            contour = axes[1].contourf(fields.xfc, fields.yfc, thetafc2)
-            axes[1].set_title('thetafc2')
-            fig.colorbar(contour, ax=axes[1])
-            contour = axes[2].contourf(fields.xfc, fields.yfc, fields.thetafc[config.store_all_timesteps*it] - thetafc2)
-            axes[2].set_title('thetafc1 - thetafc2')
-            fig.colorbar(contour, ax=axes[2])
-            contour = axes[3].contourf(fields.xcf, fields.ycf, fields.thetacf[config.store_all_timesteps*it])
-            axes[3].set_title('thetacf1')
-            fig.colorbar(contour, ax=axes[3])
-            contour = axes[4].contourf(fields.xcf, fields.ycf, thetacf2)
-            axes[4].set_title('thetacf2')
-            fig.colorbar(contour, ax=axes[4])        
-            contour = axes[5].contourf(fields.xcf, fields.ycf, fields.thetacf[config.store_all_timesteps*it] - thetacf2)
-            axes[5].set_title('thetacf1 - thetacf2')
-            fig.colorbar(contour, ax=axes[5])
-            plt.show()
+        #if plot:
+        #    thetacc2 = np.maximum(0., 1. - config.factordiv/(fields.Ccc[config.store_all_timesteps*it] + 1e-16))
+        #    thetafc2 = np.maximum(thetacc2, np.roll(thetacc2,1,0)) # at [i-1/2,j]
+        #    thetacf2 = np.maximum(thetacc2, np.roll(thetacc2,1,1)) # at [i,j-1/2]
+#
+        #    print('mean difference thetafc: ', np.mean(fields.thetafc[config.store_all_timesteps*it] - thetafc2))
+        #    print('mean difference thetacf: ', np.mean(fields.thetacf[config.store_all_timesteps*it] - thetacf2))
+#
+        #    fig, axes = plt.subplots(1, 6, figsize=(25, 5), constrained_layout=True)
+        #    contour = axes[0].contourf(fields.xfc, fields.yfc, fields.thetafc[config.store_all_timesteps*it])
+        #    axes[0].set_title('thetafc1')
+        #    fig.colorbar(contour, ax=axes[0])
+        #    contour = axes[1].contourf(fields.xfc, fields.yfc, thetafc2)
+        #    axes[1].set_title('thetafc2')
+        #    fig.colorbar(contour, ax=axes[1])
+        #    contour = axes[2].contourf(fields.xfc, fields.yfc, fields.thetafc[config.store_all_timesteps*it] - thetafc2)
+        #    axes[2].set_title('thetafc1 - thetafc2')
+        #    fig.colorbar(contour, ax=axes[2])
+        #    contour = axes[3].contourf(fields.xcf, fields.ycf, fields.thetacf[config.store_all_timesteps*it])
+        #    axes[3].set_title('thetacf1')
+        #    fig.colorbar(contour, ax=axes[3])
+        #    contour = axes[4].contourf(fields.xcf, fields.ycf, thetacf2)
+        #    axes[4].set_title('thetacf2')
+        #    fig.colorbar(contour, ax=axes[4])        
+        #    contour = axes[5].contourf(fields.xcf, fields.ycf, fields.thetacf[config.store_all_timesteps*it] - thetacf2)
+        #    axes[5].set_title('thetacf1 - thetacf2')
+        #    fig.colorbar(contour, ax=axes[5])
+        #    plt.show()
 
         # Potentially reducing thetafc and thetacf while still retaining positivity.
         if config.adjust_theta: # does this need be be adapted for divergent velocities?
@@ -163,50 +166,23 @@ def implicitness_adhimex(config, fields, it, **kwargs):
         noutc_Cfc = config.dt*(0.5*(fields.u[config.store_all_timesteps*it] + abs(fields.u[config.store_all_timesteps*it]))*np.roll(n_out_c,1,0)*fields.dycc/(np.roll(fields.dxcc,1,0)*fields.dycc) + 0.5*(-fields.u[config.store_all_timesteps*it] + abs(fields.u[config.store_all_timesteps*it]))*n_out_c*fields.dycc/(fields.dxcc*fields.dycc)) # assumes an orthogonal grid (dyfc = dycc etc). #  always positive # at [i-1/2,j] 
         noutc_Ccf = config.dt*(0.5*(fields.v[config.store_all_timesteps*it] + abs(fields.v[config.store_all_timesteps*it]))*np.roll(n_out_c,1,1)*fields.dxcc/(fields.dxcc*np.roll(fields.dycc,1,1)) + 0.5*(-fields.v[config.store_all_timesteps*it] + abs(fields.v[config.store_all_timesteps*it]))*n_out_c*fields.dxcc/(fields.dxcc*fields.dycc)) # assumes an orthogonal grid (dyfc = dycc etc). #  always positive # at [i,j-1/2]
 
-        plot=False
-        if plot:
-            fig, axes = plt.subplots(1, 3, figsize=(15, 5), constrained_layout=True)
-            contour = axes[0].contourf(fields.xcc, fields.ycc, fields.Ccc[config.store_all_timesteps*it])
-            axes[0].set_title('Ccc')
-            fig.colorbar(contour, ax=axes[0])
-            contour = axes[1].contourf(fields.xfc, fields.yfc, Cfc)
-            axes[1].set_title('Cfc')
-            fig.colorbar(contour, ax=axes[1])
-            contour = axes[2].contourf(fields.xcf, fields.ycf, Ccf)
-            axes[2].set_title('Ccf')
-            fig.colorbar(contour, ax=axes[2])
-            plt.show()
+        #plot=False #True
+        #if plot:
+        #    fig, axes = plt.subplots(1, 3, figsize=(15, 5), constrained_layout=True)
+        #    contour = axes[0].contourf(fields.xcc, fields.ycc, fields.Ccc[config.store_all_timesteps*it])
+        #    axes[0].set_title('Ccc')
+        #    fig.colorbar(contour, ax=axes[0])
+        #    contour = axes[1].contourf(fields.xfc, fields.yfc, Cfc)
+        #    axes[1].set_title('Cfc')
+        #    fig.colorbar(contour, ax=axes[1])
+        #    contour = axes[2].contourf(fields.xcf, fields.ycf, Ccf)
+        #    axes[2].set_title('Ccf')
+        #    fig.colorbar(contour, ax=axes[2])
+        #    plt.show()
         fields.thetafc[config.store_all_timesteps*it] = 1. - 1./(1. + 0.7*np.maximum(0., noutc_Cfc - 1.4)) # at [i-1/2,j] 
         fields.thetacf[config.store_all_timesteps*it] = 1. - 1./(1. + 0.7*np.maximum(0., noutc_Ccf - 1.4)) # at [i,j-1/2]
         #fields.thetacc[config.store_all_timesteps*it] = np.maximum.reduce([fields.thetafc[config.store_all_timesteps*it], np.roll(fields.thetafc[config.store_all_timesteps*it],-1,0), fields.thetacf[config.store_all_timesteps*it], np.roll(fields.thetacf[config.store_all_timesteps*it],-1,1)]) # at [i,j] # Needed to activate the matrix solve + for the fEx_c and fIm_c parts needed for constancy. This works, it seems to be stable for uniform uv and hadley and swift nondiv cases. 
         fields.thetacc[config.store_all_timesteps*it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[config.store_all_timesteps*it] - 1.4)) # at [i,j] # Needed to activate the matrix solve + for the fEx_c and fIm_c parts needed for constancy. This works, it seems to be stable for uniform uv and hadley and swift nondiv cases. 
-
-        # For comparison: previous settings:
-        if plot:
-            thetacc2 = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[config.store_all_timesteps*it] - 1.4)) # at [i,j]
-            thetafc2 = np.maximum(thetacc2, np.roll(thetacc2,1,0)) # at [i-1/2,j]
-            thetacf2 = np.maximum(thetacc2, np.roll(thetacc2,1,1)) # at [i,j-1/2]
-
-            fig, axes = plt.subplots(1, 6, figsize=(25, 5), constrained_layout=True)
-            contour = axes[0].contourf(fields.xfc, fields.yfc, fields.thetafc[config.store_all_timesteps*it])
-            axes[0].set_title('thetafc1')
-            fig.colorbar(contour, ax=axes[0])
-            contour = axes[1].contourf(fields.xfc, fields.yfc, thetafc2)
-            axes[1].set_title('thetafc2')
-            fig.colorbar(contour, ax=axes[1])
-            contour = axes[2].contourf(fields.xfc, fields.yfc, fields.thetafc[config.store_all_timesteps*it] - thetafc2)
-            axes[2].set_title('thetafc1 - thetafc2')
-            fig.colorbar(contour, ax=axes[2])
-            contour = axes[3].contourf(fields.xcf, fields.ycf, fields.thetacf[config.store_all_timesteps*it])
-            axes[3].set_title('thetacf1')
-            fig.colorbar(contour, ax=axes[3])
-            contour = axes[4].contourf(fields.xcf, fields.ycf, thetacf2)
-            axes[4].set_title('thetacf2')
-            fig.colorbar(contour, ax=axes[4])        
-            contour = axes[5].contourf(fields.xcf, fields.ycf, fields.thetacf[config.store_all_timesteps*it] - thetacf2)
-            axes[5].set_title('thetacf1 - thetacf2')
-            fig.colorbar(contour, ax=axes[5])
-            plt.show()
 
         # Potentially reducing thetafc and thetacf while still retaining positivity.
         if config.adjust_theta: # does this need be be adapted for divergent velocities?
@@ -221,6 +197,44 @@ def implicitness_adhimex(config, fields, it, **kwargs):
                 fields.thetafc[config.store_all_timesteps*it] = 1. - np.minimum(1. - fields.thetafc[config.store_all_timesteps*it] - np.minimum(0., np.sign(fields.u[config.store_all_timesteps*it]))*a_c/np.where(n_im_out_c*Cfc > 0., n_im_out_c*Cfc, np.inf) + np.maximum(0., np.sign(fields.u[config.store_all_timesteps*it]))*np.roll(a_c,1,0)/np.where(np.roll(n_im_out_c,1,0)*Cfc > 0., np.roll(n_im_out_c,1,0)*Cfc, np.inf), 1.)
                 fields.thetacf[config.store_all_timesteps*it] = 1. - np.minimum(1. - fields.thetacf[config.store_all_timesteps*it] - np.minimum(0., np.sign(fields.v[config.store_all_timesteps*it]))*a_c/np.where(n_im_out_c*Ccf > 0., n_im_out_c*Ccf, np.inf) + np.maximum(0., np.sign(fields.v[config.store_all_timesteps*it]))*np.roll(a_c,1,1)/np.where(np.roll(n_im_out_c,1,1)*Ccf > 0., np.roll(n_im_out_c,1,1)*Ccf, np.inf), 1.)
                 
+        # For comparison: previous settings:
+        #if plot:
+        #    thetacc2 = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[config.store_all_timesteps*it] - 1.4)) # at [i,j]
+        #    thetafc2 = np.maximum(thetacc2, np.roll(thetacc2,1,0)) # at [i-1/2,j]
+        #    thetacf2 = np.maximum(thetacc2, np.roll(thetacc2,1,1)) # at [i,j-1/2]
+#
+        #    print('mean difference thetafc: ', np.mean(fields.thetafc[config.store_all_timesteps*it] - thetafc2))
+        #    print('mean difference thetacf: ', np.mean(fields.thetacf[config.store_all_timesteps*it] - thetacf2))
+#
+        #    #fig, axes = plt.subplots(1, 6, figsize=(25, 5), constrained_layout=True)
+        #    #contour = axes[0].contourf(fields.xfc, fields.yfc, fields.thetafc[config.store_all_timesteps*it])
+        #    #axes[0].set_title('thetafc1')
+        #    #fig.colorbar(contour, ax=axes[0])
+        #    #contour = axes[1].contourf(fields.xfc, fields.yfc, thetafc2)
+        #    #axes[1].set_title('thetafc2')
+        #    #fig.colorbar(contour, ax=axes[1])
+        #    #contour = axes[2].contourf(fields.xfc, fields.yfc, fields.thetafc[config.store_all_timesteps*it] - thetafc2)
+        #    #axes[2].set_title('thetafc1 - thetafc2')
+        #    #fig.colorbar(contour, ax=axes[2])
+        #    #contour = axes[3].contourf(fields.xcf, fields.ycf, fields.thetacf[config.store_all_timesteps*it])
+        #    #axes[3].set_title('thetacf1')
+        #    #fig.colorbar(contour, ax=axes[3])
+        #    #contour = axes[4].contourf(fields.xcf, fields.ycf, thetacf2)
+        #    #axes[4].set_title('thetacf2')
+        #    #fig.colorbar(contour, ax=axes[4])        
+        #    #contour = axes[5].contourf(fields.xcf, fields.ycf, fields.thetacf[config.store_all_timesteps*it] - thetacf2)
+        #    #axes[5].set_title('thetacf1 - thetacf2')
+        #    #fig.colorbar(contour, ax=axes[5])
+        #    #plt.show()
+        #    fig, axes = plt.subplots(1, 2, figsize=(12, 5), constrained_layout=True)
+        #    contour = axes[0].contourf(fields.xfc, fields.yfc, fields.thetafc[config.store_all_timesteps*it] - thetafc2)
+        #    axes[0].set_title('thetafc1 - thetafc2')
+        #    fig.colorbar(contour, ax=axes[0])
+        #    contour = axes[1].contourf(fields.xcf, fields.ycf, fields.thetacf[config.store_all_timesteps*it] - thetacf2)
+        #    axes[1].set_title('thetacf1 - thetacf2')
+        #    fig.colorbar(contour, ax=axes[1])
+        #    plt.show()
+
     else:
         fields.thetacc[config.store_all_timesteps*it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[config.store_all_timesteps*it] - 1.4)) # at [i,j]
         fields.thetafc[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,0)) # at [i-1/2,j]

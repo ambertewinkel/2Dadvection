@@ -172,7 +172,8 @@ def plot_timings(data_list):
         axs[0].legend()
 
     plt.tight_layout()
-    figname = "timing_plot-20260916and17-anis"
+    #figname = "timing_plot-20260916and17-anis"
+    figname = "timing_plot_adhimex_anis_adjusted_20260923-removedlastbit-and16002000"
     plt.savefig(f"{figname}.pdf", dpi=300)
     plt.savefig(f"{figname}.svg", dpi=300)
     #plt.show()
@@ -198,7 +199,8 @@ def main():
                          help="Plot the aniso runs alongside the iso ones.")
     args = parser.parse_args()
 
-    filename = "timing_output_anis_20260916and17.txt"
+    #filename = "timing_output_anis_20260916and17.txt"
+    filename = "timing_output_adhimex_anis_adjusted_20260923-removedlastbit-and16002000.txt"
 
     data_iso = load_dataset(filename, aniso=False)
 

@@ -11,21 +11,22 @@ grid_y: uniform
 BC_x: periodic
 BC_y: periodic
 
-dt: 0.2 #0.2 #2. #2. # s
-nt: 500 #500 #0 #50 #50
+dt: 2. #0.2 #0.2 #2. #2. # s
+nt: 500 #1000 #100 #500 #500 #0 #50 #50
 starttime: 0.
 
 velocity_setting: constant_uv
 constant_u: 10.
-constant_v: 10.
+constant_v: 0.5 #10.
 
-initial_tracer: sine_swift
+initial_tracer: slotted_cylinders #sine_swift
 
 T: 100. # s
 u0: 10. # m/s
 nondivergent: True
 
 solver: gmresm
-theta_anisotropic: False #True
+theta_anisotropic: True
+adjust_theta: True
 
-outputdir: constantuv_sine_unif_adhimex_nt500
+outputdir: constantuv_sine_unif_adhimex_anis_adj_nt500

@@ -13,7 +13,7 @@ BC_y: noflux #periodic #periodic or noflux
 #metric: sphericalvertslice # sphericalvertslice or uniform
 
 dt: 4320. #864. #0.05 #1 #0.005 #450. #120. #1728. #864. #4320. #0.02 #6. # s
-nt: 20 #20 #80 #100 #19 #192 #720  #50 #100 #5 #25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
+nt: 10 #200 #20 #80 #100 #19 #192 #720  #50 #100 #5 #25 #20 #00 #100 #00 #50 #1 #50 #0 #600 #100
 starttime: 0.
 
 velocity_setting: hadley_HW #_differentscales #doswell #double_rotation_rising_bubble_capped #constant_v #swift_nondiv_streamfunction #strong_convergence #swift_div_on_steroids #_streamfunction #swift_ujet45rev #swift_nondiv_streamfunction #solid_body_rotation
@@ -32,8 +32,9 @@ solver: gmresm #gcrk #gmresm
 #FCT: True
 nondivergent: True #!!! needs adjusting in velocity code
 theta_anisotropic: True
+adjust_theta: True
 
 #filename: chenetal2017
 #verbose: True
 #animate: True
-outputdir: hadley_HW_adimexupwind_anis_nt20
+outputdir: hadley_HW_adhimex_anis_adj_nt20

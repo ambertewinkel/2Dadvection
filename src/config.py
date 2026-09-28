@@ -36,7 +36,7 @@ class Config():
     tracermin: float = None
     tracermax: float = None
 
-    timing: bool = False
+    timing: bool = True #False
     print_error: bool = False
     verbose: bool = False
     outputdir: str = 'test'

@@ -25,8 +25,9 @@ u0: 10. # m/s
 
 #FCT: True
 nondivergent: True
-theta_anisotropic: False #True
+theta_anisotropic: True
+adjust_theta: True
 
 solver: gmresm
 
-outputdir: swiftnondiv_slotcyl_adimexupwind_llgp_nt500
+outputdir: swiftnondiv_slotcyl_adhimex_anis_adj_llgp_nt500

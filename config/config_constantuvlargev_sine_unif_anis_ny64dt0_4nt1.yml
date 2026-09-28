@@ -27,5 +27,6 @@ nondivergent: True
 
 solver: gmresm
 theta_anisotropic: True
+adjust_theta: True
 
 outputdir: constantuvlargev_sine_unif_anis_ny64dt0_4nt1

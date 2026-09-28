@@ -25,6 +25,7 @@ u0: 10. # m/s
 #FCT: True
 nondivergent: True
 theta_anisotropic: True
+adjust_theta: True
 
 solver: gmresm 
 
