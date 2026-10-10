@@ -48,7 +48,7 @@ def gcrk(A, b, x, kiter=200, jiter=4, tolerance=1e-6):
     return x
 
 
-def gmresm(A, b, x, kiter=200, jiter=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
+def gmresm(A, b, x, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
     """
     Matrixfree solution of linear Ax=b system using GMRES(m) method. (matrixfree through a function that computes Ax with def A(x))).
     Semi-optimised version (i.e., implemented QR factorisation/least squares minimisation in Saad and Schultz 1986 p.860-862, but not the last step part).
@@ -66,6 +66,7 @@ def gmresm(A, b, x, kiter=200, jiter=4, tolerance=1e-6, iterations_convergence=n
 
     reltol = tolerance * np.linalg.norm(b) # relative tolerance; see GMRES slides https://www.dmsa.unipd.it/~berga/Teaching/Phd/gmres_slides.pdf and Wikipedia https://en.wikipedia.org/wiki/Generalized_minimal_residual_method; I think MATLAB and Python compare the residual to the relative tolerance as well: https://www.mathworks.com/help/matlab/ref/gmres.html and https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.gmres.html
     norm_oldres = np.linalg.norm(r0)
+    #print('initial residual:', norm_oldres)
 
     if norm_oldres <= reltol:
         print(f"Initial guess is already good enough with residual {norm_oldres} (relative tolerance {reltol}).")
@@ -74,36 +75,40 @@ def gmresm(A, b, x, kiter=200, jiter=4, tolerance=1e-6, iterations_convergence=n
 
     no_iters = 0
 
-    for irestart in range(kiter):
-        h = np.zeros((jiter+1, jiter), dtype=np.float64)
-        v = np.zeros((jiter+1, *np.shape(r0)), dtype=np.float64)
+    for irestart in range(no_restarts): # restart loop
+        h = np.zeros((m+1, m), dtype=np.float64)
+        v = np.zeros((m+1, *np.shape(r0)), dtype=np.float64)
         v_hat = np.zeros(np.shape(r0), dtype=np.float64)
         v[0] = r0/norm_oldres
 
-        cos = np.zeros(jiter, dtype=np.float64)
-        sin = np.zeros(jiter, dtype=np.float64)
-        g = np.zeros(jiter+1, dtype=np.float64)
+        cos = np.zeros(m, dtype=np.float64)
+        sin = np.zeros(m, dtype=np.float64)
+        g = np.zeros(m+1, dtype=np.float64)
         g[0] = norm_oldres # residual norm at start of restart loop
-        jend = jiter
+        jend = m
 
-        for j in range(jiter):            
+        for j in range(m): # 0 to incl m-1 # if no early convergence: v and h max size is m
             Avj = A(v[j])
-            for i in range(j+1):
-                h[i, j] = np.dot(Avj.ravel(), v[i].ravel())
-
             v_hat = Avj.copy()
-            for i in range(j+1):
+            for i in range(j+1): # 0 to incl j # Gram-Schmidt
+                h[i, j] = np.dot(Avj.ravel(), v[i].ravel())
                 v_hat -= h[i, j] * v[i]
 
             h[j+1,j] = np.linalg.norm(v_hat)
-            if h[j+1, j] < 1e-15:
+            
+            no_iters += 1
+            if h[j+1, j] < 1e-15: # we will have v filled until and incl v[j], not v[j+1]. so nonzero v length = j+1. we will have h filled until and incl h[j,j]. so length is (j+1)x(j+1).
                 # exact Krylov solution found
+                converged = True
+                jend = j + 1 # new m if you will
+                if iterations_convergence is not None:
+                    iterations_convergence[it] = no_iters
                 break
             
             v[j+1] = v_hat/h[j+1,j]
 
             # Apply previous rotations
-            for i in range(j):
+            for i in range(j): # 0 to incl j-1 (skipped when j=0 as desired)
                 temp = cos[i]*h[i, j] - sin[i]*h[i+1, j]
                 h[i+1, j] = sin[i]*h[i, j] + cos[i]*h[i+1, j]
                 h[i, j] = temp
@@ -120,12 +125,11 @@ def gmresm(A, b, x, kiter=200, jiter=4, tolerance=1e-6, iterations_convergence=n
             g[j+1] = sin[j] * g[j] + cos[j] * g[j+1]
             g[j] = temp
 
-            no_iters += 1
             residual = abs(g[j+1])
 
-            if residual < reltol and no_iters > 3:
+            if residual < reltol: # and no_iters > 3:
                 converged = True
-                jend = j
+                jend = j + 1
                 if iterations_convergence is not None:
                     iterations_convergence[it] = no_iters
                 break
@@ -135,21 +139,27 @@ def gmresm(A, b, x, kiter=200, jiter=4, tolerance=1e-6, iterations_convergence=n
                 
             norm_oldres = residual
 
-        y = np.zeros(jiter)
-        for ji in range(jend - 1, -1, -1):
-            y[ji] = (g[ji] - np.dot(h[ji, ji + 1:], y[ji + 1:]))/h[ji, ji]
+            #print('residual, reltol:', residual, reltol)
+
+        y = np.zeros(jend)
+        for ji in range(jend - 1, -1, -1): # check ending criteria and zeros.
+            y[ji] = (g[ji] - np.dot(h[ji, ji + 1:jend], y[ji + 1:]))/h[ji, ji]
 
         for i in range(len(y)):
-            x += y[i] * v[i]
+            x += y[i]*v[i]
+
+        r0 = b - A(x)
 
         if converged:
             break
 
         r0 = b - A(x)
-
+        
+    residual = np.linalg.norm(r0)
     if residual >= reltol: 
-        print(f'GMRES(m) did not converge within the given iterations (ktotal,jtotal={kiter},{jiter}). Final residual: {residual}, relative tolerance: {reltol}')
+        print(f'GMRES(m) did not converge within the given iterations (ktotal,jtotal={no_restarts},{m}). Final residual: {residual}, relative tolerance: {reltol}')
 
+    #print('no_iters, residual, reltol:', no_iters, residual, reltol)
     return x
 
 
@@ -164,6 +174,7 @@ def gmresm_nonopt(A, b, x, kiter=200, jiter=4, tolerance=1e-6, iterations_conver
     --- OUT ---
     x : converged (or cut short) solution
     """
+    print('WARNING: gmres_nonopt might not have the correct exiting criterion (10-10-2026).')
     x = x.copy()
 
     r0 = b - A(x)
@@ -218,6 +229,7 @@ def gmresm_nonopt(A, b, x, kiter=200, jiter=4, tolerance=1e-6, iterations_conver
         if residual < reltol or maxr0 < reltol/np.sqrt(b.size): #tolerance: #residual_minimised < tolerance: 
             #print(f"Converged after restart {irestart} with residual {residual} (relative tolerance {reltol}).")
             iterations_convergence[it] = no_iters
+            # incorrect exiting!!!
             break
         else:
             if residual > oldresidual: # if residual increased after restart, print a warning (this can happen with GMRES(m) if m is too small or the problem is hard)

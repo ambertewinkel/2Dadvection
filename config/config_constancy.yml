@@ -19,7 +19,7 @@ velocity_setting: swift_nondiv_streamfunction #strong_convergence #swift_div_on_
 #constant_v: 20. 
 
 initial_tracer: constant
-constant_tracer: 0.5
+constant_tracer: 1. #0.5
 
 #ujet_max: 1. #1.
 
@@ -31,10 +31,12 @@ u0: 10. #0. #0.5 with T=100. and u=100. we have Cmax of order 20, which is diffi
 nondivergent: True
 #tracermin: 0.
 #tracermax: 1.
+theta_anisotropic: True
+adjust_theta: True
 
 solver: gmresm #gcrk #gmresm
 
 #filename: chenetal2017
 #verbose: True
 #animate: True
-outputdir: swiftnondiv_constant_adhimex_IGk4 #n #tol1em9 #test # slotted_cylinders_swift_adhimex_FCTred_nt50 #_global01
+outputdir: test_swiftnondiv_constant_adhimex_aniso_RHS5 # _IGk4 #n #tol1em9 #test # slotted_cylinders_swift_adhimex_FCTred_nt50 #_global01
