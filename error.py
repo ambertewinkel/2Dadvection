@@ -104,7 +104,7 @@ def error():
         xcc = data['xcc']
         ycc = data['ycc']
 
-        initial_tracer_func = config_loaded.get("initial_tracer") + '_analytic' # only implemented for sine_swift
+        initial_tracer_func = config_loaded.get("initial_tracer") + '_analytic' # only implemented for sine_swift and sine_swift_x_uniform_y so far
         velocity_setting = config_loaded.get("velocity_setting")
         if velocity_setting == 'constant_uv':
             u = config_loaded.get("constant_u")

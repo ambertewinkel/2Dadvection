@@ -174,6 +174,7 @@ def plot_timings(data_list):
     plt.tight_layout()
     #figname = "timing_plot-20260916and17-anis"
     figname = "timing_plot_adhimex_anis_adjusted_20260923-removedlastbit-and16002000"
+    figname = "timing_noiters_accuracy_20260930"
     plt.savefig(f"{figname}.pdf", dpi=300)
     plt.savefig(f"{figname}.svg", dpi=300)
     #plt.show()
@@ -200,8 +201,8 @@ def main():
     args = parser.parse_args()
 
     #filename = "timing_output_anis_20260916and17.txt"
-    filename = "timing_output_adhimex_anis_adjusted_20260923-removedlastbit-and16002000.txt"
-
+    #filename = "timing_output_adhimex_anis_adjusted_20260923-removedlastbit-and16002000.txt"
+    filename = "timing_noiters_accuracy_20260930.txt"
     data_iso = load_dataset(filename, aniso=False)
 
     for nt, values in data_iso.items():
