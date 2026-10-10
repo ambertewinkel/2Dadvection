@@ -142,7 +142,7 @@ def adimex_upwind(config, fields, it, tolerance=1e-6, kiter=200, jiter=4, **kwar
     if np.any(fields.thetacc[config.store_all_timesteps*it]): # avoids gmresm breaking down, only running the solver when there is a nonunit matrix
         matrix = partial(adimex_upwind_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[config.store_all_timesteps*it], thetacf=fields.thetacf[config.store_all_timesteps*it]) # at [i,j]
         solver = getattr(sv, config.solver)
-        fields.tracer[config.store_all_timesteps*it+1] = solver(matrix, rhs, field_prev, kiter=kiter, jiter=jiter, tolerance=tolerance) # kiter, jiter, and tolerance can be set differently, e.g. for limiting
+        fields.tracer[config.store_all_timesteps*it+1] = solver(matrix, rhs, field_prev, no_restarts=kiter, m=jiter, tolerance=tolerance) # kiter, jiter, and tolerance can be set differently, e.g. for limiting
     else:
         fields.tracer[config.store_all_timesteps*it+1] = rhs.copy()
 
@@ -156,6 +156,7 @@ def implicitness_adhimex(config, fields, it, **kwargs):
     # sum_abs_velarea like this is still fine in the nonperiodic BCs as the u and v at the boundaries are assumed zero (e.g. for Hadley circulation)
     sum_abs_velarea = (abs(fields.u[config.store_all_timesteps*it]) + abs(np.roll(fields.u[config.store_all_timesteps*it],-1,0)))*fields.dycc + (abs(fields.v[config.store_all_timesteps*it]) + abs(np.roll(fields.v[config.store_all_timesteps*it],-1,1)))*fields.dxcc # at [i,j]
     fields.Ccc[config.store_all_timesteps*it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
+    #print('Ccc:', fields.Ccc[config.store_all_timesteps*it,0,0])
     
     if config.theta_anisotropic: # anisotropic implicitness (different in x and y directions)
         n_out_c = np.sum(np.array([fields.u[config.store_all_timesteps*it] < -1e-16, np.roll(fields.u[config.store_all_timesteps*it],-1,0) > 1e-16, fields.v[config.store_all_timesteps*it] < -1e-16, np.roll(fields.v[config.store_all_timesteps*it],-1,1) > 1e-16]), axis=0) # at [i,j]
@@ -183,6 +184,8 @@ def implicitness_adhimex(config, fields, it, **kwargs):
         fields.thetacf[config.store_all_timesteps*it] = 1. - 1./(1. + 0.7*np.maximum(0., noutc_Ccf - 1.4)) # at [i,j-1/2]
         #fields.thetacc[config.store_all_timesteps*it] = np.maximum.reduce([fields.thetafc[config.store_all_timesteps*it], np.roll(fields.thetafc[config.store_all_timesteps*it],-1,0), fields.thetacf[config.store_all_timesteps*it], np.roll(fields.thetacf[config.store_all_timesteps*it],-1,1)]) # at [i,j] # Needed to activate the matrix solve + for the fEx_c and fIm_c parts needed for constancy. This works, it seems to be stable for uniform uv and hadley and swift nondiv cases. 
         fields.thetacc[config.store_all_timesteps*it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[config.store_all_timesteps*it] - 1.4)) # at [i,j] # Needed to activate the matrix solve + for the fEx_c and fIm_c parts needed for constancy. This works, it seems to be stable for uniform uv and hadley and swift nondiv cases. 
+        #print('Cfc:', Cfc[0,0])
+        #print('Ccf:', Ccf[0,0])
 
         # Potentially reducing thetafc and thetacf while still retaining positivity.
         if config.adjust_theta: # does this need be be adapted for divergent velocities?
@@ -240,6 +243,9 @@ def implicitness_adhimex(config, fields, it, **kwargs):
         fields.thetafc[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,0)) # at [i-1/2,j]
         fields.thetacf[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,1)) # at [i,j-1/2]
     
+    #print('thetafc:', fields.thetafc[config.store_all_timesteps*it,0,0])
+    #print('thetacf:', fields.thetacf[config.store_all_timesteps*it,0,0])
+    #print('thetacc:', fields.thetacc[config.store_all_timesteps*it,0,0])
     if config.BC_x == 'periodic':
         fields.dthetafc[config.store_all_timesteps*it] = np.roll(fields.thetafc[config.store_all_timesteps*it],-1,0) - fields.thetafc[config.store_all_timesteps*it] # at [i,j]
     else: # doesn't work properly for nonperiodic BC
@@ -364,9 +370,9 @@ def adhimex_ncp(config, fields, it, **kwargs):
         if ik == 4 and np.any(fields.thetacc[config.store_all_timesteps*it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
             matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[config.store_all_timesteps*it], thetacf=fields.thetacf[config.store_all_timesteps*it], alpha=AIm[ik,ik]) # at [i,j]
             solver = getattr(sv, config.solver)
-            #field_k = solver(matrix, rhs_k, field_k, kiter=200, jiter=4, tolerance=1e-6)
+            #field_k = solver(matrix, rhs_k, field_k, no_restarts=200, m=4, tolerance=1e-6)
             guess = field_prev.copy()
-            field_k = solver(matrix, rhs_k, guess, kiter=200, jiter=4, tolerance=1e-6, it=it)
+            field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-6, it=it)
         else:
             field_k = rhs_k.copy()
 
@@ -409,7 +415,7 @@ def adhimex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
 
     for ik in range(nstages):
         # Calculate the field at stage k      
-        if ik == 1 or ik == 2:
+        if ik == 0 or ik == 1 or ik == 2 or ik == 3:
             rhs_k = field_prev + config.dt*(np.dot(np.rollaxis(fEx_c[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_c[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
         else: 
             rhs_k = field_prev + config.dt*(np.dot(np.rollaxis(fEx_f[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_f[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
@@ -417,8 +423,17 @@ def adhimex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
         if ik == 4 and np.any(fields.thetacc[config.store_all_timesteps*it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
             matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[config.store_all_timesteps*it], thetacf=fields.thetacf[config.store_all_timesteps*it], alpha=AIm[ik,ik]) # at [i,j]
             solver = getattr(sv, config.solver)
-            guess = field_prev.copy()
-            field_k = solver(matrix, rhs_k, guess, kiter=200, jiter=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
+            #guess = field_k.copy()
+            #guess = field_prev.copy() #rhs_k.copy() #field_k.copy() 
+            guess = rhs_k.copy() #field_k.copy()
+            #print('guess norm: ', np.linalg.norm(guess))
+            #guess = field_prev.copy()
+            #field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
+            field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-15, iterations_convergence=iterations_convergence, it=it)
+            #field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=20, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
+            #field_k = solver(matrix, rhs_k, guess, no_restarts=1, m=1, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
+            #print('new field norm', np.linalg.norm(field_k))
+            #print()
         else:
             field_k = rhs_k.copy()
 
@@ -447,3 +462,9 @@ def adhimex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
             raise ValueError('FCT is not implemented for periodic BCs.')
         else:
             fields.tracer[config.store_all_timesteps*it+1] = field_k.copy() 
+    #print(fields.tracer[config.store_all_timesteps*it+1,:,10])
+    #print(fields.tracer[config.store_all_timesteps*it+1,10,:])
+    #print(fields.tracer[config.store_all_timesteps*it+1,10,:] - np.roll(fields.tracer[config.store_all_timesteps*it+1,10,:],-1,0))
+    #plt.contourf(fields.xcc, fields.ycc, fields.tracer[config.store_all_timesteps*it+1])
+    #plt.colorbar()
+    #plt.show()
