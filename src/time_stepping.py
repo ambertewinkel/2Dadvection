@@ -1,5 +1,7 @@
 # This implements the time stepping loop.
 
+from matplotlib.colors import LogNorm
+import matplotlib.pyplot as plt
 
 import src.schemes as sch
 import testcases.velocity
@@ -67,6 +69,12 @@ def time_stepping(config, fields, **kwargs):
         np.save(config.outputdir + f'data/iterations_convergence.npy', iterations_convergence)
         np.save(config.outputdir + f'data/total_iterations_convergence.npy', total_iterations_convergence)
 
+
+    #print('Final tracer field difference ', abs(fields.tracer[-1] - fields.tracer[0]))
+    #plt.pcolormesh(fields.xcc, fields.ycc, abs(fields.tracer[-1] - fields.tracer[0]), norm=LogNorm())
+    #plt.colorbar()
+    #plt.show()
+        
 
             #print(f"Time step {it+1}/{config.nt} completed in {end - start:.4f} seconds.")
             # preconditioner?

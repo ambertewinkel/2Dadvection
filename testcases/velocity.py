@@ -62,6 +62,12 @@ def swift_nondiv(config, fields, it):
 
 def swift_nondiv_streamfunction(config, fields, it):
     # Non-divergent velocity field at half time levels from SWIFT testcase using the streamfunction
+    #Lx = fields.xffb[-1,-1] - fields.xffb[0,0]
+    #Ly = fields.yffb[-1,-1] - fields.yffb[0,0]
+
+    #print('difference xmax and xffb', fields.xffb[-1,-1] - config.xmax)
+
+    #print(f'Lx = {Lx}, Ly = {Ly}')
 
     Lx = config.xmax - config.xmin
     Ly = config.ymax - config.ymin
@@ -290,12 +296,83 @@ def swift_ujet45rev(config, fields, it):
     velocities_from_streamfunction(config, fields, it)
 
 
-def velocities_from_streamfunction(config, fields, it):
+def velocities_from_streamfunction_old(config, fields, it):
     """Deriving the u and v velocity components from the streamfunction psi.
     psi[i,j] is defined at i-1/2, j-1/2 -> bottom left cell corner"""
 
     fields.u[config.store_all_timesteps*it] = - (fields.psi[config.store_all_timesteps*it][:-1,1:] - fields.psi[config.store_all_timesteps*it][:-1,:-1])/fields.dycc
     fields.v[config.store_all_timesteps*it] = (fields.psi[config.store_all_timesteps*it][1:,:-1] - fields.psi[config.store_all_timesteps*it][:-1,:-1])/fields.dxcc
+
+
+def velocities_from_streamfunction(config, fields, it):
+    """Deriving the u and v velocity components from the streamfunction psi.
+    psi[i,j] is defined at i-1/2, j-1/2 -> bottom left cell corner, with psi of size (nx+1, ny+1) including the right
+    and top boundary corners. u[i,j] is defined at [i-1/2,j], v[i,j] at [i,j-1/2].
+
+    The schemes store nx faces in x (ny in y) and take the right (top) boundary face from the left (bottom) one via
+    np.roll, i.e. they reuse u[0,:] and v[:,0] there. The flux divergence of each cell is only zero to rounding error
+    (needed for constancy) if the psi values on the boundary are consistent to the last bit:
+      - periodic: psi at xmax (index -1) is the periodic image of psi at xmin (index 0), up to the mean flow;
+      - noflux:   psi is one constant along the walls, so that the wall-normal velocity is exactly zero.
+    The testcase psi only satisfies this up to rounding (about 1e-16*max|psi|, i.e. ~1e-12 for SWIFT where |psi| ~ 1e4),
+    which gave O(1e-13) 1/s divergence in the last column and row. This function enforces it exactly.
+    fields.psi itself is left unchanged."""
+
+    k = config.store_all_timesteps*it
+    psi = fields.psi[k]
+    Lx, Ly = config.xmax - config.xmin, config.ymax - config.ymin
+    X, Y = fields.xffb - config.xmin, fields.yffb - config.ymin # corner coordinates relative to the lower left corner
+
+    # 1. Mean velocities U and V, i.e. the net flow through the domain, which is only possible across periodic boundaries.
+    #    The volume flux through the left boundary is -(psi[0,-1] - psi[0,0]) = U*Ly and through the bottom boundary
+    #    psi[-1,0] - psi[0,0] = V*Lx, so that psi = psi_p + V*X - U*Y with psi_p periodic.
+    U = -(psi[0,-1] - psi[0,0])/Ly if config.BC_x == 'periodic' else 0.
+    V =  (psi[-1,0] - psi[0,0])/Lx if config.BC_y == 'periodic' else 0.
+
+    # 2. Remove the linear (mean flow) part, which is added back as U and V in step 4 (so the velocities don't change).
+    #    After this, the two copies of a periodic seam are (analytically) equal instead of offset by V*Lx or U*Ly, so step 3
+    #    can copy them. Copying with an offset instead would round each value separately and give the mismatch again.
+    #    This step does not remove the rounding errors already in psi; step 3 does that. psi_p is a new array.
+    psi_p = psi - (V*X - U*Y)
+
+    # 3. Check that the boundary values are analytically consistent (up to tol), then make them consistent to the last bit.
+    #    A mismatch larger than tol means the testcase psi doesn't fit the BCs (e.g. flow through a noflux wall), which is
+    #    an error in the setup that we don't want to hide by overwriting. Rounding mismatches are ~1e-16*max|psi|.
+    #    (tol uses max|psi|, not max|psi_p|, as psi_p is ~0 for a pure mean flow.)
+    tol = 1e-10*np.abs(psi).max()
+    c = psi_p[0,0] # psi_p on all walls: with noflux in both directions the boundary is one streamline; with noflux in
+                   # one direction both walls have the same psi_p, as the mean flow along the walls has been removed.
+    if config.BC_x == 'periodic':
+        mismatch = np.abs(psi_p[-1,:] - psi_p[0,:]).max()
+        if mismatch > tol:
+            raise ValueError(f'psi (minus the mean flow) is not periodic in x: mismatch {mismatch:.1e} > tolerance {tol:.1e}.')
+        psi_p[-1,:] = psi_p[0,:] # corners at xmax become the same floats as at xmin (only enters v[-1,:])
+    elif config.BC_x == 'noflux':
+        mismatch = max(np.abs(psi_p[0,:] - c).max(), np.abs(psi_p[-1,:] - c).max())
+        if mismatch > tol:
+            raise ValueError(f'psi is not constant along the x walls (flow through a noflux boundary): mismatch {mismatch:.1e} > tolerance {tol:.1e}.')
+        psi_p[0,:] = c  # left wall: u[0,:] = 0 exactly, also used (via np.roll) as the flux through the right wall
+        psi_p[-1,:] = c # right wall: consistent with the zero flux through it (only enters v[-1,:])
+    else:
+        raise ValueError(f'Unknown BC_x: {config.BC_x}')
+    if config.BC_y == 'periodic':
+        mismatch = np.abs(psi_p[:,-1] - psi_p[:,0]).max()
+        if mismatch > tol:
+            raise ValueError(f'psi (minus the mean flow) is not periodic in y: mismatch {mismatch:.1e} > tolerance {tol:.1e}.')
+        psi_p[:,-1] = psi_p[:,0] # corners at ymax become the same floats as at ymin (only enters u[:,-1])
+    elif config.BC_y == 'noflux':
+        mismatch = max(np.abs(psi_p[:,0] - c).max(), np.abs(psi_p[:,-1] - c).max())
+        if mismatch > tol:
+            raise ValueError(f'psi is not constant along the y walls (flow through a noflux boundary): mismatch {mismatch:.1e} > tolerance {tol:.1e}.')
+        psi_p[:,0] = c  # bottom wall: v[:,0] = 0 exactly, also used (via np.roll) as the flux through the top wall
+        psi_p[:,-1] = c # top wall: consistent with the zero flux through it (only enters u[:,-1])
+    else:
+        raise ValueError(f'Unknown BC_y: {config.BC_y}')
+
+    # 4. Velocities from differences of psi_p, plus the mean flow. Every cell now uses the same corner floats as its
+    #    neighbours (also across the boundary), so the face fluxes of each cell cancel to rounding error.
+    fields.u[k] = - (psi_p[:-1,1:] - psi_p[:-1,:-1])/fields.dycc + U # at [i-1/2,j]
+    fields.v[k] =   (psi_p[1:,:-1] - psi_p[:-1,:-1])/fields.dxcc + V # at [i,j-1/2]
 
 
 def double_rotation(config, fields, it):

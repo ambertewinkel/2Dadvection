@@ -40,10 +40,10 @@ def _grid_coordinates(xcc, ycc, xcf, ycf, xfc, yfc, xffb, yffb, dxcc, dycc, xf, 
                 yfc[jx,jy] = yc[jy]
                 yffb[jx,jy] = yf[jy]
     # Right and top boundaries for corner coordinates
-    xffb[-1,:] = xmax
-    yffb[:,-1] = ymax
     xffb[:-1,-1] = xfc[:,-1]
     yffb[-1,:-1] = ycf[-1,:]
+    xffb[-1,:] = xmax # xffb[-2,:] + dxc[-1] -> would be essentially xmax, but has OOM 1e-13 difference
+    yffb[:,-1] = ymax # yffb[:,-2] + dyc[-1] -> would be essentially ymax, but has OOM 1e-13 difference
 
 
 def set_grid_x_uniform(config, fields):

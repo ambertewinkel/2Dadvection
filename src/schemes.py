@@ -1,4 +1,5 @@
 import numpy as np
+#from matplotlib.colors import LogNorm
 from functools import partial
 import src.solvers as sv
 import src.limiter as lim
@@ -330,6 +331,9 @@ def fluxdiv(fields, flxfc, flxcf, factorfc, factorcf):
 
     flxfactorfc = factorfc*flxfc # at [i-1/2,j]
     flxfactorcf = factorcf*flxcf # at [i,j-1/2]
+
+    #print('flxfactorfc:', flxfactorfc)
+    #print('flxfactorcf:', flxfactorcf)
 
     return (flxfactorfc - np.roll(flxfactorfc,-1,0))/fields.dxcc + (flxfactorcf - np.roll(flxfactorcf,-1,1))/fields.dycc # at [i,j] # would need adapting for arbitrary grid (and dx varying in y and dy varying in x)
 
