@@ -296,14 +296,6 @@ def swift_ujet45rev(config, fields, it):
     velocities_from_streamfunction(config, fields, it)
 
 
-def velocities_from_streamfunction_old(config, fields, it):
-    """Deriving the u and v velocity components from the streamfunction psi.
-    psi[i,j] is defined at i-1/2, j-1/2 -> bottom left cell corner"""
-
-    fields.u[config.store_all_timesteps*it] = - (fields.psi[config.store_all_timesteps*it][:-1,1:] - fields.psi[config.store_all_timesteps*it][:-1,:-1])/fields.dycc
-    fields.v[config.store_all_timesteps*it] = (fields.psi[config.store_all_timesteps*it][1:,:-1] - fields.psi[config.store_all_timesteps*it][:-1,:-1])/fields.dxcc
-
-
 def velocities_from_streamfunction(config, fields, it):
     """Deriving the u and v velocity components from the streamfunction psi.
     psi[i,j] is defined at i-1/2, j-1/2 -> bottom left cell corner, with psi of size (nx+1, ny+1) including the right

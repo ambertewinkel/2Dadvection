@@ -3,7 +3,7 @@
 RUN="python run_model.py"
 
 for cfg in config_constancy_cp \
-           config_constancy_ncp; do # \
+           config_constancy_ncp \
            config_hadley_adimex \
            config_hadley_ex \
            config_swiftnondiv_slotcyl_llgp \

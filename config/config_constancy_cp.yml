@@ -1,4 +1,4 @@
-scheme: RK438PR2_5Ex3Im #adhimex #RK4CN_5Ex3Im #RK4CN_5Ex3Im #adhimex #RK438PR2_5Ex3Im #RK4CN_5Ex3Im #adhimex
+scheme: adhimex #adhimex #RK4CN_5Ex3Im #RK438PR2_5Ex3Im
 
 nx: 153  
 ny: 153
@@ -6,19 +6,21 @@ xmin: -500. # m
 xmax: 500. # m
 ymin: -500. # m
 ymax: 500. # m
-grid_x: lowerleftGP #cosine4_topleft
-grid_y: lowerleftGP # linear #cosine4_topleft
+grid_x: lowerleftGP
+grid_y: lowerleftGP
 BC_x: periodic
 BC_y: periodic
 
-dt: 0.2 #0.2 #0.02 #0.2 # s
-nt: 500 #1 #500 #5000 #5000 #1 #500
+dt: 0.2 # s
+nt: 500 
 starttime: 0.
+
+tolerance_solver_scheme: 1e-16 # relevant for RK438PR2 and RK4CN, not for adhimex as IG is exact match already
 
 velocity_setting: swift_nondiv_streamfunction 
 
 initial_tracer: constant
-constant_tracer: 0.5 #1. #0.5 #1. #0.5
+constant_tracer: 0.5
 
 T: 100.
 u0: 10.
@@ -27,76 +29,4 @@ nondivergent: True
 
 solver: gmresm 
 
-outputdir: swiftnondiv_constant #_RK438PR2_5Ex3Im # RK4CN_5Ex3Im  #adhimex #adhimex #_RK4CN_5Ex3Im #_RK438PR2_5Ex3Im #_RK4CN_5Ex3Im #swiftnondiv_constant #_adhimex
-
-#
-#Initial guess is already good enough with residual 5.6026346459360266e-14 (relative tolerance 0.00015304368252597208).
-#
-#Initial guess is already good enough with residual 2.8013173229680133e-14 (relative tolerance 7.652184126298604e-05).
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#Initial guess is already good enough with residual 2.8013173229680133e-14 (relative tolerance 7.652184126298604e-05).
-#Initial guess is already good enough with residual 4.681910669219801e-14 (relative tolerance 7.652178367638451e-05).
-#Initial guess is already good enough with residual 8.034774616886754e-14 (relative tolerance 7.652173275477348e-05).
-#Initial guess is already good enough with residual 1.8638454921800217e-13 (relative tolerance 7.652168855991406e-05).
-#Initial guess is already good enough with residual 4.660829017170571e-13 (relative tolerance 7.652164826241386e-05).
-#Initial guess is already good enough with residual 1.3641338359554865e-12 (relative tolerance 7.652161185725446e-05).
-#Initial guess is already good enough with residual 4.458062118012614e-12 (relative tolerance 7.652157770422343e-05).
-#Initial guess is already good enough with residual 1.5563346837580688e-11 (relative tolerance 7.652155063381348e-05).
-#Initial guess is already good enough with residual 5.555060147778988e-11 (relative tolerance 7.652152294159904e-05).
-#Initial guess is already good enough with residual 1.9943444418406114e-10 (relative tolerance 7.652149877589546e-05).
-#Initial guess is already good enough with residual 7.198393009961923e-10 (relative tolerance 7.652147589968464e-05).
-#Initial guess is already good enough with residual 2.593309552192999e-09 (relative tolerance 7.65214512980841e-05).
-#Initial guess is already good enough with residual 9.354103475991877e-09 (relative tolerance 7.652142399909429e-05).
-#Initial guess is already good enough with residual 3.379652687931115e-08 (relative tolerance 7.652140170263307e-05).
-#Initial guess is already good enough with residual 1.222157796421714e-07 (relative tolerance 7.652138009329361e-05).
-#Initial guess is already good enough with residual 4.4366563892065716e-07 (relative tolerance 7.652135665338156e-05).
-#Initial guess is already good enough with residual 1.6169972987181945e-06 (relative tolerance 7.65213286612869e-05).
-#Initial guess is already good enough with residual 5.923230343093394e-06 (relative tolerance 7.652129578657916e-05).
-#Initial guess is already good enough with residual 2.183725096151812e-05 (relative tolerance 7.652124791769007e-05).
-#Iterating (it=19). Initial residual: 8.104257594662499e-05 (relative tolerance 7.65211936997042e-05).
-#Iterating (it=20). Initial residual: 0.0002471542094867831 (relative tolerance 7.652114256706348e-05).
-#Iterating (it=21). Initial residual: 0.0001931084844699856 (relative tolerance 7.65210959386919e-05).
-#Iterating (it=22). Initial residual: 0.00016444970224126874 (relative tolerance 7.652105414524388e-05).
-#Iterating (it=23). Initial residual: 0.00015598466257625294 (relative tolerance 7.652101585648137e-05).
-#Iterating (it=24). Initial residual: 0.00016134923770120836 (relative tolerance 7.652097814524193e-05).
-#Iterating (it=25). Initial residual: 0.00018017366140011157 (relative tolerance 7.652094066133877e-05).
-#Iterating (it=26). Initial residual: 0.00019421426371626937 (relative tolerance 7.652089897944925e-05).
-#
-#
-#
-#Initial guess is already good enough with residual 5.6026346459360266e-14 (relative tolerance 0.00015304368252597208).
-#Initial guess is already good enough with residual 9.363821338439602e-14 (relative tolerance 0.00015304356735276902).
-#Initial guess is already good enough with residual 1.6069549233773507e-13 (relative tolerance 0.00015304346550954696).
-#Initial guess is already good enough with residual 3.7276909843600434e-13 (relative tolerance 0.00015304337711982813).
-#Initial guess is already good enough with residual 9.321658034341143e-13 (relative tolerance 0.00015304329652482773).
-#Initial guess is already good enough with residual 2.728267671910973e-12 (relative tolerance 0.00015304322371450892).
-#Initial guess is already good enough with residual 8.916124236025228e-12 (relative tolerance 0.00015304315540844686).
-#Initial guess is already good enough with residual 3.1126693675161376e-11 (relative tolerance 0.00015304310126762697).
-#Initial guess is already good enough with residual 1.1110120295557975e-10 (relative tolerance 0.00015304304588319807).
-#Initial guess is already good enough with residual 3.988688883681223e-10 (relative tolerance 0.00015304299755179092).
-#Initial guess is already good enough with residual 1.4396786019923846e-09 (relative tolerance 0.0001530429517993693).
-#Initial guess is already good enough with residual 5.186619104385998e-09 (relative tolerance 0.0001530429025961682).
-#Initial guess is already good enough with residual 1.8708206951983755e-08 (relative tolerance 0.00015304284799818859).
-#Initial guess is already good enough with residual 6.75930537586223e-08 (relative tolerance 0.00015304280340526613).
-#Initial guess is already good enough with residual 2.444315592843428e-07 (relative tolerance 0.00015304276018658722).
-#Initial guess is already good enough with residual 8.873312778413143e-07 (relative tolerance 0.00015304271330676312).
-#Initial guess is already good enough with residual 3.233994597436389e-06 (relative tolerance 0.0001530426573225738).
-#Initial guess is already good enough with residual 1.1846460686186788e-05 (relative tolerance 0.00015304259157315831).
-#Initial guess is already good enough with residual 4.367450192303624e-05 (relative tolerance 0.00015304249583538015).
-#Iterating (it=19). Initial residual: 0.00016208515189324998 (relative tolerance 0.0001530423873994084).
-#Iterating (it=20). Initial residual: 0.0004943084189735662 (relative tolerance 0.00015304228513412696).
-#Iterating (it=21). Initial residual: 0.0003862169689399712 (relative tolerance 0.0001530421918773838).
-#Iterating (it=22). Initial residual: 0.0003288994044825375 (relative tolerance 0.00015304210829048776).
-#Iterating (it=23). Initial residual: 0.0003119693251525059 (relative tolerance 0.00015304203171296273).
-#Iterating (it=24). Initial residual: 0.0003226984754024167 (relative tolerance 0.00015304195629048387).
-#Iterating (it=25). Initial residual: 0.00036034732280022314 (relative tolerance 0.00015304188132267754).
-#Iterating (it=26). Initial residual: 0.00038842852743253874 (relative tolerance 0.0001530417979588985).
-#
+outputdir: swiftnondiv_constant

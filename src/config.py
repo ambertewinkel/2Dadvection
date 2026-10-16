@@ -43,6 +43,7 @@ class Config():
     store_all_timesteps: bool = False
 
     solver: str = 'gmresm' #gcrk or gmresm --- both matrixfree (gmresm kinda)
+    tolerance_solver_scheme: float = 1e-6
     constant_tracer: float = 1.
     constant_u: float = 1.
     constant_v: float = 1.

@@ -1,4 +1,4 @@
-scheme: RK438PR2_5Ex3Im #adhimex #RK438PR2_5Ex3Im #adhimex #RK438PR2_5Ex3Im #RK4CN_5Ex3Im #adhimex
+scheme: adhimex #RK438PR2_5Ex3Im #RK4CN_5Ex3Im #adhimex
 
 nx: 128 
 ny: 128 
@@ -26,4 +26,4 @@ nondivergent: True
 
 solver: gmresm
 
-outputdir: swiftnondiv_slotcyl_unif_largeC_RK438PR2_5Ex3Im
+outputdir: swiftnondiv_slotcyl_unif_largeC_adhimex

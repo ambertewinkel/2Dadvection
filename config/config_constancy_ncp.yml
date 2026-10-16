@@ -1,4 +1,5 @@
-scheme: RK438PR2_5Ex3Im #adhimex #RK438PR2_5Ex3Im #RK4CN_5Ex3Im #adhimex
+scheme: adhimex #adhimex #RK4CN_5Ex3Im #RK438PR2_5Ex3Im
+#! not adhimex_ncp at the moment
 
 nx: 153  
 ny: 153
@@ -6,8 +7,8 @@ xmin: -500. # m
 xmax: 500. # m
 ymin: -500. # m
 ymax: 500. # m
-grid_x: lowerleftGP #cosine4_topleft
-grid_y: lowerleftGP # linear #cosine4_topleft
+grid_x: lowerleftGP
+grid_y: lowerleftGP
 BC_x: periodic
 BC_y: periodic
 
@@ -18,7 +19,7 @@ starttime: 0.
 velocity_setting: swift_nondiv_streamfunction 
 
 initial_tracer: constant
-constant_tracer: 0.5 #1. #0.5
+constant_tracer: 0.5
 
 T: 100.
 u0: 10.

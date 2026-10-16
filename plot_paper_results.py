@@ -18,7 +18,7 @@ Produces three figures from the stored .npy files in ./output/{date}, saved to
   bk25      a 3x2 comparison of the BK25 nondivergent flow at the final time
              step.  Columns are the grid, the unlimited result, and the
              FCT-limited result; rows are the explicit reference (top) and
-             AdHImEx (bottom).  All six panels share the x and y axes, and the
+             AdImEx scheme (bottom).  All six panels share the x and y axes, and the
              four tracer panels share a color scale and a single colorbar.
 
 Author: Amber te Winkel
@@ -91,7 +91,7 @@ def finish_figure(fig, cf, axes, figname):
     cbar = fig.colorbar(cf, ax=axes, fraction=0.046, pad=0.02)
     cbar.ax.tick_params(labelsize=12)
 
-    plots_dir = './output/dated/20261013/plots/'
+    plots_dir = './output/dated/20261016/plots/'
     if not os.path.exists(plots_dir):
         os.mkdir(plots_dir)
     for ext in ('pdf', 'svg'):
@@ -241,8 +241,8 @@ def plot_hadley():
 
     figname = 'hadley'
 
-    config_l, data_l = load_run('output/dated/20261013/hadley_ex') 
-    config_r, data_r = load_run('output/dated/20261013/hadley_adimex')
+    config_l, data_l = load_run('output/dated/20261016/hadley_ex') 
+    config_r, data_r = load_run('output/dated/20261016/hadley_adimex')
 
     # Time levels 0 to nt are stored, so the halfway time step is at nt // 2
     half_l, half_r = config_l.nt // 2, config_r.nt // 2
@@ -253,9 +253,9 @@ def plot_hadley():
                              constrained_layout=True)
 
     panels = [(axes[0, 0], config_l, data_l, half_l, False, 'mid-time, explicit'),
-              (axes[0, 1], config_r, data_r, half_r, False, 'mid-time, AdHImEx'),
+              (axes[0, 1], config_r, data_r, half_r, False, 'mid-time, AdHImEx (5Ex5Im)'),
               (axes[1, 0], config_l, data_l, 200, True, 'end-time, explicit'),
-              (axes[1, 1], config_r, data_r, 20, True, 'end-time, AdHImEx')]
+              (axes[1, 1], config_r, data_r, 20, True, 'end-time, AdHImEx (5Ex5Im)')]
 
     for ax, config, data, index, show_l2, label in panels:
         cf = plot_panel_hadley(ax, config, data, index, show_l2, label, cmap)
@@ -274,16 +274,16 @@ def plot_constancy():
 
     figname = 'constancy'
 
-    config_l, data_l = load_run('output/dated/20261013/swiftnondiv_constant_ncp')
-    config_r, data_r = load_run('output/dated/20261013/swiftnondiv_constant')
+    config_l, data_l = load_run('output/dated/20261016/swiftnondiv_constant_ncp')
+    config_r, data_r = load_run('output/dated/20261016/swiftnondiv_constant')
 
     fig, axes = plt.subplots(1, 2, figsize=(9.5, 4.5), sharey=True,
                              constrained_layout=True)
     fig.get_layout_engine().set(w_pad=0.02, wspace=0.02)
 
     for ax, config, data, label in [
-            (axes[0], config_l, data_l, 'without constancy preservation'),
-            (axes[1], config_r, data_r, 'with constancy preservation')]:
+            (axes[0], config_l, data_l, 'with 1e-6 absolute solver tolerance'),
+            (axes[1], config_r, data_r, 'with 1e-16 absolute solver tolerance')]:
         cf = plot_panel_cp(ax, config, data, label)
 
     axes[0].set_ylabel(YLABEL_CP, size=14)
@@ -297,13 +297,13 @@ def plot_bk25():
 
     figname = 'bk25'
 
-    config_ex, data_ex = load_run('output/dated/20261013/swiftnondiv_slotcyl_unif')
-    config_ex_fct, data_ex_fct = load_run('output/dated/20261013/swiftnondiv_slotcyl_unif_FCT')
-    config_ad, data_ad = load_run('output/dated/20261013/swiftnondiv_slotcyl_llgp')
-    config_ad_fct, data_ad_fct = load_run('output/dated/20261013/swiftnondiv_slotcyl_llgp_FCT')
+    config_ex, data_ex = load_run('output/dated/20261016/swiftnondiv_slotcyl_unif')
+    config_ex_fct, data_ex_fct = load_run('output/dated/20261016/swiftnondiv_slotcyl_unif_FCT')
+    config_ad, data_ad = load_run('output/dated/20261016/swiftnondiv_slotcyl_llgp')
+    config_ad_fct, data_ad_fct = load_run('output/dated/20261016/swiftnondiv_slotcyl_llgp_FCT')
 
-    grid_ex = load_grid('output/dated/20261013/swiftnondiv_slotcyl_unif')
-    grid_ad = load_grid('output/dated/20261013/swiftnondiv_slotcyl_llgp')
+    grid_ex = load_grid('output/dated/20261016/swiftnondiv_slotcyl_unif')
+    grid_ad = load_grid('output/dated/20261016/swiftnondiv_slotcyl_llgp')
 
     cmap = pc.read('wh-bl-gr-ye-re.cpt').cmap
 
@@ -315,8 +315,8 @@ def plot_bk25():
 
     panels = [(axes[0, 1], config_ex, data_ex, 'explicit'),
               (axes[0, 2], config_ex_fct, data_ex_fct, 'explicit, FCT-limited'),
-              (axes[1, 1], config_ad, data_ad, 'AdHImEx'),
-              (axes[1, 2], config_ad_fct, data_ad_fct, 'AdHImEx, FCT-limited')]
+              (axes[1, 1], config_ad, data_ad, 'AdHImEx (5Ex5Im)'),
+              (axes[1, 2], config_ad_fct, data_ad_fct, 'AdHImEx (5Ex5Im), FCT-limited')] # plots first half of Oct 2026 didn't actually apply FCT
 
     for ax, config, data, label in panels:
         cf = plot_panel_bk25(ax, config, data, label, cmap)
@@ -334,8 +334,8 @@ def plot_bk25():
 
 if __name__ == '__main__':
 
-    #plot_bk25()
+    plot_bk25()
     plot_constancy()
-    #plot_hadley()
+    plot_hadley()
 
     print("Plotting BK25, constancy, and Hadley done.")

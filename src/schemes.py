@@ -419,7 +419,7 @@ def adhimex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
 
     for ik in range(nstages):
         # Calculate the field at stage k      
-        if ik == 0 or ik == 1 or ik == 2 or ik == 3:
+        if ik == 1 or ik == 2:
             rhs_k = field_prev + config.dt*(np.dot(np.rollaxis(fEx_c[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_c[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
         else: 
             rhs_k = field_prev + config.dt*(np.dot(np.rollaxis(fEx_f[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_f[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
@@ -571,12 +571,6 @@ def implicitness_RK4CN_5Ex3Im(config, fields, it, **kwargs):
     fields.thetafc[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,0)) # at [i-1/2,j]
     fields.thetacf[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,1)) # at [i,j-1/2]
     
-    # testing with constant (but nonzero) implicitness for now (12-10-2026)
-    #fields.thetacc[config.store_all_timesteps*it] = np.full(np.shape(fields.thetacc[config.store_all_timesteps*it]), 0.)#1.) #0.5)
-    #fields.thetafc[config.store_all_timesteps*it] = np.full(np.shape(fields.thetafc[config.store_all_timesteps*it]), 0.)#1.) #0.5)
-    #fields.thetacf[config.store_all_timesteps*it] = np.full(np.shape(fields.thetacf[config.store_all_timesteps*it]), 0.) #1.)#0.5)
-
-    
     if config.BC_x == 'periodic':
         fields.dthetafc[config.store_all_timesteps*it] = np.roll(fields.thetafc[config.store_all_timesteps*it],-1,0) - fields.thetafc[config.store_all_timesteps*it] # at [i,j]
     else: # doesn't work properly for nonperiodic BC
@@ -589,21 +583,6 @@ def implicitness_RK4CN_5Ex3Im(config, fields, it, **kwargs):
 
 def RK4CN_5Ex3Im(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
     """Implement the AdImEx RK4CN quinticEx-cubicIm scheme for the given time step"""
-    #np.set_printoptions(precision=17, floatmode='unique')
-
-
-    #print('dxcc', fields.dxcc)
-    #print('dycc', fields.dycc)
-
-
-    #plt.contourf(fields.xcc, fields.ycc, fields.dxcc)
-    #plt.colorbar()
-    #plt.title('dxcc')
-    #plt.show()
-    #plt.contourf(fields.xcc, fields.ycc, fields.dycc)
-    #plt.colorbar()
-    #plt.title('dycc')
-    #plt.show()
     
     it_prev = config.store_all_timesteps*it + 1 - config.store_all_timesteps
     field_prev = fields.tracer[it_prev].copy()
@@ -620,8 +599,6 @@ def RK4CN_5Ex3Im(config, fields, it, iterations_convergence=np.zeros(10), **kwar
     field_k = field_prev.copy()
     flxfc_HO, flxcf_HO = np.zeros_like(field_k), np.zeros_like(field_k)
 
-    #print('RK4CN_5Ex3Im: it =', it)
-    #print('field n', field_prev)
     for ik in range(nstages):
         # Calculate the field at stage k      
         rhs_k = field_prev + config.dt*(np.dot(np.rollaxis(fEx_f[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_f[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
@@ -630,56 +607,13 @@ def RK4CN_5Ex3Im(config, fields, it, iterations_convergence=np.zeros(10), **kwar
             matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[config.store_all_timesteps*it], thetacf=fields.thetacf[config.store_all_timesteps*it], alpha=AIm[ik,ik]) # at [i,j]
             solver = getattr(sv, config.solver)
             guess = field_prev.copy() # might need to be a different guess for this scheme to ensure exact constancy
-            field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
+            field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=config.tolerance_solver_scheme, iterations_convergence=iterations_convergence, it=it)
             #field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-16, iterations_convergence=iterations_convergence, it=it)
         else:
             field_k = rhs_k.copy()
 
-
-        #diff = np.abs(field_k - field_prev)
-        #print(diff)
-        #i, j = np.unravel_index(np.argmax(diff), diff.shape)
-
-        #print(f"Location of max abs difference: (i, j) = ({i}, {j})")
-        #print(f"field_k[i, j]    = {field_k[i, j]:.6e}")
-        #print(f"field_prev[i, j] = {field_prev[i, j]:.6e}")
-        #print(f"diff[i, j]       = {diff[i, j]:.6e}")
-        #print(f"np.max(diff)     = {np.max(diff):.6e}")
-        #print(f"Match: {diff[i, j] == np.max(diff)}")
-        #exit()
-
-
-
-
-        #import sys
-        #print(sys.float_info.epsilon)
-        #print()
-#
-        #print(f'field_k - field_prev last in x and y', field_k[-1,:]-field_prev[-1,:], field_k[:,-1]-field_prev[:,-1])
-        #print(f'field_k last in x and y', field_k[-1,:], field_k[:,-1])
-        #print(f'field_prev last in x and y', field_prev[-1,:], field_prev[:,-1])
-        #print()
-        #print(f'field_k - field_prev penultimate in x and y', field_k[-2,:]-field_prev[-2,:], field_k[:,-2]-field_prev[:,-2])
-        #print(f'field_k penultimate in x and y', field_k[-2,:], field_k[:,-2])
-        #print(f'field_prev penultimate in x and y', field_prev[-2,:], field_prev[:,-2])
-        #print()
-        #print(f'field_(k={ik}):', field_k)
-        #print('difference:', field_k - field_prev)
-        #print('max abs difference:', np.max(np.abs(field_k - field_prev)))
-        #print('field at stage', ik, 'exactly one:', not np.any(field_k != 1.))
-        #print()
-        #plt.contourf(fields.xcc, fields.ycc, np.where(abs(field_k - field_prev) > 1e-15, field_k - field_prev, 0.))
-        #if ik == 1 or ik == 2 or ik == 4:
-        #    plt.contourf(fields.xcc, fields.ycc, abs(field_k - field_prev), norm=LogNorm())
-        ## plt.contourf(fields.xcc, fields.ycc, abs(field_k - field_prev) != 0, abs(field_k - field_prev), norm=LogNorm())
-        #    plt.colorbar()
-        #    plt.title(f'field_(k={ik}) - field_prev')
-        #    plt.show()
-
-
         # Calculate the velocity times the fifth-order field approximation at faces
         flxkfc_5Ex, flxkcf_5Ex = fifth_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
-        #flxkfc_5Ex, flxkcf_5Ex = third_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2] # temporary for testing 12-10-2026
         flxkfc_3Im, flxkcf_3Im = third_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
 
         fEx_c[ik,:] = (1.-fields.thetacc[config.store_all_timesteps*it])*fluxdiv(fields, flxkfc_5Ex, flxkcf_5Ex, 1., 1.)
@@ -772,8 +706,7 @@ def RK438PR2_5Ex3Im(config, fields, it, iterations_convergence=np.zeros(10), **k
             matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[config.store_all_timesteps*it], thetacf=fields.thetacf[config.store_all_timesteps*it], alpha=AIm[ik,ik]) # at [i,j]
             solver = getattr(sv, config.solver)
             guess = field_prev.copy() # might need to be a different guess for this scheme to ensure exact constancy
-            field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
-            #field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-16, iterations_convergence=iterations_convergence, it=it)
+            field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=config.tolerance_solver_scheme, iterations_convergence=iterations_convergence, it=it)
         else:
             field_k = rhs_k.copy()
 
