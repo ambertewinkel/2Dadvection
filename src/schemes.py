@@ -299,7 +299,7 @@ def fifth_order(config, fields, it, phi):
 
 
 def third_order(config, fields, it, phi):
-    """Third-order spatial discretisation (potentially used for the matrix)"""
+    """Third-order spatial discretisation (potentially used for the matrix) and for some schemes"""
     phi_BS_fc = 1./3.*phi + 5./6.*np.roll(phi,1,0) - 1./6.*np.roll(phi,2,0) # backward in space (upwind if u>0) flux at face in x direction
     phi_FS_fc = 1./3.*np.roll(phi,1,0) + 5./6.*phi - 1./6.*np.roll(phi,-1,0) # forward in space (upwind if u<0) flux at face in x direction
     phi_BS_cf = 1./3.*phi + 5./6.*np.roll(phi,1,1) - 1./6.*np.roll(phi,2,1) # backward in space (upwind if v>0) flux at face in y direction
@@ -423,13 +423,13 @@ def adhimex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
         if ik == 4 and np.any(fields.thetacc[config.store_all_timesteps*it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
             matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[config.store_all_timesteps*it], thetacf=fields.thetacf[config.store_all_timesteps*it], alpha=AIm[ik,ik]) # at [i,j]
             solver = getattr(sv, config.solver)
-            #guess = field_k.copy()
+            guess = field_prev.copy() #field_k.copy()
             #guess = field_prev.copy() #rhs_k.copy() #field_k.copy() 
-            guess = rhs_k.copy() #field_k.copy()
+            #guess = rhs_k.copy() #field_k.copy()
             #print('guess norm: ', np.linalg.norm(guess))
             #guess = field_prev.copy()
-            #field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
-            field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-15, iterations_convergence=iterations_convergence, it=it)
+            field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
+            #field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-15, iterations_convergence=iterations_convergence, it=it)
             #field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=20, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
             #field_k = solver(matrix, rhs_k, guess, no_restarts=1, m=1, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
             #print('new field norm', np.linalg.norm(field_k))
@@ -468,3 +468,334 @@ def adhimex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
     #plt.contourf(fields.xcc, fields.ycc, fields.tracer[config.store_all_timesteps*it+1])
     #plt.colorbar()
     #plt.show()
+
+
+################# ADLIMHEX SCHEME #################
+
+#def adlimhex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
+#    """Implement the AdLImHex scheme for the given time step - constancy-preserving version"""
+#
+#    it_prev = config.store_all_timesteps*it + 1 - config.store_all_timesteps
+#    field_prev = fields.tracer[it_prev].copy()
+#
+#    # Set up Butcher tableau
+#    AEx, AIm, nstages = adlimhex_butcher()
+#
+#    # Calculate the implicitness at each cell face
+#    implicitness_adlimhex(config, fields, it, **kwargs)
+#    
+#    # Time step
+#    fEx_c, fIm_c = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
+#    fEx_f, fIm_f = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
+#    field_k = field_prev.copy()
+#    flxfc_HO, flxcf_HO = np.zeros_like(field_k), np.zeros_like(field_k)
+#
+#    for ik in range(nstages):
+#        # Calculate the field at stage k      
+#        rhs_k = field_prev + config.dt*(np.dot(np.rollaxis(fEx_f[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_f[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
+#
+#        if ik != 0 and np.any(fields.thetacc[config.store_all_timesteps*it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
+#            matrix = partial(adlimhex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[config.store_all_timesteps*it], thetacf=fields.thetacf[config.store_all_timesteps*it], alpha=AIm[ik,ik]) # at [i,j]
+#            solver = getattr(sv, config.solver)
+#            guess = rhs_k.copy() 
+#            field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
+#        else:
+#            field_k = rhs_k.copy()
+#
+#        # Calculate the velocity times the fifth-order field approximation at faces
+#        flxkfc, flxkcf = fifth_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
+#
+#        fEx_c[ik,:] = (1.-fields.thetacc[config.store_all_timesteps*it])*fluxdiv(fields, flxkfc, flxkcf, 1., 1.)
+#        fIm_c[ik,:] = fields.thetacc[config.store_all_timesteps*it]*fluxdiv(fields, flxkfc, flxkcf, 1., 1.)
+#        fEx_f[ik,:] = fluxdiv(fields, flxkfc, flxkcf, 1.-fields.thetafc[config.store_all_timesteps*it], 1.-fields.thetacf[config.store_all_timesteps*it])
+#        fIm_f[ik,:] = fluxdiv(fields, flxkfc, flxkcf, fields.thetafc[config.store_all_timesteps*it], fields.thetacf[config.store_all_timesteps*it])    
+#        
+#        # Accumulate the flux contributions from the stages (needed for FCT)
+#        flxfc_HO += AEx[-1,ik]*(1 - fields.thetafc[config.store_all_timesteps*it])*flxkfc + AIm[-1,ik]*fields.thetafc[config.store_all_timesteps*it]*flxkfc # at [i-1/2,j]
+#        flxcf_HO += AEx[-1,ik]*(1 - fields.thetacf[config.store_all_timesteps*it])*flxkcf + AIm[-1,ik]*fields.thetacf[config.store_all_timesteps*it]*flxkcf # at [i,j-1/2]
+#
+#    # Implement FCT if required
+#    if config.BC_x == 'periodic' and config.BC_y == 'periodic': # to avoid having to implement boundaries for Hadley nonperiodic BC. Not planning to implement FCT results for this for now (22-03-2026)
+#        if config.FCT_2pass:
+#            fields.tracer[config.store_all_timesteps*it+1] = lim.FCT_2pass(config, fields, it, flxfc_HO, flxcf_HO)     
+#        elif config.FCT:
+#            fields.tracer[config.store_all_timesteps*it+1] = lim.FCT(config, fields, it, flxfc_HO, flxcf_HO)
+#        else:
+#            fields.tracer[config.store_all_timesteps*it+1] = field_k.copy() 
+#    else:     
+#        if config.FCT_2pass or config.FCT:
+#            raise ValueError('FCT is not implemented for periodic BCs.')
+#        else:
+#            fields.tracer[config.store_all_timesteps*it+1] = field_k.copy() 
+
+
+
+
+
+
+
+
+
+
+################# RK4CN quinticEx-cubicIm SCHEME #################
+
+def RK4CN_butcher():
+    """Sets up RK4CN Butcher tableau"""
+
+    # Butcher tableau for explicit part: RK4
+    AEx = np.array([[0., 0., 0., 0., 0.],[0.5, 0., 0., 0., 0.],[0., 0.5, 0., 0., 0.],[0., 0., 1., 0., 0.],[1/6, 1/3, 1/3, 1/6, 0.]])
+
+    # Butcher tableau for implicit part: CN 
+    AIm = np.array([[0., 0., 0., 0., 0.],[0.5, 0., 0., 0., 0.],[0.5, 0., 0., 0., 0.],[0.5, 0., 0., 0.5, 0.],[0.5, 0., 0., 0.5, 0.]])
+
+    nstages = np.shape(AIm)[1]
+
+    return AEx, AIm, nstages
+
+
+def implicitness_RK4CN_5Ex3Im(config, fields, it, **kwargs):
+    """Calculate Courant numbers at cell centers and implicitness at cell centers and faces for AdHImEx scheme. Assumes nondivergent winds, and that dy is constant in x and dx is constant in y"""
+
+    # assumes theta isotropic for now
+    if config.theta_anisotropic:
+        raise ValueError('RK4CN quinticEx-cubicIm scheme is not implemented for anisotropic theta.')
+
+    sum_abs_velarea = (abs(fields.u[config.store_all_timesteps*it]) + abs(np.roll(fields.u[config.store_all_timesteps*it],-1,0)))*fields.dycc + (abs(fields.v[config.store_all_timesteps*it]) + abs(np.roll(fields.v[config.store_all_timesteps*it],-1,1)))*fields.dxcc # at [i,j]
+    fields.Ccc[config.store_all_timesteps*it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
+
+    fields.thetacc[config.store_all_timesteps*it] = np.where(fields.Ccc[config.store_all_timesteps*it] < 1.2, 0., np.minimum(1., np.maximum(0., 1.27 - 1./(1. + 0.6*(fields.Ccc[config.store_all_timesteps*it] - 1.62))))) # at [i,j] # I could probably do a better job on this definition, it is currently just copying the amplification factor theta definition from AdHImEx paper code main branch 10-10-2026
+    fields.thetafc[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,0)) # at [i-1/2,j]
+    fields.thetacf[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,1)) # at [i,j-1/2]
+    
+    # testing with constant (but nonzero) implicitness for now (12-10-2026)
+    #fields.thetacc[config.store_all_timesteps*it] = np.full(np.shape(fields.thetacc[config.store_all_timesteps*it]), 0.)#1.) #0.5)
+    #fields.thetafc[config.store_all_timesteps*it] = np.full(np.shape(fields.thetafc[config.store_all_timesteps*it]), 0.)#1.) #0.5)
+    #fields.thetacf[config.store_all_timesteps*it] = np.full(np.shape(fields.thetacf[config.store_all_timesteps*it]), 0.) #1.)#0.5)
+
+    
+    if config.BC_x == 'periodic':
+        fields.dthetafc[config.store_all_timesteps*it] = np.roll(fields.thetafc[config.store_all_timesteps*it],-1,0) - fields.thetafc[config.store_all_timesteps*it] # at [i,j]
+    else: # doesn't work properly for nonperiodic BC
+        fields.dthetafc[config.store_all_timesteps*it] = np.full(np.shape(fields.dthetafc[config.store_all_timesteps*it]), -1.)
+    if config.BC_y == 'periodic':
+        fields.dthetacf[config.store_all_timesteps*it] = np.roll(fields.thetacf[config.store_all_timesteps*it],-1,1) - fields.thetacf[config.store_all_timesteps*it] # at [i,j]
+    else: # doesn't work properly for nonperiodic BC
+        fields.dthetacf[config.store_all_timesteps*it] = np.full(np.shape(fields.dthetacf[config.store_all_timesteps*it]), -1.)
+
+
+def RK4CN_5Ex3Im(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
+    """Implement the AdImEx RK4CN quinticEx-cubicIm scheme for the given time step"""
+    #np.set_printoptions(precision=17, floatmode='unique')
+
+
+    #print('dxcc', fields.dxcc)
+    #print('dycc', fields.dycc)
+
+
+    #plt.contourf(fields.xcc, fields.ycc, fields.dxcc)
+    #plt.colorbar()
+    #plt.title('dxcc')
+    #plt.show()
+    #plt.contourf(fields.xcc, fields.ycc, fields.dycc)
+    #plt.colorbar()
+    #plt.title('dycc')
+    #plt.show()
+    
+    it_prev = config.store_all_timesteps*it + 1 - config.store_all_timesteps
+    field_prev = fields.tracer[it_prev].copy()
+
+    # Set up Butcher tableau
+    AEx, AIm, nstages = RK4CN_butcher()
+
+    # Calculate the implicitness at each cell face
+    implicitness_RK4CN_5Ex3Im(config, fields, it, **kwargs)
+    
+    # Time step
+    fEx_c, fIm_c = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
+    fEx_f, fIm_f = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
+    field_k = field_prev.copy()
+    flxfc_HO, flxcf_HO = np.zeros_like(field_k), np.zeros_like(field_k)
+
+    #print('RK4CN_5Ex3Im: it =', it)
+    #print('field n', field_prev)
+    for ik in range(nstages):
+        # Calculate the field at stage k      
+        rhs_k = field_prev + config.dt*(np.dot(np.rollaxis(fEx_f[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_f[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
+
+        if ik == 3 and np.any(fields.thetacc[config.store_all_timesteps*it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
+            matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[config.store_all_timesteps*it], thetacf=fields.thetacf[config.store_all_timesteps*it], alpha=AIm[ik,ik]) # at [i,j]
+            solver = getattr(sv, config.solver)
+            guess = field_prev.copy() # might need to be a different guess for this scheme to ensure exact constancy
+            field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
+            #field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-16, iterations_convergence=iterations_convergence, it=it)
+        else:
+            field_k = rhs_k.copy()
+
+
+        #diff = np.abs(field_k - field_prev)
+        #print(diff)
+        #i, j = np.unravel_index(np.argmax(diff), diff.shape)
+
+        #print(f"Location of max abs difference: (i, j) = ({i}, {j})")
+        #print(f"field_k[i, j]    = {field_k[i, j]:.6e}")
+        #print(f"field_prev[i, j] = {field_prev[i, j]:.6e}")
+        #print(f"diff[i, j]       = {diff[i, j]:.6e}")
+        #print(f"np.max(diff)     = {np.max(diff):.6e}")
+        #print(f"Match: {diff[i, j] == np.max(diff)}")
+        #exit()
+
+
+
+
+        #import sys
+        #print(sys.float_info.epsilon)
+        #print()
+#
+        #print(f'field_k - field_prev last in x and y', field_k[-1,:]-field_prev[-1,:], field_k[:,-1]-field_prev[:,-1])
+        #print(f'field_k last in x and y', field_k[-1,:], field_k[:,-1])
+        #print(f'field_prev last in x and y', field_prev[-1,:], field_prev[:,-1])
+        #print()
+        #print(f'field_k - field_prev penultimate in x and y', field_k[-2,:]-field_prev[-2,:], field_k[:,-2]-field_prev[:,-2])
+        #print(f'field_k penultimate in x and y', field_k[-2,:], field_k[:,-2])
+        #print(f'field_prev penultimate in x and y', field_prev[-2,:], field_prev[:,-2])
+        #print()
+        #print(f'field_(k={ik}):', field_k)
+        #print('difference:', field_k - field_prev)
+        #print('max abs difference:', np.max(np.abs(field_k - field_prev)))
+        #print('field at stage', ik, 'exactly one:', not np.any(field_k != 1.))
+        #print()
+        #plt.contourf(fields.xcc, fields.ycc, np.where(abs(field_k - field_prev) > 1e-15, field_k - field_prev, 0.))
+        #if ik == 1 or ik == 2 or ik == 4:
+        #    plt.contourf(fields.xcc, fields.ycc, abs(field_k - field_prev), norm=LogNorm())
+        ## plt.contourf(fields.xcc, fields.ycc, abs(field_k - field_prev) != 0, abs(field_k - field_prev), norm=LogNorm())
+        #    plt.colorbar()
+        #    plt.title(f'field_(k={ik}) - field_prev')
+        #    plt.show()
+
+
+        # Calculate the velocity times the fifth-order field approximation at faces
+        flxkfc_5Ex, flxkcf_5Ex = fifth_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
+        #flxkfc_5Ex, flxkcf_5Ex = third_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2] # temporary for testing 12-10-2026
+        flxkfc_3Im, flxkcf_3Im = third_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
+
+        fEx_c[ik,:] = (1.-fields.thetacc[config.store_all_timesteps*it])*fluxdiv(fields, flxkfc_5Ex, flxkcf_5Ex, 1., 1.)
+        fIm_c[ik,:] = fields.thetacc[config.store_all_timesteps*it]*fluxdiv(fields, flxkfc_3Im, flxkcf_3Im, 1., 1.)
+        fEx_f[ik,:] = fluxdiv(fields, flxkfc_5Ex, flxkcf_5Ex, 1.-fields.thetafc[config.store_all_timesteps*it], 1.-fields.thetacf[config.store_all_timesteps*it])
+        fIm_f[ik,:] = fluxdiv(fields, flxkfc_3Im, flxkcf_3Im, fields.thetafc[config.store_all_timesteps*it], fields.thetacf[config.store_all_timesteps*it])    
+        
+        # Accumulate the flux contributions from the stages (needed for FCT)
+        flxfc_HO += AEx[-1,ik]*(1 - fields.thetafc[config.store_all_timesteps*it])*flxkfc_5Ex + AIm[-1,ik]*fields.thetafc[config.store_all_timesteps*it]*flxkfc_3Im # at [i-1/2,j]
+        flxcf_HO += AEx[-1,ik]*(1 - fields.thetacf[config.store_all_timesteps*it])*flxkcf_5Ex + AIm[-1,ik]*fields.thetacf[config.store_all_timesteps*it]*flxkcf_3Im # at [i,j-1/2]
+
+    # Implement FCT if required
+    if config.BC_x == 'periodic' and config.BC_y == 'periodic': # to avoid having to implement boundaries for Hadley nonperiodic BC. Not planning to implement FCT results for this for now (22-03-2026)
+        if config.FCT_2pass:
+            fields.tracer[config.store_all_timesteps*it+1] = lim.FCT_2pass(config, fields, it, flxfc_HO, flxcf_HO)     
+        elif config.FCT:
+            fields.tracer[config.store_all_timesteps*it+1] = lim.FCT(config, fields, it, flxfc_HO, flxcf_HO)
+        else:
+            fields.tracer[config.store_all_timesteps*it+1] = field_k.copy() 
+    else:     
+        if config.FCT_2pass or config.FCT:
+            raise ValueError('FCT is not implemented for periodic BCs.')
+        else:
+            fields.tracer[config.store_all_timesteps*it+1] = field_k.copy() 
+
+
+################# RK438PR2 quinticEx-cubicIm SCHEME #################
+
+def RK438PR2_butcher():
+    """Sets up RK438PR2 Butcher tableau"""
+
+    # Butcher tableau for explicit part: RK4
+    AEx = np.array([[0., 0., 0., 0., 0.],[1/3, 0., 0., 0., 0.],[-1/3, 1., 0., 0., 0.],[1., -1., 1., 0., 0.],[1/8, 3/8, 3/8, 1/8, 0.]])
+
+    # Butcher tableau for implicit part: CN 
+    AIm = np.array([[0., 0., 0., 0., 0.],[0., 1/3, 0., 0., 0.],[0., 1/3, 1/3, 0., 0.],[0., 0.5, 0.5, 0., 0.],[0., 0.5, 0.5, 0., 0.]])
+
+    nstages = np.shape(AIm)[1]
+
+    return AEx, AIm, nstages
+
+
+def implicitness_RK438PR2_5Ex3Im(config, fields, it, **kwargs):
+    """Calculate Courant numbers at cell centers and implicitness at cell centers and faces for AdHImEx scheme. Assumes nondivergent winds, and that dy is constant in x and dx is constant in y"""
+
+    # assumes theta isotropic for now
+    if config.theta_anisotropic:
+        raise ValueError('RK438PR2 quinticEx-cubicIm scheme is not implemented for anisotropic theta.')
+
+    sum_abs_velarea = (abs(fields.u[config.store_all_timesteps*it]) + abs(np.roll(fields.u[config.store_all_timesteps*it],-1,0)))*fields.dycc + (abs(fields.v[config.store_all_timesteps*it]) + abs(np.roll(fields.v[config.store_all_timesteps*it],-1,1)))*fields.dxcc # at [i,j]
+    fields.Ccc[config.store_all_timesteps*it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
+
+    fields.thetacc[config.store_all_timesteps*it] = np.where(fields.Ccc[config.store_all_timesteps*it] < 1.5, 0., np.minimum(1., np.maximum(0., 1.015 - 1./(1. + 1.2*(fields.Ccc[config.store_all_timesteps*it] - 1.7))))) # at [i,j] # copying the amplification factor theta definition from AdHImEx paper code main branch 10-10-2026
+    fields.thetafc[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,0)) # at [i-1/2,j]
+    fields.thetacf[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,1)) # at [i,j-1/2]
+    
+    if config.BC_x == 'periodic':
+        fields.dthetafc[config.store_all_timesteps*it] = np.roll(fields.thetafc[config.store_all_timesteps*it],-1,0) - fields.thetafc[config.store_all_timesteps*it] # at [i,j]
+    else: # doesn't work properly for nonperiodic BC
+        fields.dthetafc[config.store_all_timesteps*it] = np.full(np.shape(fields.dthetafc[config.store_all_timesteps*it]), -1.)
+    if config.BC_y == 'periodic':
+        fields.dthetacf[config.store_all_timesteps*it] = np.roll(fields.thetacf[config.store_all_timesteps*it],-1,1) - fields.thetacf[config.store_all_timesteps*it] # at [i,j]
+    else: # doesn't work properly for nonperiodic BC
+        fields.dthetacf[config.store_all_timesteps*it] = np.full(np.shape(fields.dthetacf[config.store_all_timesteps*it]), -1.)
+
+
+def RK438PR2_5Ex3Im(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
+    """Implement the AdImEx RK438PR2 quinticEx-cubicIm scheme for the given time step"""
+
+    it_prev = config.store_all_timesteps*it + 1 - config.store_all_timesteps
+    field_prev = fields.tracer[it_prev].copy()
+
+    # Set up Butcher tableau
+    AEx, AIm, nstages = RK438PR2_butcher()
+
+    # Calculate the implicitness at each cell face
+    implicitness_RK438PR2_5Ex3Im(config, fields, it, **kwargs)
+    
+    # Time step
+    fEx_c, fIm_c = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
+    fEx_f, fIm_f = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
+    field_k = field_prev.copy()
+    flxfc_HO, flxcf_HO = np.zeros_like(field_k), np.zeros_like(field_k)
+
+    for ik in range(nstages):
+        # Calculate the field at stage k      
+        rhs_k = field_prev + config.dt*(np.dot(np.rollaxis(fEx_f[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_f[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
+
+        if (ik == 1 or ik == 2) and np.any(fields.thetacc[config.store_all_timesteps*it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
+            matrix = partial(adhimex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[config.store_all_timesteps*it], thetacf=fields.thetacf[config.store_all_timesteps*it], alpha=AIm[ik,ik]) # at [i,j]
+            solver = getattr(sv, config.solver)
+            guess = field_prev.copy() # might need to be a different guess for this scheme to ensure exact constancy
+            field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
+            #field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-16, iterations_convergence=iterations_convergence, it=it)
+        else:
+            field_k = rhs_k.copy()
+
+        # Calculate the velocity times the fifth-order field approximation at faces
+        flxkfc_5Ex, flxkcf_5Ex = fifth_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
+        flxkfc_3Im, flxkcf_3Im = third_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
+
+        fEx_c[ik,:] = (1.-fields.thetacc[config.store_all_timesteps*it])*fluxdiv(fields, flxkfc_5Ex, flxkcf_5Ex, 1., 1.)
+        fIm_c[ik,:] = fields.thetacc[config.store_all_timesteps*it]*fluxdiv(fields, flxkfc_3Im, flxkcf_3Im, 1., 1.)
+        fEx_f[ik,:] = fluxdiv(fields, flxkfc_5Ex, flxkcf_5Ex, 1.-fields.thetafc[config.store_all_timesteps*it], 1.-fields.thetacf[config.store_all_timesteps*it])
+        fIm_f[ik,:] = fluxdiv(fields, flxkfc_3Im, flxkcf_3Im, fields.thetafc[config.store_all_timesteps*it], fields.thetacf[config.store_all_timesteps*it])    
+        
+        # Accumulate the flux contributions from the stages (needed for FCT)
+        flxfc_HO += AEx[-1,ik]*(1 - fields.thetafc[config.store_all_timesteps*it])*flxkfc_5Ex + AIm[-1,ik]*fields.thetafc[config.store_all_timesteps*it]*flxkfc_3Im # at [i-1/2,j]
+        flxcf_HO += AEx[-1,ik]*(1 - fields.thetacf[config.store_all_timesteps*it])*flxkcf_5Ex + AIm[-1,ik]*fields.thetacf[config.store_all_timesteps*it]*flxkcf_3Im # at [i,j-1/2]
+
+    # Implement FCT if required
+    if config.BC_x == 'periodic' and config.BC_y == 'periodic': # to avoid having to implement boundaries for Hadley nonperiodic BC. Not planning to implement FCT results for this for now (22-03-2026)
+        if config.FCT_2pass:
+            fields.tracer[config.store_all_timesteps*it+1] = lim.FCT_2pass(config, fields, it, flxfc_HO, flxcf_HO)     
+        elif config.FCT:
+            fields.tracer[config.store_all_timesteps*it+1] = lim.FCT(config, fields, it, flxfc_HO, flxcf_HO)
+        else:
+            fields.tracer[config.store_all_timesteps*it+1] = field_k.copy() 
+    else:     
+        if config.FCT_2pass or config.FCT:
+            raise ValueError('FCT is not implemented for periodic BCs.')
+        else:
+            fields.tracer[config.store_all_timesteps*it+1] = field_k.copy() 

@@ -71,6 +71,8 @@ def gmresm(A, b, x, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence
     if norm_oldres <= reltol:
         print(f"Initial guess is already good enough with residual {norm_oldres} (relative tolerance {reltol}).")
         return x
+    else: 
+        print(f"Iterating (it={it}). Initial residual: {norm_oldres} (relative tolerance {reltol}).")
     converged = False
 
     no_iters = 0
