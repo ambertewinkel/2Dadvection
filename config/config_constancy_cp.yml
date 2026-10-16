@@ -1,4 +1,4 @@
-scheme: adhimex #adhimex #RK4CN_5Ex3Im #RK438PR2_5Ex3Im
+scheme: RK438PR2_5Ex3Im #adhimex #RK4CN_5Ex3Im #RK438PR2_5Ex3Im
 
 nx: 153  
 ny: 153
@@ -28,5 +28,7 @@ u0: 10.
 nondivergent: True
 
 solver: gmresm 
+theta_anisotropic: True
+adjust_theta: True
 
 outputdir: swiftnondiv_constant

@@ -1,4 +1,4 @@
-scheme: adhimex #adhimex #RK4CN_5Ex3Im #RK438PR2_5Ex3Im
+scheme: RK438PR2_5Ex3Im #adhimex #RK4CN_5Ex3Im #RK438PR2_5Ex3Im
 
 nx: 128 
 ny: 128 
@@ -25,5 +25,7 @@ u0: 10. # m/s
 nondivergent: True
 
 solver: gmresm
+theta_anisotropic: True
+adjust_theta: True
 
 outputdir: swiftnondiv_slotcyl_unif

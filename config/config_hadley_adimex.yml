@@ -1,4 +1,4 @@
-scheme: adhimex #adhimex #RK4CN_5Ex3Im #RK438PR2_5Ex3Im
+scheme: RK438PR2_5Ex3Im #adhimex #RK4CN_5Ex3Im #RK438PR2_5Ex3Im
 
 nx: 180
 ny: 180
@@ -23,5 +23,7 @@ store_all_timesteps: True
 solver: gmresm 
 
 nondivergent: True
+theta_anisotropic: True
+adjust_theta: True
 
 outputdir: hadley_adimex

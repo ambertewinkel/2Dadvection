@@ -253,9 +253,9 @@ def plot_hadley():
                              constrained_layout=True)
 
     panels = [(axes[0, 0], config_l, data_l, half_l, False, 'mid-time, explicit'),
-              (axes[0, 1], config_r, data_r, half_r, False, 'mid-time, AdHImEx (5Ex5Im)'),
+              (axes[0, 1], config_r, data_r, half_r, False, 'mid-time, RK438PR2_5Ex3Im'),
               (axes[1, 0], config_l, data_l, 200, True, 'end-time, explicit'),
-              (axes[1, 1], config_r, data_r, 20, True, 'end-time, AdHImEx (5Ex5Im)')]
+              (axes[1, 1], config_r, data_r, 20, True, 'end-time, RK438PR2_5Ex3Im')]
 
     for ax, config, data, index, show_l2, label in panels:
         cf = plot_panel_hadley(ax, config, data, index, show_l2, label, cmap)
@@ -315,8 +315,8 @@ def plot_bk25():
 
     panels = [(axes[0, 1], config_ex, data_ex, 'explicit'),
               (axes[0, 2], config_ex_fct, data_ex_fct, 'explicit, FCT-limited'),
-              (axes[1, 1], config_ad, data_ad, 'AdHImEx (5Ex5Im)'),
-              (axes[1, 2], config_ad_fct, data_ad_fct, 'AdHImEx (5Ex5Im), FCT-limited')] # plots first half of Oct 2026 didn't actually apply FCT
+              (axes[1, 1], config_ad, data_ad, 'RK438PR2_5Ex3Im)'),
+              (axes[1, 2], config_ad_fct, data_ad_fct, 'RK438PR2_5Ex3Im, FCT-limited')] # plots first half of Oct 2026 didn't actually apply FCT
 
     for ax, config, data, label in panels:
         cf = plot_panel_bk25(ax, config, data, label, cmap)
