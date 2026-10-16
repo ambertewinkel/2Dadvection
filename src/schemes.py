@@ -560,17 +560,45 @@ def RK4CN_butcher():
 def implicitness_RK4CN_5Ex3Im(config, fields, it, **kwargs):
     """Calculate Courant numbers at cell centers and implicitness at cell centers and faces for AdHImEx scheme. Assumes nondivergent winds, and that dy is constant in x and dx is constant in y"""
 
-    # assumes theta isotropic for now
-    if config.theta_anisotropic:
-        raise ValueError('RK4CN quinticEx-cubicIm scheme is not implemented for anisotropic theta.')
-
     sum_abs_velarea = (abs(fields.u[config.store_all_timesteps*it]) + abs(np.roll(fields.u[config.store_all_timesteps*it],-1,0)))*fields.dycc + (abs(fields.v[config.store_all_timesteps*it]) + abs(np.roll(fields.v[config.store_all_timesteps*it],-1,1)))*fields.dxcc # at [i,j]
     fields.Ccc[config.store_all_timesteps*it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
 
-    fields.thetacc[config.store_all_timesteps*it] = np.where(fields.Ccc[config.store_all_timesteps*it] < 1.2, 0., np.minimum(1., np.maximum(0., 1.27 - 1./(1. + 0.6*(fields.Ccc[config.store_all_timesteps*it] - 1.62))))) # at [i,j] # I could probably do a better job on this definition, it is currently just copying the amplification factor theta definition from AdHImEx paper code main branch 10-10-2026
-    fields.thetafc[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,0)) # at [i-1/2,j]
-    fields.thetacf[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,1)) # at [i,j-1/2]
-    
+    if config.theta_anisotropic: # anisotropic implicitness (different in x and y directions)
+        n_out_c = np.sum(np.array([fields.u[config.store_all_timesteps*it] < -1e-16, np.roll(fields.u[config.store_all_timesteps*it],-1,0) > 1e-16, fields.v[config.store_all_timesteps*it] < -1e-16, np.roll(fields.v[config.store_all_timesteps*it],-1,1) > 1e-16]), axis=0) # at [i,j]
+
+        Cfc = config.dt*(0.5*(fields.u[config.store_all_timesteps*it] + abs(fields.u[config.store_all_timesteps*it]))*fields.dycc/(np.roll(fields.dxcc,1,0)*fields.dycc) + 0.5*(-fields.u[config.store_all_timesteps*it] + abs(fields.u[config.store_all_timesteps*it]))*fields.dycc/(fields.dxcc*fields.dycc)) # assumes an orthogonal grid (dyfc = dycc etc). #  always positive # at [i-1/2,j] 
+        Ccf = config.dt*(0.5*(fields.v[config.store_all_timesteps*it] + abs(fields.v[config.store_all_timesteps*it]))*fields.dxcc/(fields.dxcc*np.roll(fields.dycc,1,1)) + 0.5*(-fields.v[config.store_all_timesteps*it] + abs(fields.v[config.store_all_timesteps*it]))*fields.dxcc/(fields.dxcc*fields.dycc)) # assumes an orthogonal grid (dyfc = dycc etc). #  always positive # at [i,j-1/2]
+        # Calculating Courant number times number of outward facing cells for the upwind cell of a certain fc or cf face
+        noutc_Cfc = config.dt*(0.5*(fields.u[config.store_all_timesteps*it] + abs(fields.u[config.store_all_timesteps*it]))*np.roll(n_out_c,1,0)*fields.dycc/(np.roll(fields.dxcc,1,0)*fields.dycc) + 0.5*(-fields.u[config.store_all_timesteps*it] + abs(fields.u[config.store_all_timesteps*it]))*n_out_c*fields.dycc/(fields.dxcc*fields.dycc)) # assumes an orthogonal grid (dyfc = dycc etc). #  always positive # at [i-1/2,j] 
+        noutc_Ccf = config.dt*(0.5*(fields.v[config.store_all_timesteps*it] + abs(fields.v[config.store_all_timesteps*it]))*np.roll(n_out_c,1,1)*fields.dxcc/(fields.dxcc*np.roll(fields.dycc,1,1)) + 0.5*(-fields.v[config.store_all_timesteps*it] + abs(fields.v[config.store_all_timesteps*it]))*n_out_c*fields.dxcc/(fields.dxcc*fields.dycc)) # assumes an orthogonal grid (dyfc = dycc etc). #  always positive # at [i,j-1/2]
+
+        #fields.thetafc[config.store_all_timesteps*it] = 1. - 1./(1. + 0.7*np.maximum(0., noutc_Cfc - 1.4)) # at [i-1/2,j] 
+        fields.thetafc[config.store_all_timesteps*it] = np.where(noutc_Cfc < 1.2, 0., np.minimum(1., np.maximum(0., 1.27 - 1./(1. + 0.6*(noutc_Cfc - 1.62)))))  # at [i-1/2,j] 
+        
+        #fields.thetacf[config.store_all_timesteps*it] = 1. - 1./(1. + 0.7*np.maximum(0., noutc_Ccf - 1.4)) # at [i,j-1/2]
+        fields.thetacf[config.store_all_timesteps*it] = np.where(noutc_Ccf < 1.2, 0., np.minimum(1., np.maximum(0., 1.27 - 1./(1. + 0.6*(noutc_Ccf - 1.62))))) # at [i,j-1/2]
+
+        #fields.thetacc[config.store_all_timesteps*it] = np.maximum.reduce([fields.thetafc[config.store_all_timesteps*it], np.roll(fields.thetafc[config.store_all_timesteps*it],-1,0), fields.thetacf[config.store_all_timesteps*it], np.roll(fields.thetacf[config.store_all_timesteps*it],-1,1)]) # at [i,j] # Needed to activate the matrix solve + for the fEx_c and fIm_c parts needed for constancy. This works, it seems to be stable for uniform uv and hadley and swift nondiv cases. 
+        #fields.thetacc[config.store_all_timesteps*it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[config.store_all_timesteps*it] - 1.4)) # at [i,j] # Needed to activate the matrix solve + for the fEx_c and fIm_c parts needed for constancy. This works, it seems to be stable for uniform uv and hadley and swift nondiv cases. 
+        fields.thetacc[config.store_all_timesteps*it] = np.where(fields.Ccc[config.store_all_timesteps*it] < 1.2, 0., np.minimum(1., np.maximum(0., 1.27 - 1./(1. + 0.6*(fields.Ccc[config.store_all_timesteps*it] - 1.62))))) # at [i,j] # I could probably do a better job on this definition, it is currently just copying the amplification factor theta definition from AdHImEx paper code main branch 10-10-2026
+
+        # Potentially reducing thetafc and thetacf while still retaining positivity.
+        if config.adjust_theta: # does this need be be adapted for divergent velocities?
+            for it_adjust in range(3): # four faces so three iterations should be enough to converge (nothing should happen if all faces explicit nor if all faces implicit)
+                # Calculate the room to remove implicitness
+                a_c = 1.27 + np.minimum(0., np.sign(fields.u[config.store_all_timesteps*it]))*(1. - fields.thetafc[config.store_all_timesteps*it])*Cfc - np.maximum(0., np.sign(np.roll(fields.u[config.store_all_timesteps*it],-1,0)))*(1. - np.roll(fields.thetafc[config.store_all_timesteps*it],-1,0))*np.roll(Cfc,-1,0) + np.minimum(0., np.sign(fields.v[config.store_all_timesteps*it]))*(1. - fields.thetacf[config.store_all_timesteps*it])*Ccf - np.maximum(0., np.sign(np.roll(fields.v[config.store_all_timesteps*it],-1,1)))*(1. - np.roll(fields.thetacf[config.store_all_timesteps*it],-1,1))*np.roll(Ccf,-1,1) # at [i,j]
+
+                # Calculate number of outward facing implicit cells
+                n_im_out_c = np.sum(np.array([ (fields.u[config.store_all_timesteps*it] < 0.)*(fields.thetafc[config.store_all_timesteps*it] > 1e-14), (np.roll(fields.u[config.store_all_timesteps*it],-1,0) > 0.)*(np.roll(fields.thetafc[config.store_all_timesteps*it],-1,0) > 1e-14), (fields.v[config.store_all_timesteps*it] < 0.)*(fields.thetacf[config.store_all_timesteps*it] > 1e-14), (np.roll(fields.v[config.store_all_timesteps*it],-1,1) > 0.)*(np.roll(fields.thetacf[config.store_all_timesteps*it],-1,1) > 1e-14) ]), axis=0) # at [i,j] # I can maybe adjust the 1e-14 to 0.?
+
+                # Adjusting thetafc and thetacf
+                fields.thetafc[config.store_all_timesteps*it] = 1. - np.minimum(1. - fields.thetafc[config.store_all_timesteps*it] - np.minimum(0., np.sign(fields.u[config.store_all_timesteps*it]))*a_c/np.where(n_im_out_c*Cfc > 0., n_im_out_c*Cfc, np.inf) + np.maximum(0., np.sign(fields.u[config.store_all_timesteps*it]))*np.roll(a_c,1,0)/np.where(np.roll(n_im_out_c,1,0)*Cfc > 0., np.roll(n_im_out_c,1,0)*Cfc, np.inf), 1.)
+                fields.thetacf[config.store_all_timesteps*it] = 1. - np.minimum(1. - fields.thetacf[config.store_all_timesteps*it] - np.minimum(0., np.sign(fields.v[config.store_all_timesteps*it]))*a_c/np.where(n_im_out_c*Ccf > 0., n_im_out_c*Ccf, np.inf) + np.maximum(0., np.sign(fields.v[config.store_all_timesteps*it]))*np.roll(a_c,1,1)/np.where(np.roll(n_im_out_c,1,1)*Ccf > 0., np.roll(n_im_out_c,1,1)*Ccf, np.inf), 1.)
+    else:
+        fields.thetacc[config.store_all_timesteps*it] = np.where(fields.Ccc[config.store_all_timesteps*it] < 1.2, 0., np.minimum(1., np.maximum(0., 1.27 - 1./(1. + 0.6*(fields.Ccc[config.store_all_timesteps*it] - 1.62))))) # at [i,j] # I could probably do a better job on this definition, it is currently just copying the amplification factor theta definition from AdHImEx paper code main branch 10-10-2026
+        fields.thetafc[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,0)) # at [i-1/2,j]
+        fields.thetacf[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,1)) # at [i,j-1/2]
+
     if config.BC_x == 'periodic':
         fields.dthetafc[config.store_all_timesteps*it] = np.roll(fields.thetafc[config.store_all_timesteps*it],-1,0) - fields.thetafc[config.store_all_timesteps*it] # at [i,j]
     else: # doesn't work properly for nonperiodic BC
@@ -659,16 +687,44 @@ def RK438PR2_butcher():
 def implicitness_RK438PR2_5Ex3Im(config, fields, it, **kwargs):
     """Calculate Courant numbers at cell centers and implicitness at cell centers and faces for AdHImEx scheme. Assumes nondivergent winds, and that dy is constant in x and dx is constant in y"""
 
-    # assumes theta isotropic for now
-    if config.theta_anisotropic:
-        raise ValueError('RK438PR2 quinticEx-cubicIm scheme is not implemented for anisotropic theta.')
-
     sum_abs_velarea = (abs(fields.u[config.store_all_timesteps*it]) + abs(np.roll(fields.u[config.store_all_timesteps*it],-1,0)))*fields.dycc + (abs(fields.v[config.store_all_timesteps*it]) + abs(np.roll(fields.v[config.store_all_timesteps*it],-1,1)))*fields.dxcc # at [i,j]
     fields.Ccc[config.store_all_timesteps*it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
 
-    fields.thetacc[config.store_all_timesteps*it] = np.where(fields.Ccc[config.store_all_timesteps*it] < 1.5, 0., np.minimum(1., np.maximum(0., 1.015 - 1./(1. + 1.2*(fields.Ccc[config.store_all_timesteps*it] - 1.7))))) # at [i,j] # copying the amplification factor theta definition from AdHImEx paper code main branch 10-10-2026
-    fields.thetafc[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,0)) # at [i-1/2,j]
-    fields.thetacf[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,1)) # at [i,j-1/2]
+    if config.theta_anisotropic: # anisotropic implicitness (different in x and y directions)
+        n_out_c = np.sum(np.array([fields.u[config.store_all_timesteps*it] < -1e-16, np.roll(fields.u[config.store_all_timesteps*it],-1,0) > 1e-16, fields.v[config.store_all_timesteps*it] < -1e-16, np.roll(fields.v[config.store_all_timesteps*it],-1,1) > 1e-16]), axis=0) # at [i,j]
+
+        Cfc = config.dt*(0.5*(fields.u[config.store_all_timesteps*it] + abs(fields.u[config.store_all_timesteps*it]))*fields.dycc/(np.roll(fields.dxcc,1,0)*fields.dycc) + 0.5*(-fields.u[config.store_all_timesteps*it] + abs(fields.u[config.store_all_timesteps*it]))*fields.dycc/(fields.dxcc*fields.dycc)) # assumes an orthogonal grid (dyfc = dycc etc). #  always positive # at [i-1/2,j] 
+        Ccf = config.dt*(0.5*(fields.v[config.store_all_timesteps*it] + abs(fields.v[config.store_all_timesteps*it]))*fields.dxcc/(fields.dxcc*np.roll(fields.dycc,1,1)) + 0.5*(-fields.v[config.store_all_timesteps*it] + abs(fields.v[config.store_all_timesteps*it]))*fields.dxcc/(fields.dxcc*fields.dycc)) # assumes an orthogonal grid (dyfc = dycc etc). #  always positive # at [i,j-1/2]
+        # Calculating Courant number times number of outward facing cells for the upwind cell of a certain fc or cf face
+        noutc_Cfc = config.dt*(0.5*(fields.u[config.store_all_timesteps*it] + abs(fields.u[config.store_all_timesteps*it]))*np.roll(n_out_c,1,0)*fields.dycc/(np.roll(fields.dxcc,1,0)*fields.dycc) + 0.5*(-fields.u[config.store_all_timesteps*it] + abs(fields.u[config.store_all_timesteps*it]))*n_out_c*fields.dycc/(fields.dxcc*fields.dycc)) # assumes an orthogonal grid (dyfc = dycc etc). #  always positive # at [i-1/2,j] 
+        noutc_Ccf = config.dt*(0.5*(fields.v[config.store_all_timesteps*it] + abs(fields.v[config.store_all_timesteps*it]))*np.roll(n_out_c,1,1)*fields.dxcc/(fields.dxcc*np.roll(fields.dycc,1,1)) + 0.5*(-fields.v[config.store_all_timesteps*it] + abs(fields.v[config.store_all_timesteps*it]))*n_out_c*fields.dxcc/(fields.dxcc*fields.dycc)) # assumes an orthogonal grid (dyfc = dycc etc). #  always positive # at [i,j-1/2]
+
+        #fields.thetafc[config.store_all_timesteps*it] = 1. - 1./(1. + 0.7*np.maximum(0., noutc_Cfc - 1.4)) # at [i-1/2,j] 
+        fields.thetafc[config.store_all_timesteps*it] = np.where(noutc_Cfc < 1.5, 0., np.minimum(1., np.maximum(0., 1.015 - 1./(1. + 1.2*(noutc_Cfc - 1.7)))))   # at [i-1/2,j] 
+
+        #fields.thetacf[config.store_all_timesteps*it] = 1. - 1./(1. + 0.7*np.maximum(0., noutc_Ccf - 1.4)) # at [i,j-1/2]
+        fields.thetacf[config.store_all_timesteps*it] = np.where(noutc_Ccf < 1.5, 0., np.minimum(1., np.maximum(0., 1.015 - 1./(1. + 1.2*(noutc_Ccf - 1.7)))))  # at [i,j-1/2]
+
+        #fields.thetacc[config.store_all_timesteps*it] = np.maximum.reduce([fields.thetafc[config.store_all_timesteps*it], np.roll(fields.thetafc[config.store_all_timesteps*it],-1,0), fields.thetacf[config.store_all_timesteps*it], np.roll(fields.thetacf[config.store_all_timesteps*it],-1,1)]) # at [i,j] # Needed to activate the matrix solve + for the fEx_c and fIm_c parts needed for constancy. This works, it seems to be stable for uniform uv and hadley and swift nondiv cases. 
+        #fields.thetacc[config.store_all_timesteps*it] = 1. - 1./(1. + 0.7*np.maximum(0., fields.Ccc[config.store_all_timesteps*it] - 1.4)) # at [i,j] # Needed to activate the matrix solve + for the fEx_c and fIm_c parts needed for constancy. This works, it seems to be stable for uniform uv and hadley and swift nondiv cases. 
+        fields.thetacc[config.store_all_timesteps*it] = np.where(fields.Ccc[config.store_all_timesteps*it] < 1.5, 0., np.minimum(1., np.maximum(0., 1.015 - 1./(1. + 1.2*(fields.Ccc[config.store_all_timesteps*it] - 1.7))))) # at [i,j] # copying the amplification factor theta definition from AdHImEx paper code main branch 10-10-2026
+
+        # Potentially reducing thetafc and thetacf while still retaining positivity.
+        if config.adjust_theta: # does this need be be adapted for divergent velocities?
+            for it_adjust in range(3): # four faces so three iterations should be enough to converge (nothing should happen if all faces explicit nor if all faces implicit)
+                # Calculate the room to remove implicitness
+                a_c = 1.015 + np.minimum(0., np.sign(fields.u[config.store_all_timesteps*it]))*(1. - fields.thetafc[config.store_all_timesteps*it])*Cfc - np.maximum(0., np.sign(np.roll(fields.u[config.store_all_timesteps*it],-1,0)))*(1. - np.roll(fields.thetafc[config.store_all_timesteps*it],-1,0))*np.roll(Cfc,-1,0) + np.minimum(0., np.sign(fields.v[config.store_all_timesteps*it]))*(1. - fields.thetacf[config.store_all_timesteps*it])*Ccf - np.maximum(0., np.sign(np.roll(fields.v[config.store_all_timesteps*it],-1,1)))*(1. - np.roll(fields.thetacf[config.store_all_timesteps*it],-1,1))*np.roll(Ccf,-1,1) # at [i,j]
+
+                # Calculate number of outward facing implicit cells
+                n_im_out_c = np.sum(np.array([ (fields.u[config.store_all_timesteps*it] < 0.)*(fields.thetafc[config.store_all_timesteps*it] > 1e-14), (np.roll(fields.u[config.store_all_timesteps*it],-1,0) > 0.)*(np.roll(fields.thetafc[config.store_all_timesteps*it],-1,0) > 1e-14), (fields.v[config.store_all_timesteps*it] < 0.)*(fields.thetacf[config.store_all_timesteps*it] > 1e-14), (np.roll(fields.v[config.store_all_timesteps*it],-1,1) > 0.)*(np.roll(fields.thetacf[config.store_all_timesteps*it],-1,1) > 1e-14) ]), axis=0) # at [i,j] # I can maybe adjust the 1e-14 to 0.?
+
+                # Adjusting thetafc and thetacf
+                fields.thetafc[config.store_all_timesteps*it] = 1. - np.minimum(1. - fields.thetafc[config.store_all_timesteps*it] - np.minimum(0., np.sign(fields.u[config.store_all_timesteps*it]))*a_c/np.where(n_im_out_c*Cfc > 0., n_im_out_c*Cfc, np.inf) + np.maximum(0., np.sign(fields.u[config.store_all_timesteps*it]))*np.roll(a_c,1,0)/np.where(np.roll(n_im_out_c,1,0)*Cfc > 0., np.roll(n_im_out_c,1,0)*Cfc, np.inf), 1.)
+                fields.thetacf[config.store_all_timesteps*it] = 1. - np.minimum(1. - fields.thetacf[config.store_all_timesteps*it] - np.minimum(0., np.sign(fields.v[config.store_all_timesteps*it]))*a_c/np.where(n_im_out_c*Ccf > 0., n_im_out_c*Ccf, np.inf) + np.maximum(0., np.sign(fields.v[config.store_all_timesteps*it]))*np.roll(a_c,1,1)/np.where(np.roll(n_im_out_c,1,1)*Ccf > 0., np.roll(n_im_out_c,1,1)*Ccf, np.inf), 1.)
+    else:
+        fields.thetacc[config.store_all_timesteps*it] = np.where(fields.Ccc[config.store_all_timesteps*it] < 1.5, 0., np.minimum(1., np.maximum(0., 1.015 - 1./(1. + 1.2*(fields.Ccc[config.store_all_timesteps*it] - 1.7))))) # at [i,j] # copying the amplification factor theta definition from AdHImEx paper code main branch 10-10-2026
+        fields.thetafc[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,0)) # at [i-1/2,j]
+        fields.thetacf[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,1)) # at [i,j-1/2]
     
     if config.BC_x == 'periodic':
         fields.dthetafc[config.store_all_timesteps*it] = np.roll(fields.thetafc[config.store_all_timesteps*it],-1,0) - fields.thetafc[config.store_all_timesteps*it] # at [i,j]

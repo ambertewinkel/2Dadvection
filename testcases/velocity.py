@@ -62,12 +62,6 @@ def swift_nondiv(config, fields, it):
 
 def swift_nondiv_streamfunction(config, fields, it):
     # Non-divergent velocity field at half time levels from SWIFT testcase using the streamfunction
-    #Lx = fields.xffb[-1,-1] - fields.xffb[0,0]
-    #Ly = fields.yffb[-1,-1] - fields.yffb[0,0]
-
-    #print('difference xmax and xffb', fields.xffb[-1,-1] - config.xmax)
-
-    #print(f'Lx = {Lx}, Ly = {Ly}')
 
     Lx = config.xmax - config.xmin
     Ly = config.ymax - config.ymin

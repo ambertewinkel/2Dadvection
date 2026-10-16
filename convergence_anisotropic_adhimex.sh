@@ -62,18 +62,18 @@ INPUTS=(
     #"constantuvlargev_sine_unif_anis_ny256dt0_1nt4"
     #"constantuvlargev_sine_unif_ny256dt0_1nt4"
     # Runs 28-09-2026
-    "constantuv_sinexunify_unif_anis_ny640dt0_4nt1"
-    "constantuv_sinexunify_unif_ny640dt0_4nt1"
-    #"constantuv_sinexunify_unif_anis_ny1280dt0_2nt2"
-    #"constantuv_sinexunify_unif_ny1280dt0_2nt2"
-    #"constantuv_sinexunify_unif_anis_ny2560dt0_1nt4"
-    #"constantuv_sinexunify_unif_ny2560dt0_1nt4"
+    #"constantuv_sinexunify_unif_anis_ny640dt0_4nt1"
+    #"constantuv_sinexunify_unif_ny640dt0_4nt1"
+    "constantuv_sinexunify_unif_anis_ny1280dt0_2nt2"
+    "constantuv_sinexunify_unif_ny1280dt0_2nt2"
+    "constantuv_sinexunify_unif_anis_ny2560dt0_1nt4"
+    "constantuv_sinexunify_unif_ny2560dt0_1nt4"
 )
 
 for args in "${INPUTS[@]}"; do
     echo "=== Running: python run_model.py config_$args ==="
     python run_model.py config_$args
-    python plot_tracer.py swift dated/20261007/$args
+    python plot_tracer.py swift dated/20261016/$args
     #python error.py dated/20260917/$args finaltoinitial
-    python error.py dated/20261007/$args finaltoanalytic
+    python error.py dated/20261016/$args finaltoanalytic
 done
