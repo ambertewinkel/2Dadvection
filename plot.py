@@ -92,7 +92,7 @@ def load_data(outputdir, field_to_plot):
 
 def plot_fields(config, fieldnames, data, plots_dir, setting):
     """Plots the fields based on the specified setting."""
-
+    
     # Plot fields based on setting
     if setting == 'final':
         # Plot the tracer initial condition if tracer is outputted (i.e. field_to_plot is 'all' or 'tracer')
@@ -146,18 +146,22 @@ def plot_fields(config, fieldnames, data, plots_dir, setting):
         for field in fieldnames:
             if field in ['tracer', 'density', 'Ccc', 'thetacc', 'u', 'v', 'thetafc', 'thetacf', 'psi']:
                 # Determine min and max values for consistent color scale
-                add_hatching, minval, maxval = False, np.min(data[field]), np.max(data[field])
+                #add_hatching, minval, maxval = False, np.min(data[field]), np.max(data[field])
+                add_hatching, minval, maxval = True, np.min(data[field]), np.max(data[field])
                 if field == 'tracer' or field == 'density':
-                    plot_figure(data['xcc']*90, data['ycc']*12, data[field][0], field, f'$\\Psi$ at $n_t$=0', 'lat (deg)', 'z (km)', 'viridis', plots_dir + f'{field}_nt0.png', minval, maxval)
+                    #plot_figure(data['xcc'], data['ycc']*1e-3, data[field][0], field, f'$\\Psi$ at $n_t$=0', 'lat (deg)', 'z (km)', 'viridis', plots_dir + f'{field}_nt0.png', minval, maxval)
+                    plot_figure(data['xcc'], data['ycc'], data[field][0], field, f'$\\Psi$ at $n_t$=0', 'x (m)', 'y (m)', 'viridis', plots_dir + f'{field}_nt0.png', minval, maxval)
                     for it in range(1, config.nt+1):
                         if 'thetacc' in fieldnames:
                             add_hatching, thetacc = True, data['thetacc'][it-1]
                         else:
                             add_hatching, thetacc = False, None
-                        plot_figure(data['xcc']*90, data['ycc']*12, data[field][it], field, f'$\\Psi$ at $n_t$ = {it}', 'lat (deg)', 'z (km)', 'viridis', plots_dir + f'{field}_nt{it}.png', minval, maxval, add_hatching, thetacc)
+                        #plot_figure(data['xcc'], data['ycc']*1e-3, data[field][it], field, f'$\\Psi$ at $n_t$ = {it}', 'lat (deg)', 'z (km)', 'viridis', plots_dir + f'{field}_nt{it}.png', minval, maxval, add_hatching, thetacc)
+                        plot_figure(data['xcc'], data['ycc'], data[field][it], field, f'$\\Psi$ at $n_t$ = {it}', 'x (m)', 'y (m)', 'viridis', plots_dir + f'{field}_nt{it}.png', minval, maxval, add_hatching, thetacc)
                 else:
                     if field == 'Ccc' or field == 'thetacc':
-                        x, y = data['xcc']*90, data['ycc']*12
+                        #x, y = data['xcc']*90, data['ycc']*12
+                        x, y = data['xcc'], data['ycc']
                     elif field == 'u' or field == 'thetafc':
                         x, y = data['xfc'], data['yfc']
                     elif field == 'v' or field == 'thetacf':
@@ -165,14 +169,19 @@ def plot_fields(config, fieldnames, data, plots_dir, setting):
                     elif field == 'psi':
                         x, y = data['xffb'], data['yffb']
                     for it in range(config.nt):
-                        plot_figure(x, y, data[field][it], field, f'Courant number at $n_t$ = {it+0.5}', 'lat (deg)', 'z (km)', 'viridis', plots_dir + f'{field}_nt{it+1}.png', minval, maxval)
+                        #plot_figure(x, y, data[field][it], field, f'Courant number at $n_t$ = {it+0.5}', 'lat (deg)', 'z (km)', 'viridis', plots_dir + f'{field}_nt{it+1}.png', minval, maxval)
+                        #plot_figure(x, y, data[field][it], field, f'Implicitness at $n_t$ = {it+0.5}', 'x (m)', 'y (m)', 'viridis', plots_dir + f'{field}_nt{it+1}.png', minval, maxval)
+                        plot_figure(x, y, data[field][it], field, f'Courant number at $n_t$ = {it+0.5}', 'x (m)', 'y (m)', 'viridis', plots_dir + f'{field}_nt{it+1}.png', minval, maxval)
                 create_animation(config, plots_dir, anim_dir, field)
     else: 
         raise ValueError('Plotting setting not recognized.')
 
 
 def plot_figure(x, y, fielddata, fieldname, title, xlabel, ylabel, cmap, filename, minval, maxval, add_hatching=False, thetacc=None, add_initial=False, initialtracer=None):
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(5.5,5))#10, 5))
+    #plt.figure(figsize=(7,3.5)) # 6,3.5 for left plot, 7,3.5 for right plot
+    plt.gca().set_aspect('equal', adjustable='box')
+
     palette = pc.read('wh-bl-gr-ye-re.cpt') # read in a color palette
     #cmap = 'Greys'#'bwr'
     diff = maxval - minval
@@ -190,12 +199,16 @@ def plot_figure(x, y, fielddata, fieldname, title, xlabel, ylabel, cmap, filenam
             contourlevels = list(np.arange(-0.15, 1.16, 0.1)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
             #contourlevels = list(np.linspace(-maxval+1., maxval, 10)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
         else: 
-            contourlevels = list(np.linspace(minval, maxval, 20, endpoint=True))
+            #contourlevels = list(np.linspace(minval, maxval, 20, endpoint=True))
+            print('maxval:', maxval)
+            contourlevels = list(np.arange(0., maxval+0.2, 0.25)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
+            #contourlevels = list(np.arange(0., np.ceil(maxval*10)*0.1+0.1, 0.1)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
         #contourlevels = list(np.linspace(minval, maxval, 20, endpoint=True)) #list(np.arange(-0.15, 1.15, 0.1)) # np.linspace(-0.15, 1.15, 13))  # list(np.linspace(minval, maxval, 20, endpoint=True))
         #contourlevels = [minval, (minval + 0.15*diff), (minval + 0.25*diff), (minval + 0.35*diff), (minval + 0.45*diff), (minval + 0.55*diff), (minval + 0.65*diff), (minval + 0.75*diff), (minval + 0.85*diff), maxval]
     plt.contourf(x, y, fielddata, cmap=palette.cmap, levels=contourlevels, extend=extend)
     #plt.contourf(x, y, fielddata-5.0E-1, cmap=cmap, levels=contourlevels, extend=extend)
-    cbar = plt.colorbar()
+    #cbar = plt.colorbar()
+    cbar = plt.colorbar(fraction=0.046, pad=0.04)
     cbar.ax.tick_params(labelsize=12)  # change colorbar tick label size
     if add_initial:
         if diff == 0.:
