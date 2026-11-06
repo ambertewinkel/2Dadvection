@@ -22,6 +22,7 @@ def parse_file(filename, aniso=False):
         "time_scheme": re.compile(r"Time total scheme:\s*([0-9eE\.\-\+]+)"),
         "total_iters": re.compile(r"Total number of iterations over all times:\s*([0-9eE\.\-\+]+)"),
         "l2norm": re.compile(r"l2norm\s*=\s*([0-9eE\.\-\+]+)"),
+        "linfnorm": re.compile(r"linfnorm\s*=\s*([0-9eE\.\-\+]+)"),
         "tracer_minmax": re.compile(
             r"Min and max tracer at final time step:\s*\(np\.float64\(([^)]+)\),\s*np\.float64\(([^)]+)\)\)"
         ),
@@ -55,7 +56,7 @@ def parse_file(filename, aniso=False):
                 continue
 
             # Scalar variables
-            for key in ["time_total", "time_vel", "time_scheme", "total_iters", "l2norm"]:
+            for key in ["time_total", "time_vel", "time_scheme", "total_iters", "l2norm", "linfnorm"]:
                 match = patterns[key].search(line)
                 if match:
                     data[current_nt][key].append(float(match.group(1)))
@@ -111,7 +112,7 @@ def plot_timings(data_list):
     # A single entry reproduces the original single-line plot exactly.
 
     # ---- Plot ----
-    fig, axs = plt.subplots(4, 1, figsize=(4.5, 7.5), sharex=True)
+    fig, axs = plt.subplots(5, 1, figsize=(4.5, 8.5), sharex=True)
     meanCmaxoverdt_list = []
 
     for data, label, color in data_list:
@@ -122,6 +123,7 @@ def plot_timings(data_list):
         Cmax  = np.array([data[nt]["C_max"]  for nt in nts])
 
         l2 = np.array([data[nt]["l2norm"] for nt in nts])
+        linf = np.array([data[nt]["linfnorm"] for nt in nts])
         time_scheme = np.array([np.mean(data[nt]["time_scheme"]) for nt in nts])
         total_iters = np.array([data[nt]["total_iters"] for nt in nts])
 
@@ -134,17 +136,21 @@ def plot_timings(data_list):
         axs[0].plot(dt, l2, marker='x', color=color, label=label)
         axs[0].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
 
-        # 2) total scheme time
-        axs[1].plot(dt, time_scheme, marker='x', color=color, label=label)
+        # 2) linf norm
+        axs[1].plot(dt, linf, marker='x', color=color, label=label)
         axs[1].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
 
-        # 3) time per step
-        axs[2].plot(dt, time_per_step, marker='x', color=color, label=label)
+        # 3) total scheme time
+        axs[2].plot(dt, time_scheme, marker='x', color=color, label=label)
         axs[2].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
 
-        # 4) iterations per step
-        axs[3].plot(dt[:-4], iterations_per_step[:-4], marker='x', color=color, label=label)
+        # 4) time per step
+        axs[3].plot(dt, time_per_step, marker='x', color=color, label=label)
         axs[3].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
+
+        # 5) iterations per step
+        axs[4].plot(dt[:-4], iterations_per_step[:-4], marker='x', color=color, label=label)
+        axs[4].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
 
     axs[0].set_ylabel("$l_2$ norm")
     axs[0].set_xscale("log")
@@ -152,21 +158,26 @@ def plot_timings(data_list):
     axs[0].grid(True, which="both", ls="--", alpha=0.5)
     meanCmaxoverdt = np.mean(meanCmaxoverdt_list)
     axs[0].secondary_xaxis('top', functions=(lambda x: meanCmaxoverdt*x, lambda x: meanCmaxoverdt*x)).set_xlabel("$C_{max}$")
-
-    axs[1].set_ylabel("Total scheme\nwall-clock time (s)")
+    
+    axs[1].set_ylabel("$l_\\infty$ norm")
     axs[1].set_xscale("log")
+    axs[1].set_yscale("log")
     axs[1].grid(True, which="both", ls="--", alpha=0.5)
 
-    axs[2].set_ylabel("Scheme wall-clock time\nper time step (s)")
-    axs[2].set_yscale("log")
+    axs[2].set_ylabel("Total scheme\nwall-clock time (s)")
     axs[2].set_xscale("log")
     axs[2].grid(True, which="both", ls="--", alpha=0.5)
 
-    axs[3].set_ylabel("Iterations\nper time step")
-    axs[3].set_xlabel("$\\Delta t$")
+    axs[3].set_ylabel("Scheme wall-clock time\nper time step (s)")
     axs[3].set_yscale("log")
     axs[3].set_xscale("log")
     axs[3].grid(True, which="both", ls="--", alpha=0.5)
+
+    axs[4].set_ylabel("Iterations\nper time step")
+    axs[4].set_xlabel("$\\Delta t$")
+    axs[4].set_yscale("log")
+    axs[4].set_xscale("log")
+    axs[4].grid(True, which="both", ls="--", alpha=0.5)
 
     if len(data_list) > 1:
         axs[0].legend()
@@ -206,7 +217,7 @@ def main():
     data_iso = load_dataset(filename, aniso=False)
 
     for nt, values in data_iso.items():
-        print(f"[iso] nt: {nt}, dt: {values['dt']:.2e}, C_min: {values['C_min']:.2e}, C_max: {values['C_max']:.2e}, l2norm: {values['l2norm']:.2e}, time_scheme_mean: {values['time_scheme_mean']:.2f}s, total_iters: {values['total_iters']}")
+        print(f"[iso] nt: {nt}, dt: {values['dt']:.2e}, C_min: {values['C_min']:.2e}, C_max: {values['C_max']:.2e}, l2norm: {values['l2norm']:.2e}, linfnorm: {values['linfnorm']:.2e}, time_scheme_mean: {values['time_scheme_mean']:.2f}s, total_iters: {values['total_iters']}")
 
     data_list = [(data_iso, "iso", "blue")]
 
@@ -216,7 +227,7 @@ def main():
             print("Warning: --bothanisoandiso requested but no aniso runs found in the file; plotting iso only.")
         else:
             for nt, values in data_aniso.items():
-                print(f"[aniso] nt: {nt}, dt: {values['dt']:.2e}, C_min: {values['C_min']:.2e}, C_max: {values['C_max']:.2e}, l2norm: {values['l2norm']:.2e}, time_scheme_mean: {values['time_scheme_mean']:.2f}s, total_iters: {values['total_iters']}")
+                print(f"[aniso] nt: {nt}, dt: {values['dt']:.2e}, C_min: {values['C_min']:.2e}, C_max: {values['C_max']:.2e}, l2norm: {values['l2norm']:.2e}, linfnorm: {values['linfnorm']:.2e}, time_scheme_mean: {values['time_scheme_mean']:.2f}s, total_iters: {values['total_iters']}")
             data_list.append((data_aniso, "aniso", "green"))
 
     plot_timings(data_list)

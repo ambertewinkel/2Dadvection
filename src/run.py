@@ -7,7 +7,7 @@ from src.time_stepping import time_stepping
 from testcases.initial.tracer import initial_tracer
 from src.output import store_output_npy, set_up_logging, set_up_output_directory, store_config, getminmax
 from logging import info
-from error import l2norm
+from error import l2norm, linfnorm
 import numpy as np
 
 def run(config, configfile, configname):
@@ -37,10 +37,17 @@ def run(config, configfile, configname):
     if config.timing == False: store_output_npy(config, fields)
 
     if config.print_error: 
+        # L2 error
         l2_error = l2norm(fields.tracer[-1], fields.tracer[0], fields.dxcc*fields.dycc)
         info(f'l2norm = {l2_error}')
         print(f'l2norm = {l2_error}')
         np.save(config.outputdir + f'data/l2_error.npy', l2_error)
+
+        # Linf error
+        linf_error = linfnorm(fields.tracer[-1], fields.tracer[0])
+        info(f'linfnorm = {linf_error}')
+        print(f'linfnorm = {linf_error}')
+        np.save(config.outputdir + f'data/linf_error.npy', linf_error)
 
     info('Min and max tracer at final time step: ' + str(getminmax(fields.tracer, -1)))
     print('Min and max tracer at final time step: ' + str(getminmax(fields.tracer, -1)))

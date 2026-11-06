@@ -24,7 +24,7 @@ from utils.animation import create_animation
 from src.config import Config
 from src.output import set_up_plots_directory
 import pycpt as pc
-from error import l2norm
+from error import l2norm, linfnorm
 
 
 def load_data(outputdir, field_to_plot):
@@ -109,9 +109,10 @@ def plot_fields(config, fieldnames, data, plots_dir, setting):
                 else:
                     add_hatching, thetacc = False, None
                 l2_error = l2norm(data['tracer'][-1], data['tracer'][0], data['dxcc']*data['dycc'])
-                #plot_figure(data['xcc'], data['ycc'], data[field][-1], field, f'$\\Psi$ at $n_t$ = {config.nt} \n min = {minval:.3f}, max = {maxval:.3f}, l2 = {l2_error:.3f}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval)#, add_hatching, thetacc, True, data['tracer'][0])
-                #plot_figure(data['xcc'], data['ycc'], data[field][-1], field, f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$, $l_2$ = {l2_error:.5f}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.pdf', minval, maxval)#, add_hatching, thetacc, True, data['tracer'][0])
-                plot_figure(data['xcc']*90., data['ycc']*12., data[field][-1], field, f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$', 'lat (deg)', 'z (km)', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval, add_hatching, thetacc)#, True, data['tracer'][0])
+                linf_error = linfnorm(data['tracer'][-1], data['tracer'][0])
+                #plot_figure(data['xcc'], data['ycc'], data[field][-1], field, f'$\\Psi$ at $n_t$ = {config.nt} \n min = {minval:.3f}, max = {maxval:.3f}, l2 = {l2_error:.3f}, l_inf = {linf_error:.3f}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval)#, add_hatching, thetacc, True, data['tracer'][0])
+                #plot_figure(data['xcc'], data['ycc'], data[field][-1], field, f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$, $l_2$ = {l2_error:.5f}, $l_\\infty$ = {linf_error:.5f}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.pdf', minval, maxval)#, add_hatching, thetacc, True, data['tracer'][0])
+                plot_figure(data['xcc']*90., data['ycc']*12., data[field][-1], field, f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$, $l_2$ = {l2_error:.5f}, $l_\\infty$ = {linf_error:.5f}', 'lat (deg)', 'z (km)', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval, add_hatching, thetacc)#, True, data['tracer'][0])
             elif field == 'Ccc' or field == 'thetacc' or field == 'dthetafc' or field == 'dthetacf':
                 plot_figure(data['xcc'], data['ycc'], data[field][-1], field, f'{field} at $n_t$ = {config.nt}, min = {minval:.4f}, max = {maxval:.4f}', 'x', 'y', 'viridis', plots_dir + f'{field}_nt{config.nt}.svg', minval, maxval)
             elif field == 'u' or field == 'thetafc':

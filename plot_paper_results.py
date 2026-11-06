@@ -32,7 +32,7 @@ import pycpt as pc
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 
 from src.config import Config
-from error import l2norm
+from error import l2norm, linfnorm
 
 
 CCONTOURLEVELS = [1.4, 2.8, 4.2, 5.6, 7., 8.4, 9.8]
@@ -100,24 +100,25 @@ def finish_figure(fig, cf, axes, figname):
 
 
 # Hadley
-def panel_title_hadley(config, data, index, show_l2):
-    """Builds the title for one panel: value range, and l2 if requested."""
+def panel_title_hadley(config, data, index, show_error):
+    """Builds the title for one panel: value range, and error if requested."""
 
     field = data['tracer'][index]
     minval, maxval = np.min(field), np.max(field)
     nt = index  # tracer.npy stores time levels 0 to nt inclusive
 
     title = f'$\\Psi^{{ {nt} }} \\in [{minval:.2f},{maxval:.2f}]$'
-    if show_l2:
+    if show_error:
         l2_error = l2norm(field, data['tracer'][0],
                           data['dxcc'] * data['dycc'])
-        title += f', $\\ell_2 =${l2_error:.5f}'
+        linf_error = linfnorm(field, data['tracer'][0])
+        title += f', $\\ell_2 =${l2_error:.5f}, $\\ell_\\infty =${linf_error:.5f}'
 
     return title
 
 
 # Hadley
-def plot_panel_hadley(ax, config, data, index, show_l2, label, cmap):
+def plot_panel_hadley(ax, config, data, index, show_error, label, cmap):
     """Draws one tracer panel with a scheme label and returns the filled contour set."""
 
     x, y = data['xcc'], data['ycc'] * 1e-3
@@ -126,7 +127,7 @@ def plot_panel_hadley(ax, config, data, index, show_l2, label, cmap):
                      levels=CONTOURLEVELS, extend='both')
     ax.contour(x, y, data['Ccc'][index-1], colors='k', levels=CCONTOURLEVELS,
                linewidths=0.5, linestyles=':')
-    ax.set_title(panel_title_hadley(config, data, index, show_l2), size=15)
+    ax.set_title(panel_title_hadley(config, data, index, show_error), size=15)
     add_label(ax, label)
     ax.tick_params(labelsize=12)
 
@@ -212,9 +213,10 @@ def panel_title_bk25(config, data):
     field = data['tracer'][-1]
     minval, maxval = np.min(field), np.max(field)
     l2_error = l2norm(field, data['tracer'][0], data['dxcc'] * data['dycc'])
+    linf_error = linfnorm(field, data['tracer'][0])
 
     return (f'$\\Psi^{{ {config.nt} }} \\in [{minval:.2f},{maxval:.2f}]$'
-            f', $\\ell_2 =${l2_error:.4f}')
+            f', $\\ell_2 =${l2_error:.4f}, $\\ell_\\infty =${linf_error:.4f}')
 
 
 # BK25
@@ -257,8 +259,8 @@ def plot_hadley():
               (axes[1, 0], config_l, data_l, 200, True, 'end-time, explicit'),
               (axes[1, 1], config_r, data_r, 20, True, 'end-time, RK438PR2_5Ex3Im')]
 
-    for ax, config, data, index, show_l2, label in panels:
-        cf = plot_panel_hadley(ax, config, data, index, show_l2, label, cmap)
+    for ax, config, data, index, show_error, label in panels:
+        cf = plot_panel_hadley(ax, config, data, index, show_error, label, cmap)
 
     for ax in axes[1, :]:
         ax.set_xlabel(XLABEL_HADLEY, size=15)

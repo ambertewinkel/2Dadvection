@@ -23,6 +23,14 @@ def l2norm(numerical, analytic, V):
     return np.sqrt(numerator/(denominator + 1.e-16))
 
 
+def linfnorm(numerical, analytic):
+    """This calculates the linf norm from an output field compared to the analytic solution.
+    field : 2D array of floats, output field from the numerical scheme
+    analytic : 2D array of floats, analytic solution
+    """
+    return np.max(np.abs(numerical - analytic))/(np.max(np.abs(analytic)) + 1e-16)
+
+
 def load_config(path) -> dict:
     if not path.exists():
         raise FileNotFoundError(f"Config file not found: {path}")
@@ -78,14 +86,21 @@ def error():
 
     if setting == 'finaltoinitial':
         print("Computing error at final time compared to initial condition...")
-        # Load initial condition
-        l2_error = l2norm(data['tracer'][-1], data['tracer'][0], data['dxcc']*data['dycc'])
 
         # Output l2 norms to file
-        print(l2_error)
+        l2_error = l2norm(data['tracer'][-1], data['tracer'][0], data['dxcc']*data['dycc'])
+        print('l2 error:', l2_error)
         with open(outputdir + 'l2norms.out', 'w') as f:
             f.write('l2 norm (final compared to initial)\n')
             f.write(f'{l2_error:.6e}\n')
+
+        # Output linf norms to file
+        linf_error = linfnorm(data['tracer'][-1], data['tracer'][0])
+        print('linf error:', linf_error)
+        with open(outputdir + 'linfnorms.out', 'w') as f:
+            f.write('linf norm (final compared to initial)\n')
+            f.write(f'{linf_error:.6e}\n')
+        
     elif setting == 'finaltoanalytic':
         # Find arguments from config file
         config_loaded = load_config(Path(configfile[0]))
@@ -130,6 +145,15 @@ def error():
         with open(outputdir + 'l2norms.out', 'w') as f:
             f.write(f'l2 norm (final compared to analytic at time t={nt*dt})\n')
             f.write(f'{l2_error:.6e}\n')
+
+        # Calculate error difference with analytic solution
+        linf_error = linfnorm(data['tracer'][-1], analytic)
+
+        # Output linf norms to file
+        print(linf_error)
+        with open(outputdir + 'linfnorms.out', 'w') as f:
+            f.write(f'linf norm (final compared to analytic at time t={nt*dt})\n')
+            f.write(f'{linf_error:.6e}\n')
 
     print('Done')
 
