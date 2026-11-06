@@ -49,8 +49,8 @@ def gcrk(A, b, x, kiter=200, jiter=4, tolerance=1e-6):
     
     return x
 
-
-def gmresm_AW(A, b, x, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
+#gmresm_AW
+def gmresm(A, b, x, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
     """
     Matrixfree solution of linear Ax=b system using GMRES(m) method. (matrixfree through a function that computes Ax with def A(x))).
     Semi-optimised version (i.e., implemented QR factorisation/least squares minimisation in Saad and Schultz 1986 p.860-862, but not the last step part).
@@ -266,7 +266,7 @@ def gmresm_nonopt(A, b, x, kiter=200, jiter=4, tolerance=1e-6, iterations_conver
 #####    return x
 
 #gmresm_scipy
-def gmresm(A, b, x, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
+def gmresm_scipy(A, b, x, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
     """
     Matrixfree solution of linear Ax=b system using the SciPy implementation of GMRES(m) (scipy.sparse.linalg.gmres), with the same settings as gmresm(): restart length m, at most no_restarts restarts, no preconditioner, and convergence when ||b - Ax|| <= tolerance*||b||.
     A acts on fields with the shape of b (e.g. 2D), while SciPy works with 1D vectors. A is therefore wrapped in a LinearOperator that reshapes each vector to the shape of b, applies A, and flattens the result. b and x are flattened for SciPy and the solution is reshaped back.
