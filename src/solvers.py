@@ -1,6 +1,8 @@
 import numpy as np
 import logging
 import warnings
+from scipy.sparse.linalg import gmres as spla_gmres
+from scipy.sparse.linalg import LinearOperator
 
 
 def gcrk(A, b, x, kiter=200, jiter=4, tolerance=1e-6):
@@ -48,7 +50,7 @@ def gcrk(A, b, x, kiter=200, jiter=4, tolerance=1e-6):
     return x
 
 
-def gmresm(A, b, x, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
+def gmresm_AW(A, b, x, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
     """
     Matrixfree solution of linear Ax=b system using GMRES(m) method. (matrixfree through a function that computes Ax with def A(x))).
     Semi-optimised version (i.e., implemented QR factorisation/least squares minimisation in Saad and Schultz 1986 p.860-862, but not the last step part).
@@ -69,10 +71,10 @@ def gmresm(A, b, x, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence
     #print('initial residual:', norm_oldres)
 
     if norm_oldres <= reltol:
-        print(f"Initial guess is already good enough with residual {norm_oldres} (relative tolerance {reltol}).")
+        #print(f"Initial guess is already good enough with residual {norm_oldres} (relative tolerance {reltol}).")
         return x
-    else: 
-        print(f"Iterating (it={it}). Initial residual: {norm_oldres} (relative tolerance {reltol}).")
+    #else: 
+        #print(f"Iterating (it={it}). Initial residual: {norm_oldres} (relative tolerance {reltol}).")
     converged = False
 
     no_iters = 0
@@ -240,5 +242,59 @@ def gmresm_nonopt(A, b, x, kiter=200, jiter=4, tolerance=1e-6, iterations_conver
 
     if residual >= reltol and maxr0 >= reltol/np.sqrt(b.size): # This second part wasn't here yet for the trial run.
         print(f'GMRES(m) did not converge within the given iterations (ktotal,jtotal={kiter},{jiter}). Final residual: {residual}, relative tolerance: {reltol}')
+
+    return x
+
+
+#####def gmresm_scipy(A, b, x, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
+#####    """
+#####    Matrixfree solution of linear Ax=b system using GMRES(m) method. (matrixfree through a function that computes Ax with def A(x))).
+#####    This uses the scipy implementation of GMRES, which is more efficient and robust than the custom implementation.
+#####    --- IN --- 
+#####    A: function to implement the A matrix
+#####    b: N vector, rhs of equation
+#####    x: N vector, initial guess for solution
+#####    --- OUT ---
+#####    x : converged (or cut short) solution
+#####    """
+#####
+#####    x, exitCode = spla_gmres(A, b, x0=x, restart=m, tol=tolerance, maxiter=no_restarts)
+#####
+#####    if exitCode != 0:
+#####        print(f'GMRES(m) did not converge within the given iterations (ktotal,jtotal={no_restarts},{m}). Exit code: {exitCode}')
+#####
+#####    return x
+
+#gmresm_scipy
+def gmresm(A, b, x, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
+    """
+    Matrixfree solution of linear Ax=b system using the SciPy implementation of GMRES(m) (scipy.sparse.linalg.gmres), with the same settings as gmresm(): restart length m, at most no_restarts restarts, no preconditioner, and convergence when ||b - Ax|| <= tolerance*||b||.
+    A acts on fields with the shape of b (e.g. 2D), while SciPy works with 1D vectors. A is therefore wrapped in a LinearOperator that reshapes each vector to the shape of b, applies A, and flattens the result. b and x are flattened for SciPy and the solution is reshaped back.
+    --- IN ---
+    A: function to implement the A matrix (takes and returns a field with the shape of b)
+    b: field, rhs of equation
+    x: field, initial guess for solution
+    --- OUT ---
+    x : converged (or cut short) solution, with the shape of b
+    """
+    shape, N = np.shape(b), np.size(b)
+    A_linop = LinearOperator((N, N), matvec=lambda v: A(v.reshape(shape)).ravel(), dtype=np.float64) # giving the dtype avoids SciPy calling A once just to determine it
+
+    no_iters = [0] # number of inner iterations summed over all restarts, as no_iters in gmresm() (a list so that count_iters can update it)
+    def count_iters(_):
+        no_iters[0] += 1
+
+    # rtol=tolerance with atol=0. gives the convergence test of gmresm(): ||b - Ax|| <= tolerance*||b||.
+    # callback_type='pr_norm' calls count_iters once per inner iteration and keeps maxiter as the number of restarts. (Without it, SciPy falls back to 'legacy', where maxiter counts inner iterations instead.)
+    x_flat, exitCode = spla_gmres(A_linop, np.ravel(b), x0=np.ravel(x), rtol=tolerance, atol=0., restart=m, maxiter=no_restarts, callback=count_iters, callback_type='pr_norm')
+    x = x_flat.reshape(shape)
+
+    if exitCode == 0:
+        if iterations_convergence is not None:
+            iterations_convergence[it] = no_iters[0]
+    else:
+        residual = np.linalg.norm(b - A(x))
+        reltol = tolerance * np.linalg.norm(b)
+        print(f'SciPy GMRES(m) did not converge within the given iterations (ktotal,jtotal={no_restarts},{m}). Final residual: {residual}, relative tolerance: {reltol}')
 
     return x
