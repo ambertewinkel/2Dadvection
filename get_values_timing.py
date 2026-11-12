@@ -4,11 +4,14 @@ from collections import defaultdict
 import numpy as np
 import matplotlib.pyplot as plt
 
-def parse_file(filename, aniso=False):
+def parse_file(filename, aniso=False, scipy=None):
+    # scipy: None keeps every run whatever its linear solver (the behaviour without
+    # --gmresmscipy); True keeps only the SciPy GMRES(m) runs, False only the other ones.
     data = defaultdict(lambda: defaultdict(list))
 
     current_nt = None
     current_is_aniso = None  # which sub-run (sub-block) the following lines belong to
+    current_is_scipy = None  # whether that sub-run used the SciPy GMRES(m)
 
     # Strict nt pattern: must start with dashes and end with dashes
     nt_pattern = re.compile(r"^-{14}\s*nt\s+(\d+)")
@@ -39,20 +42,25 @@ def parse_file(filename, aniso=False):
             if nt_match:
                 current_nt = int(nt_match.group(1))
                 current_is_aniso = None
+                current_is_scipy = None
                 continue
 
             if current_nt is None:
                 continue
 
             # Figure out which sub-run we just entered. Recognise both the
-            # '_anis_' and '_aniso_' filename spellings as the aniso sub-run.
+            # '_anis_' and '_aniso_' filename spellings as the aniso sub-run, and
+            # a 'gmresmscipy' tag in the filename as a SciPy GMRES(m) run.
             outputfile_match = outputfile_pattern.search(line)
             if outputfile_match:
                 current_is_aniso = "_anis_" in outputfile_match.group(1) or "_aniso_" in outputfile_match.group(1)
+                current_is_scipy = "gmresmscipy" in outputfile_match.group(1)
                 continue
 
             # Only keep lines belonging to the sub-run we were asked for
             if current_is_aniso != aniso:
+                continue
+            if scipy is not None and current_is_scipy != scipy:
                 continue
 
             # Scalar variables
@@ -108,14 +116,14 @@ def C_to_dt(x, dt, C):
 
 
 def plot_timings(data_list):
-    # data_list: list of (data, label, color) tuples, one entry per line to plot.
+    # data_list: list of (data, label, color, marker) tuples, one entry per line to plot.
     # A single entry reproduces the original single-line plot exactly.
 
     # ---- Plot ----
     fig, axs = plt.subplots(5, 1, figsize=(4.5, 8.5), sharex=True)
     meanCmaxoverdt_list = []
 
-    for data, label, color in data_list:
+    for data, label, color, marker in data_list:
         nts = sorted(data.keys())
 
         # Extract data
@@ -133,23 +141,23 @@ def plot_timings(data_list):
         meanCmaxoverdt_list.append(meanCmaxoverdt)
 
         # 1) l2 norm
-        axs[0].plot(dt, l2, marker='x', color=color, label=label)
+        axs[0].plot(dt, l2, marker=marker, color=color, label=label)
         axs[0].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
 
         # 2) linf norm
-        axs[1].plot(dt, linf, marker='x', color=color, label=label)
+        axs[1].plot(dt, linf, marker=marker, color=color, label=label)
         axs[1].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
 
         # 3) total scheme time
-        axs[2].plot(dt, time_scheme, marker='x', color=color, label=label)
+        axs[2].plot(dt, time_scheme, marker=marker, color=color, label=label)
         axs[2].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
 
         # 4) time per step
-        axs[3].plot(dt, time_per_step, marker='x', color=color, label=label)
+        axs[3].plot(dt, time_per_step, marker=marker, color=color, label=label)
         axs[3].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
 
         # 5) iterations per step
-        axs[4].plot(dt[:-4], iterations_per_step[:-4], marker='x', color=color, label=label)
+        axs[4].plot(dt[:-4], iterations_per_step[:-4], marker=marker, color=color, label=label)
         axs[4].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
 
     axs[0].set_ylabel("$l_2$ norm")
@@ -187,14 +195,15 @@ def plot_timings(data_list):
     #figname = "timing_plot_adhimex_anis_adjusted_20260923-removedlastbit-and16002000"
     #figname = "timing_noiters_accuracy_20260930"
     #figname = "output_1x_linfnormtest_20261106"
-    figname = "output_1x_gmresmscipytest_20261106"
+    #figname = "output_1x_gmresmscipytest_20261106"
+    figname = "output_comparing_gmresm-to-gmresmscipy_20261107"
     plt.savefig(f"{figname}.pdf", dpi=300)
     plt.savefig(f"{figname}.svg", dpi=300)
     #plt.show()
 
 
-def load_dataset(filename, aniso):
-    data = parse_file(filename, aniso=aniso)
+def load_dataset(filename, aniso, scipy=None):
+    data = parse_file(filename, aniso=aniso, scipy=scipy)
     if not data:
         return None
     data = turn_into_np_arrays(data)
@@ -211,28 +220,48 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--bothanisoandiso", action="store_true",
                          help="Plot the aniso runs alongside the iso ones.")
+    parser.add_argument("--gmresmscipy", action="store_true",
+                         help="Plot the GMRES(m) runs (x markers) and the SciPy GMRES(m) runs "
+                              "(+ markers; 'gmresmscipy' in their output file name) as separate curves.")
     args = parser.parse_args()
 
     #filename = "timing_output_anis_20260916and17.txt"
     #filename = "timing_output_adhimex_anis_adjusted_20260923-removedlastbit-and16002000.txt"
     #filename = "timing_noiters_accuracy_20260930.txt"
     #filename = "output_1x_linfnormtest_20261106.txt"
-    filename = "output_1x_gmresmscipytest_20261106.txt"
-    data_iso = load_dataset(filename, aniso=False)
+    #filename = "output_1x_gmresmscipytest_20261106.txt"
+    filename = "output_comparing_gmresm-to-gmresmscipy_20261107.txt"
 
-    for nt, values in data_iso.items():
-        print(f"[iso] nt: {nt}, dt: {values['dt']:.2e}, C_min: {values['C_min']:.2e}, C_max: {values['C_max']:.2e}, l2norm: {values['l2norm']:.2e}, linfnorm: {values['linfnorm']:.2e}, time_scheme_mean: {values['time_scheme_mean']:.2f}s, total_iters: {values['total_iters']}")
-
-    data_list = [(data_iso, "iso", "blue")]
-
+    # Sub-runs to plot: (aniso, label, color, color of its SciPy GMRES(m) curve)
+    groups = [(False, "iso", "blue", "darkorange")]
     if args.bothanisoandiso:
-        data_aniso = load_dataset(filename, aniso=True)
-        if data_aniso is None:
-            print("Warning: --bothanisoandiso requested but no aniso runs found in the file; plotting iso only.")
-        else:
-            for nt, values in data_aniso.items():
-                print(f"[aniso] nt: {nt}, dt: {values['dt']:.2e}, C_min: {values['C_min']:.2e}, C_max: {values['C_max']:.2e}, l2norm: {values['l2norm']:.2e}, linfnorm: {values['linfnorm']:.2e}, time_scheme_mean: {values['time_scheme_mean']:.2f}s, total_iters: {values['total_iters']}")
-            data_list.append((data_aniso, "aniso", "green"))
+        groups.append((True, "aniso", "green", "mediumvioletred"))
+
+    # Linear solvers to split each sub-run into, one marker each: (scipy, label, marker).
+    # Without --gmresmscipy, scipy=None keeps all runs together in one curve, as before.
+    if args.gmresmscipy:
+        solvers = [(False, "GMRES(m)", "x"), (True, "SciPy GMRES(m)", "+")]
+    else:
+        solvers = [(None, None, "x")]
+
+    data_list = []
+    for aniso, group_label, color, scipy_color in groups:
+        for scipy, solver_label, marker in solvers:
+            if solver_label is None:                  # no --gmresmscipy: the old labels, "iso" / "aniso"
+                label = group_label
+            elif len(groups) == 1:                    # --gmresmscipy, iso only: "iso" adds nothing, (the order matters: elif needs to come after if here)
+                label = solver_label                  #   so just "GMRES(m)" / "SciPy GMRES(m)"
+            else:                                     # both flags: 4 curves, so both names are needed
+                label = f"{group_label} {solver_label}"
+
+            data = load_dataset(filename, aniso=aniso, scipy=scipy)
+            if data is None:
+                print(f"Warning: no {label} runs found in the file; not plotting them.")
+                continue
+
+            for nt, values in data.items():
+                print(f"[{label}] nt: {nt}, dt: {values['dt']:.2e}, C_min: {values['C_min']:.2e}, C_max: {values['C_max']:.2e}, l2norm: {values['l2norm']:.2e}, linfnorm: {values['linfnorm']:.2e}, time_scheme_mean: {values['time_scheme_mean']:.2f}s, total_iters: {values['total_iters']}")
+            data_list.append((data, label, scipy_color if scipy else color, marker))
 
     plot_timings(data_list)
 
