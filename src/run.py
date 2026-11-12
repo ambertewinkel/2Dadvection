@@ -54,8 +54,9 @@ def run(config, configfile, configname):
     np.save(config.outputdir + f'data/min_tracer.npy', getminmax(fields.tracer, -1)[0])
     np.save(config.outputdir + f'data/max_tracer.npy', getminmax(fields.tracer, -1)[1])
 
-    info(f'Minimum and maximum C over all times: {np.min(fields.Ccc)}, {np.max(fields.Ccc)}')    
-    print(f'Minimum and maximum C over all times: {np.min(fields.Ccc)}, {np.max(fields.Ccc)}')
-    np.save(config.outputdir + f'data/min_Ccc.npy', np.min(fields.Ccc))
-    np.save(config.outputdir + f'data/max_Ccc.npy', np.max(fields.Ccc))
+    # Min and max Courant number over all time steps (tracked during time_stepping, as fields.Ccc only holds the final time step if store_all_timesteps is False)
+    info(f'Minimum and maximum C over all times: {fields.Ccc_min_alltimes}, {fields.Ccc_max_alltimes}')    
+    print(f'Minimum and maximum C over all times: {fields.Ccc_min_alltimes}, {fields.Ccc_max_alltimes}')
+    np.save(config.outputdir + f'data/min_Ccc.npy', fields.Ccc_min_alltimes)
+    np.save(config.outputdir + f'data/max_Ccc.npy', fields.Ccc_max_alltimes)
 

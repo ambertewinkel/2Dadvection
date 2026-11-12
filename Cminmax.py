@@ -23,11 +23,17 @@ def output_Courant_minmax():
     # Set up logging
     logfile = outputdir + 'Cminmax.log'
     
-    # Load data
-    Ccc = np.load(outputdir + 'data/Ccc.npy')
-
-    Ccc_min = np.min(Ccc)
-    Ccc_max = np.max(Ccc)
+    # Load data. For runs from 2026-11-08 on, min_Ccc.npy and max_Ccc.npy hold the min and max over all time steps
+    # (tracked during the run). Earlier runs saved the min and max of the stored Ccc field in them, which is only the
+    # final time step unless store_all_timesteps was True, and runs before 2026-05-01 have no such files (-> Ccc.npy).
+    if os.path.exists(outputdir + 'data/max_Ccc.npy'):
+        Ccc_min = np.load(outputdir + 'data/min_Ccc.npy')
+        Ccc_max = np.load(outputdir + 'data/max_Ccc.npy')
+    else:
+        Ccc = np.load(outputdir + 'data/Ccc.npy')
+        Ccc_min = np.min(Ccc)
+        Ccc_max = np.max(Ccc)
+        print('No max_Ccc.npy found, so using Ccc.npy (only the final time step, unless store_all_timesteps was True).')
 
     # Output values
     print('Looking at', outputdir)

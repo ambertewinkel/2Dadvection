@@ -10,8 +10,17 @@ from logging import info
 import numpy as np
 
 
+def update_Ccc_minmax(config, fields, it):
+    """Update the minimum and maximum Courant number over all time steps so far with those of time step it.
+    Needed as fields.Ccc only holds the latest time step if store_all_timesteps is False."""
+    Ccc = fields.Ccc[config.store_all_timesteps*it]
+    fields.Ccc_min_alltimes = np.minimum(fields.Ccc_min_alltimes, Ccc.min())
+    fields.Ccc_max_alltimes = np.maximum(fields.Ccc_max_alltimes, Ccc.max())
+
+
 def time_stepping(config, fields, **kwargs):
     scheme = getattr(sch, config.scheme, **kwargs)
+    fields.Ccc_min_alltimes, fields.Ccc_max_alltimes = np.inf, -np.inf # min and max Courant number over all time steps, updated by update_Ccc_minmax()
 
 
     if config.timing == False:
@@ -28,6 +37,7 @@ def time_stepping(config, fields, **kwargs):
             #exit()
             # Call the advection scheme
             scheme(config, fields, it, iterations_convergence=iterations_convergence)
+            update_Ccc_minmax(config, fields, it)
     else: 
         iterations_convergence = np.zeros(config.nt)
 
@@ -47,6 +57,7 @@ def time_stepping(config, fields, **kwargs):
             scheme(config, fields, it, iterations_convergence=iterations_convergence)
             end_scheme = perf_counter()
             time_total_scheme += end_scheme - start_scheme
+            update_Ccc_minmax(config, fields, it) # after the scheme timer, so it doesn't count towards time_total_scheme
 
         end_total = perf_counter()
         time_total = end_total - start_total
