@@ -322,3 +322,45 @@ def set_grid_y_lowerleftGP(config, fields):
         fields.yf[i+1] = fields.yf[i] + fields.dyc[i]
 
     fields.yc = fields.yf + 0.5*fields.dyc
+
+
+def _lowerleftHalving_spacing(n_center, n_halvings=7, n_bg=128):
+    """Normalised cell widths (sum = 1) for one direction of the halving plus grid.
+
+    Uniform background spacing 1/n_bg, except that the two background cells either side of background-cell
+    edge n_center (the center of the plus, as in lowerleftGP) are each refined towards that edge by repeated
+    halving: 1/2, 1/4, ..., 1/2**n_halvings of a background cell. The smallest width appears twice on each
+    side, because 1/2 + 1/4 + ... + 1/2**n = 1 - 1/2**n, so that each side fills exactly one background cell.
+    """
+    side = 0.5**np.arange(1, n_halvings + 1)
+    side = np.append(side, side[-1])  # decreasing towards the center, sums to exactly 1
+    return np.concatenate((np.ones(n_center - 1), side, side[::-1], np.ones(n_bg - n_center - 1)))/n_bg
+
+
+def set_grid_x_lowerleftHalving(config, fields):
+    """Plus grid centered at the same point as lowerleftGP (xmin + 13/128*Lx) with background spacing Lx/128, refined
+    by 7 halvings to Lx/16384 (6.1 cm for Lx = 1000 m): C_max ~ 90 instead of ~6.3 (swift_nondiv, dt = 0.2 s)."""
+
+    fields.dxc = _lowerleftHalving_spacing(n_center=13)*(config.xmax - config.xmin)
+    if len(fields.dxc) != config.nx:
+        raise ValueError(f'grid_x lowerleftHalving has {len(fields.dxc)} cells, but nx = {config.nx}.')
+
+    fields.xf[0] = config.xmin
+    for i in range(config.nx-1):
+        fields.xf[i+1] = fields.xf[i] + fields.dxc[i]
+
+    fields.xc = fields.xf + 0.5*fields.dxc
+
+
+def set_grid_y_lowerleftHalving(config, fields):
+    """As set_grid_x_lowerleftHalving, with the plus centered at ymin + 38/128*Ly (as in lowerleftGP)."""
+
+    fields.dyc = _lowerleftHalving_spacing(n_center=38)*(config.ymax - config.ymin)
+    if len(fields.dyc) != config.ny:
+        raise ValueError(f'grid_y lowerleftHalving has {len(fields.dyc)} cells, but ny = {config.ny}.')
+
+    fields.yf[0] = config.ymin
+    for i in range(config.ny-1):
+        fields.yf[i+1] = fields.yf[i] + fields.dyc[i]
+
+    fields.yc = fields.yf + 0.5*fields.dyc
