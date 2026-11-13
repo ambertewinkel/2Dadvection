@@ -1,7 +1,7 @@
 scheme: adhimex #RK438PR2_5Ex3Im #adhimex #RK4CN_5Ex3Im #RK438PR2_5Ex3Im
 
-nx: 142 #153 
-ny: 142 #153 
+nx: 144 #142 #153 
+ny: 144 #142 #153 
 xmin: -500. # m
 xmax: 500. # m
 ymin: -500. # m
@@ -28,4 +28,4 @@ solver: gmresm
 #theta_anisotropic: True
 #adjust_theta: True
 
-outputdir: adhimex_swiftnondiv_slotcyl_llH
+outputdir: adhimex_swiftnondiv_slotcyl_llH8_nt500

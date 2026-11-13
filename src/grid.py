@@ -324,7 +324,7 @@ def set_grid_y_lowerleftGP(config, fields):
     fields.yc = fields.yf + 0.5*fields.dyc
 
 
-def _lowerleftHalving_spacing(n_center, n_halvings=7, n_bg=128):
+def _lowerleftHalving_spacing(n_center, n_halvings=8, n_bg=128):
     """Normalised cell widths (sum = 1) for one direction of the halving plus grid.
 
     Uniform background spacing 1/n_bg, except that the two background cells either side of background-cell
