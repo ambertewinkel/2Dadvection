@@ -1,4 +1,4 @@
-scheme: adimex_upwind #adhimex
+scheme: adlimhex #adimex_upwind #adhimex
 
 nx: 153 #128 
 ny: 153 #128 
@@ -25,9 +25,11 @@ u0: 10. # m/s
 
 #FCT: True
 nondivergent: True
-theta_anisotropic: True
-adjust_theta: True
+#theta_anisotropic: True
+#adjust_theta: True
+
+adlimhex_RK: RK4
 
 solver: gmresm
 
-outputdir: swiftnondiv_slotcyl_adhimex_anis_adj_llgp_nt500
+outputdir: swiftnondiv_slotcyl_adlimhexRK4_nt500_llgp #_unif #swiftnondiv_slotcyl_adhimex_anis_adj_llgp_nt500

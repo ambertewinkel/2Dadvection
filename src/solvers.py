@@ -106,7 +106,7 @@ def gmresm(A, b, x, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence
                 converged = True
                 jend = j + 1 # new m if you will
                 if iterations_convergence is not None:
-                    iterations_convergence[it] = no_iters
+                    iterations_convergence[it] += no_iters
                 break
             
             v[j+1] = v_hat/h[j+1,j]
@@ -135,7 +135,7 @@ def gmresm(A, b, x, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence
                 converged = True
                 jend = j + 1
                 if iterations_convergence is not None:
-                    iterations_convergence[it] = no_iters
+                    iterations_convergence[it] += no_iters
                 break
             else:
                 if residual > norm_oldres: # if residual increased after restart, print a warning (this can happen with GMRES(m) if m is too small or the problem is hard)
@@ -232,7 +232,7 @@ def gmresm_nonopt(A, b, x, kiter=200, jiter=4, tolerance=1e-6, iterations_conver
 
         if residual < reltol or maxr0 < reltol/np.sqrt(b.size): #tolerance: #residual_minimised < tolerance: 
             #print(f"Converged after restart {irestart} with residual {residual} (relative tolerance {reltol}).")
-            iterations_convergence[it] = no_iters
+            iterations_convergence[it] += no_iters
             # incorrect exiting!!!
             break
         else:
@@ -244,26 +244,6 @@ def gmresm_nonopt(A, b, x, kiter=200, jiter=4, tolerance=1e-6, iterations_conver
         print(f'GMRES(m) did not converge within the given iterations (ktotal,jtotal={kiter},{jiter}). Final residual: {residual}, relative tolerance: {reltol}')
 
     return x
-
-
-#####def gmresm_scipy(A, b, x, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
-#####    """
-#####    Matrixfree solution of linear Ax=b system using GMRES(m) method. (matrixfree through a function that computes Ax with def A(x))).
-#####    This uses the scipy implementation of GMRES, which is more efficient and robust than the custom implementation.
-#####    --- IN --- 
-#####    A: function to implement the A matrix
-#####    b: N vector, rhs of equation
-#####    x: N vector, initial guess for solution
-#####    --- OUT ---
-#####    x : converged (or cut short) solution
-#####    """
-#####
-#####    x, exitCode = spla_gmres(A, b, x0=x, restart=m, tol=tolerance, maxiter=no_restarts)
-#####
-#####    if exitCode != 0:
-#####        print(f'GMRES(m) did not converge within the given iterations (ktotal,jtotal={no_restarts},{m}). Exit code: {exitCode}')
-#####
-#####    return x
 
 #gmresm_scipy
 def gmresm_scipy(A, b, x, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=np.zeros(10), it=0):
@@ -291,7 +271,7 @@ def gmresm_scipy(A, b, x, no_restarts=200, m=4, tolerance=1e-6, iterations_conve
 
     if exitCode == 0:
         if iterations_convergence is not None:
-            iterations_convergence[it] = no_iters[0]
+            iterations_convergence[it] += no_iters[0]
     else:
         residual = np.linalg.norm(b - A(x))
         reltol = tolerance * np.linalg.norm(b)

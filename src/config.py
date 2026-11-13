@@ -57,6 +57,8 @@ class Config():
     u0: float = 10. # m s-1    
     T: float = 100. # s
 
+    adlimhex_RK: str = 'RK4' # RK4 or RK3
+
     # Jet testcase defaults
     ujet_max: float = 1. # maximum jet velocity magnitude
 

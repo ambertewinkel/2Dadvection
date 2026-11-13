@@ -119,10 +119,11 @@ def implicitness_adimex_upwind(config, fields, it, **kwargs):
         fields.thetafc[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,0)) # at [i-1/2,j]
         fields.thetacf[config.store_all_timesteps*it] = np.maximum(fields.thetacc[config.store_all_timesteps*it], np.roll(fields.thetacc[config.store_all_timesteps*it],1,1)) # at [i,j-1/2]
 
-def adimex_upwind_matrix_func(phi, config, fields, it, thetafc, thetacf):
+
+def adimex_upwind_matrix_func(phi, config, fields, it, thetafc, thetacf, cEx=1.):
     """Matrix function for the implicit part of the AdImEx upwind scheme"""
 
-    return phi - config.dt*fluxdiv_first(config, fields, it, phi, thetafc, thetacf) # at [i,j]
+    return phi - config.dt*cEx*fluxdiv_first(config, fields, it, phi, thetafc, thetacf) # at [i,j]
 
 
 def adimex_upwind(config, fields, it, tolerance=1e-6, kiter=200, jiter=4, **kwargs):
@@ -299,12 +300,96 @@ def fifth_order(config, fields, it, phi):
     return flxfc, flxcf
 
 
+def fifth_order_corr(config, fields, it, phi):
+    """Fifth-order **correction** (HC) spatial discretisation"""
+    if config.BC_x == 'periodic' and config.BC_y == 'periodic':
+        phi_BS_fc = -1./20*np.roll(phi,-1,0) + 9./20.*phi - 13./60.*np.roll(phi,1,0) - 13./60.*np.roll(phi,2,0) + 1./30.*np.roll(phi,3,0) # backward in space (upwind if u>0) flux at face in x direction
+        phi_FS_fc = -1./20*np.roll(phi,2,0) + 9./20.*np.roll(phi,1,0) - 13./60.*phi - 13./60.*np.roll(phi,-1,0) + 1./30.*np.roll(phi,-2,0) # forward in space (upwind if u<0) flux at face in x direction
+        phi_BS_cf = -1./20*np.roll(phi,-1,1) + 9./20.*phi - 13./60.*np.roll(phi,1,1) - 13./60.*np.roll(phi,2,1) + 1./30.*np.roll(phi,3,1) # backward in space (upwind if v>0) flux at face in y direction
+        phi_FS_cf = -1./20*np.roll(phi,2,1) + 9./20.*np.roll(phi,1,1) - 13./60.*phi - 13./60.*np.roll(phi,-1,1) + 1./30.*np.roll(phi,-2,1) # forward in space (upwind if v<0) flux at face in y direction
+    elif config.BC_x == 'noflux' and config.BC_y == 'noflux':
+        phi = phi
+        phi_temp = np.append(phi, np.array([phi[-1,:],phi[-1,:],phi[0,:],phi[0,:]]), axis=0)
+        phi_temp = np.append(phi_temp, np.array([phi_temp[:,-1],phi_temp[:,-1],phi_temp[:,0],phi_temp[:,0]]).T, axis=1)
+        phi_temp_BS_fc = -1./20*np.roll(phi_temp,-1,0) + 9./20.*phi_temp - 13./60.*np.roll(phi_temp,1,0) - 13./60.*np.roll(phi_temp,2,0) + 1./30.*np.roll(phi_temp,3,0) # backward in space (upwind if u>0) flux at face in x direction
+        phi_temp_FS_fc = -1./20*np.roll(phi_temp,2,0) + 9./20.*np.roll(phi_temp,1,0) - 13./60.*phi_temp - 13./60.*np.roll(phi_temp,-1,0) + 1./30.*np.roll(phi_temp,-2,0) # forward in space (upwind if u<0) flux at face in x direction
+        phi_temp_BS_cf = -1./20*np.roll(phi_temp,-1,1) + 9./20.*phi_temp - 13./60.*np.roll(phi_temp,1,1) - 13./60.*np.roll(phi_temp,2,1) + 1./30.*np.roll(phi_temp,3,1) # backward in space (upwind if v>0) flux at face in y direction
+        phi_temp_FS_cf = -1./20*np.roll(phi_temp,2,1) + 9./20.*np.roll(phi_temp,1,1) - 13./60.*phi_temp - 13./60.*np.roll(phi_temp,-1,1) + 1./30.*np.roll(phi_temp,-2,1) # forward in space (upwind if v<0) flux at face in y direction
+        phi_BS_fc = phi_temp_BS_fc[:-4,:-4]
+        phi_FS_fc = phi_temp_FS_fc[:-4,:-4]
+        phi_BS_cf = phi_temp_BS_cf[:-4,:-4]
+        phi_FS_cf = phi_temp_FS_cf[:-4,:-4]
+    else:
+        raise ValueError('Fifth-order SD is set to use either both BCs periodic or both nonperiodic (noflux).')
+
+    flxfc = np.maximum(0., fields.u[config.store_all_timesteps*it]) * phi_BS_fc + np.minimum(0., fields.u[config.store_all_timesteps*it]) * phi_FS_fc # at [i-1/2,j]
+    flxcf = np.maximum(0., fields.v[config.store_all_timesteps*it]) * phi_BS_cf + np.minimum(0., fields.v[config.store_all_timesteps*it]) * phi_FS_cf # at [i,j-1/2]
+
+    return flxfc, flxcf
+
+
 def third_order(config, fields, it, phi):
-    """Third-order spatial discretisation (potentially used for the matrix) and for some schemes"""
-    phi_BS_fc = 1./3.*phi + 5./6.*np.roll(phi,1,0) - 1./6.*np.roll(phi,2,0) # backward in space (upwind if u>0) flux at face in x direction
-    phi_FS_fc = 1./3.*np.roll(phi,1,0) + 5./6.*phi - 1./6.*np.roll(phi,-1,0) # forward in space (upwind if u<0) flux at face in x direction
-    phi_BS_cf = 1./3.*phi + 5./6.*np.roll(phi,1,1) - 1./6.*np.roll(phi,2,1) # backward in space (upwind if v>0) flux at face in y direction
-    phi_FS_cf = 1./3.*np.roll(phi,1,1) + 5./6.*phi - 1./6.*np.roll(phi,-1,1) # forward in space (upwind if v<0) flux at face in y direction
+    """Third-order spatial discretisation (potentially used for the matrix) and for some schemes."""
+    if config.BC_x == 'periodic' and config.BC_y == 'periodic':
+        phi_BS_fc = 1./3.*phi + 5./6.*np.roll(phi,1,0) - 1./6.*np.roll(phi,2,0) # backward in space (upwind if u>0) flux at face in x direction
+        phi_FS_fc = 1./3.*np.roll(phi,1,0) + 5./6.*phi - 1./6.*np.roll(phi,-1,0) # forward in space (upwind if u<0) flux at face in x direction
+        phi_BS_cf = 1./3.*phi + 5./6.*np.roll(phi,1,1) - 1./6.*np.roll(phi,2,1) # backward in space (upwind if v>0) flux at face in y direction
+        phi_FS_cf = 1./3.*np.roll(phi,1,1) + 5./6.*phi - 1./6.*np.roll(phi,-1,1) # forward in space (upwind if v<0) flux at face in y direction
+    elif config.BC_x == 'noflux' and config.BC_y == 'noflux':
+        phi = phi
+        phi_temp = np.append(phi, np.array([phi[-1,:],phi[0,:]]), axis=0)
+        phi_temp = np.append(phi_temp, np.array([phi_temp[:,-1],phi_temp[:,0]]).T, axis=1)      
+        phi_temp_BS_fc = 1./3.*phi_temp + 5./6.*np.roll(phi_temp,1,0) - 1./6.*np.roll(phi_temp,2,0) # backward in space (upwind if u>0) flux at face in x direction
+        phi_temp_FS_fc = 1./3.*np.roll(phi_temp,1,0) + 5./6.*phi_temp - 1./6.*np.roll(phi_temp,-1,0) # forward in space (upwind if u<0) flux at face in x direction
+        phi_temp_BS_cf = 1./3.*phi_temp + 5./6.*np.roll(phi_temp,1,1) - 1./6.*np.roll(phi_temp,2,1) # backward in space (upwind if v>0) flux at face in y direction
+        phi_temp_FS_cf = 1./3.*np.roll(phi_temp,1,1) + 5./6.*phi_temp - 1./6.*np.roll(phi_temp,-1,1) # forward in space (upwind if v<0) flux at face in y direction      
+        phi_BS_fc = phi_temp_BS_fc[:-2,:-2]
+        phi_FS_fc = phi_temp_FS_fc[:-2,:-2]
+        phi_BS_cf = phi_temp_BS_cf[:-2,:-2]
+        phi_FS_cf = phi_temp_FS_cf[:-2,:-2]
+    else:
+        raise ValueError('Third-order SD is set to use either both BCs periodic or both nonperiodic (noflux).')
+
+    flxfc = np.maximum(0., fields.u[config.store_all_timesteps*it]) * phi_BS_fc + np.minimum(0., fields.u[config.store_all_timesteps*it]) * phi_FS_fc # at [i-1/2,j]
+    flxcf = np.maximum(0., fields.v[config.store_all_timesteps*it]) * phi_BS_cf + np.minimum(0., fields.v[config.store_all_timesteps*it]) * phi_FS_cf # at [i,j-1/2]
+
+    return flxfc, flxcf
+
+
+def third_order_corr(config, fields, it, phi):
+    """Third-order **correction** (HC) spatial discretisation (potentially used for the matrix) and for some schemes."""
+    if config.BC_x == 'periodic' and config.BC_y == 'periodic':
+        phi_BS_fc = 1./3.*phi - 1./6.*np.roll(phi,1,0) - 1./6.*np.roll(phi,2,0) # backward in space (upwind if u>0) flux at face in x direction
+        phi_FS_fc = 1./3.*np.roll(phi,1,0) - 1./6.*phi - 1./6.*np.roll(phi,-1,0) # forward in space (upwind if u<0) flux at face in x direction
+        phi_BS_cf = 1./3.*phi - 1./6.*np.roll(phi,1,1) - 1./6.*np.roll(phi,2,1) # backward in space (upwind if v>0) flux at face in y direction
+        phi_FS_cf = 1./3.*np.roll(phi,1,1) - 1./6.*phi - 1./6.*np.roll(phi,-1,1) # forward in space (upwind if v<0) flux at face in y direction
+    elif config.BC_x == 'noflux' and config.BC_y == 'noflux':
+        phi = phi
+        phi_temp = np.append(phi, np.array([phi[-1,:],phi[0,:]]), axis=0)
+        phi_temp = np.append(phi_temp, np.array([phi_temp[:,-1],phi_temp[:,0]]).T, axis=1)      
+        phi_temp_BS_fc = 1./3.*phi_temp - 1./6.*np.roll(phi_temp,1,0) - 1./6.*np.roll(phi_temp,2,0) # backward in space (upwind if u>0) flux at face in x direction
+        phi_temp_FS_fc = 1./3.*np.roll(phi_temp,1,0) - 1./6.*phi_temp - 1./6.*np.roll(phi_temp,-1,0) # forward in space (upwind if u<0) flux at face in x direction
+        phi_temp_BS_cf = 1./3.*phi_temp - 1./6.*np.roll(phi_temp,1,1) - 1./6.*np.roll(phi_temp,2,1) # backward in space (upwind if v>0) flux at face in y direction
+        phi_temp_FS_cf = 1./3.*np.roll(phi_temp,1,1) - 1./6.*phi_temp - 1./6.*np.roll(phi_temp,-1,1) # forward in space (upwind if v<0) flux at face in y direction      
+        phi_BS_fc = phi_temp_BS_fc[:-2,:-2]
+        phi_FS_fc = phi_temp_FS_fc[:-2,:-2]
+        phi_BS_cf = phi_temp_BS_cf[:-2,:-2]
+        phi_FS_cf = phi_temp_FS_cf[:-2,:-2]
+    else:
+        raise ValueError('Third-order SD is set to use either both BCs periodic or both nonperiodic (noflux).')
+
+    flxfc = np.maximum(0., fields.u[config.store_all_timesteps*it]) * phi_BS_fc + np.minimum(0., fields.u[config.store_all_timesteps*it]) * phi_FS_fc # at [i-1/2,j]
+    flxcf = np.maximum(0., fields.v[config.store_all_timesteps*it]) * phi_BS_cf + np.minimum(0., fields.v[config.store_all_timesteps*it]) * phi_FS_cf # at [i,j-1/2]
+
+    return flxfc, flxcf
+
+
+def first_order(config, fields, it, phi):
+    """First-order spatial discretisation (potentially used for the matrix) and for some schemes. Should work with both periodic and noflux BCs."""
+    phi_BS_fc = np.roll(phi,1,0) # backward in space (upwind if u>0) flux at face in x direction
+    phi_FS_fc = phi # forward in space (upwind if u<0) flux at face in x direction
+    phi_BS_cf = np.roll(phi,1,1) # backward in space (upwind if v>0) flux at face in y direction
+    phi_FS_cf = phi # forward in space (upwind if v<0) flux at face in y direction
 
     flxfc = np.maximum(0., fields.u[config.store_all_timesteps*it]) * phi_BS_fc + np.minimum(0., fields.u[config.store_all_timesteps*it]) * phi_FS_fc # at [i-1/2,j]
 
@@ -476,69 +561,104 @@ def adhimex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
 
 ################# ADLIMHEX SCHEME #################
 
-#def adlimhex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
-#    """Implement the AdLImHex scheme for the given time step - constancy-preserving version"""
-#
-#    it_prev = config.store_all_timesteps*it + 1 - config.store_all_timesteps
-#    field_prev = fields.tracer[it_prev].copy()
-#
-#    # Set up Butcher tableau
-#    AEx, AIm, nstages = adlimhex_butcher()
-#
-#    # Calculate the implicitness at each cell face
-#    implicitness_adlimhex(config, fields, it, **kwargs)
-#    
-#    # Time step
-#    fEx_c, fIm_c = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
-#    fEx_f, fIm_f = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
-#    field_k = field_prev.copy()
-#    flxfc_HO, flxcf_HO = np.zeros_like(field_k), np.zeros_like(field_k)
-#
-#    for ik in range(nstages):
-#        # Calculate the field at stage k      
-#        rhs_k = field_prev + config.dt*(np.dot(np.rollaxis(fEx_f[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_f[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
-#
-#        if ik != 0 and np.any(fields.thetacc[config.store_all_timesteps*it]): # 22-12-2025: I think this is necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
-#            matrix = partial(adlimhex_matrix_func, config=config, fields=fields, it=it, thetafc=fields.thetafc[config.store_all_timesteps*it], thetacf=fields.thetacf[config.store_all_timesteps*it], alpha=AIm[ik,ik]) # at [i,j]
-#            solver = getattr(sv, config.solver)
-#            guess = rhs_k.copy() 
-#            field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
-#        else:
-#            field_k = rhs_k.copy()
-#
-#        # Calculate the velocity times the fifth-order field approximation at faces
-#        flxkfc, flxkcf = fifth_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
-#
-#        fEx_c[ik,:] = (1.-fields.thetacc[config.store_all_timesteps*it])*fluxdiv(fields, flxkfc, flxkcf, 1., 1.)
-#        fIm_c[ik,:] = fields.thetacc[config.store_all_timesteps*it]*fluxdiv(fields, flxkfc, flxkcf, 1., 1.)
-#        fEx_f[ik,:] = fluxdiv(fields, flxkfc, flxkcf, 1.-fields.thetafc[config.store_all_timesteps*it], 1.-fields.thetacf[config.store_all_timesteps*it])
-#        fIm_f[ik,:] = fluxdiv(fields, flxkfc, flxkcf, fields.thetafc[config.store_all_timesteps*it], fields.thetacf[config.store_all_timesteps*it])    
-#        
-#        # Accumulate the flux contributions from the stages (needed for FCT)
-#        flxfc_HO += AEx[-1,ik]*(1 - fields.thetafc[config.store_all_timesteps*it])*flxkfc + AIm[-1,ik]*fields.thetafc[config.store_all_timesteps*it]*flxkfc # at [i-1/2,j]
-#        flxcf_HO += AEx[-1,ik]*(1 - fields.thetacf[config.store_all_timesteps*it])*flxkcf + AIm[-1,ik]*fields.thetacf[config.store_all_timesteps*it]*flxkcf # at [i,j-1/2]
-#
-#    # Implement FCT if required
-#    if config.BC_x == 'periodic' and config.BC_y == 'periodic': # to avoid having to implement boundaries for Hadley nonperiodic BC. Not planning to implement FCT results for this for now (22-03-2026)
-#        if config.FCT_2pass:
-#            fields.tracer[config.store_all_timesteps*it+1] = lim.FCT_2pass(config, fields, it, flxfc_HO, flxcf_HO)     
-#        elif config.FCT:
-#            fields.tracer[config.store_all_timesteps*it+1] = lim.FCT(config, fields, it, flxfc_HO, flxcf_HO)
-#        else:
-#            fields.tracer[config.store_all_timesteps*it+1] = field_k.copy() 
-#    else:     
-#        if config.FCT_2pass or config.FCT:
-#            raise ValueError('FCT is not implemented for periodic BCs.')
-#        else:
-#            fields.tracer[config.store_all_timesteps*it+1] = field_k.copy() 
+
+def calculate_alpha_beta_adlimhex(config, fields, it, **kwargs):
+    """Calculate Courant numbers at cell centers and implicitness at cell centers and faces for AdHImEx scheme. Assumes nondivergent winds, and that dy is constant in x and dx is constant in y"""
+
+    sum_abs_velarea = (abs(fields.u[config.store_all_timesteps*it]) + abs(np.roll(fields.u[config.store_all_timesteps*it],-1,0)))*fields.dycc + (abs(fields.v[config.store_all_timesteps*it]) + abs(np.roll(fields.v[config.store_all_timesteps*it],-1,1)))*fields.dxcc # at [i,j]
+    fields.Ccc[config.store_all_timesteps*it] = 0.5*config.dt*sum_abs_velarea/(fields.dxcc*fields.dycc) # at [i,j] (always nonnegative) # see Weller et al 2023 for definition
+    #print('Ccc:', fields.Ccc[config.store_all_timesteps*it,0,0])
+    
+    Cfc = np.maximum(fields.Ccc[config.store_all_timesteps*it], np.roll(fields.Ccc[config.store_all_timesteps*it],1,0)) # at [i-1/2, j], different definition than the one used for AdHImEx
+    Ccf = np.maximum(fields.Ccc[config.store_all_timesteps*it], np.roll(fields.Ccc[config.store_all_timesteps*it],1,1)) # at [i, j-1/2], different definition than the one used for AdHImEx
+
+    alphafc, alphacf = np.maximum(0.5, 1. - 1./Cfc), np.maximum(0.5, 1. - 1./Ccf) # at [i-1/2,j] and [i,j-1/2] # see Weller et al 2026 for definition
+
+    if config.adlimhex_RK == 'RK3':
+        betafc, betacf = 0.43*(1. - 1./(1. + np.maximum(Cfc - 1.6, 0.))), 0.43*(1. - 1./(1. + np.maximum(Ccf - 1.6, 0.))) # at [i-1/2,j] and [i,j-1/2] # see Weller et al 2026 for definition 
+    elif config.adlimhex_RK == 'RK4':
+        betafc, betacf = 0.45*(1. - 1./(1. + 13./15.*np.maximum(Cfc - 1.7, 0.))), 0.45*(1. - 1./(1. + 13./15.*np.maximum(Ccf - 1.7, 0.))) # at [i-1/2,j] and [i,j-1/2] # see Weller et al 2026 for definition 
+
+    return alphafc, alphacf, betafc, betacf
 
 
+def adlimhex_butcher(config):
+    """Sets up AdLImHEx explicit Butcher tableau"""
+
+    # Butcher tableau for explicit part 
+    if config.adlimhex_RK == 'RK3':
+        AEx = np.array([[0., 0., 0., 0.],[1., 0., 0., 0.],[0.25, 0.25, 0., 0.],[1/6, 1/6, 2/3, 0.]])
+        cEx = np.array([0., 1., 0.5, 1.])
+    elif config.adlimhex_RK == 'RK4':
+        AEx = np.array([[0., 0., 0., 0., 0.],[0.5, 0., 0., 0., 0.],[0., 0.5, 0., 0., 0.],[0., 0., 1., 0., 0.],[1/6, 1/3, 1/3, 1/6, 0.]])
+        cEx = np.array([0., 0.5, 0.5, 1., 1.])
+    else: 
+        raise ValueError('AdLImHEx: Invalid time integration scheme (Butcher tableau).')
+
+    nstages = np.shape(AEx)[1]
+
+    return AEx, cEx, nstages
 
 
+def adlimhex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
+    """Implement the AdLImHex scheme for the given time step, by default with RK4 in time"""
 
+    it_prev = config.store_all_timesteps*it + 1 - config.store_all_timesteps
+    field_prev = fields.tracer[it_prev].copy()
 
+    # Set up Butcher tableau
+    AEx, cEx, nstages = adlimhex_butcher(config)
 
+    # Calculate the alpha and beta at each cell face
+    alphafc, alphacf, betafc, betacf = calculate_alpha_beta_adlimhex(config, fields, it, **kwargs)
 
+    # Time step
+    fEx_L, fEx_HC = np.zeros((nstages+1, *np.shape(fields.tracer)[1:])), np.zeros((nstages+1, *np.shape(fields.tracer)[1:]))
+    field_k = field_prev.copy()
+    flxfc_HO, flxcf_HO = np.zeros_like(field_k), np.zeros_like(field_k)
+
+    #L_fieldnfc, L_fieldncf = first_order(config, fields, it, field_prev)
+    L_1malpha_beta_fieldn = fluxdiv(fields, *first_order(config, fields, it, field_prev), (1.-alphafc)*betafc, (1.-alphacf)*betacf) # at [i,j]
+
+    for ik in range(nstages):
+        # Calculate the field at stage k      
+        rhs_k = field_prev + config.dt*(np.dot(np.rollaxis(fEx_L[:ik,:],0,3) + np.rollaxis(fEx_HC[:ik,:],0,3), AEx[ik,:ik]) + cEx[ik]*L_1malpha_beta_fieldn) # at [i,j]
+
+        if ik != 0 and (np.any(betafc) and np.any(betacf)): # necessary for GMRES not breaking down because of existing convergence (when the matrix is full of zeros)
+            matrix = partial(adimex_upwind_matrix_func, config=config, fields=fields, it=it, thetafc=alphafc*betafc, thetacf=alphacf*betacf, cEx=cEx[ik]) # at [i,j]
+            solver = getattr(sv, config.solver)
+            guess = field_prev.copy() 
+            field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
+        else:
+            field_k = rhs_k.copy()
+
+        # Calculate the velocity times the field approximation at faces
+        if config.adlimhex_RK == 'RK3': # goes with cubic in space
+            flxkfc_HC, flxkcf_HC = third_order_corr(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
+        elif config.adlimhex_RK == 'RK4': # goes with fifth-order in space
+            flxkfc_HC, flxkcf_HC = fifth_order_corr(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
+        flxkfc_L, flxkcf_L = first_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
+
+        fEx_L[ik,:] = fluxdiv(fields, flxkfc_L, flxkcf_L, 1.-betafc, 1.-betacf)
+        fEx_HC[ik,:] = fluxdiv(fields, flxkfc_HC, flxkcf_HC, 1., 1.)
+        
+        # Accumulate the flux contributions from the stages (needed for FCT) # currently commented out because it is AdHImEx version.
+        #flxfc_HO += AEx[-1,ik]*(1 - fields.thetafc[config.store_all_timesteps*it])*flxkfc + AIm[-1,ik]*fields.thetafc[config.store_all_timesteps*it]*flxkfc # at [i-1/2,j]
+        #flxcf_HO += AEx[-1,ik]*(1 - fields.thetacf[config.store_all_timesteps*it])*flxkcf + AIm[-1,ik]*fields.thetacf[config.store_all_timesteps*it]*flxkcf # at [i,j-1/2]
+
+    # Implement FCT if required # not up-to-date for AdLImHEx (flxfc_HO and flxcf_HO are not calculated for AdLImHEx, but they are needed for FCT)
+    if config.BC_x == 'periodic' and config.BC_y == 'periodic': # to avoid having to implement boundaries for Hadley nonperiodic BC. Not planning to implement FCT results for this for now (22-03-2026)
+        if config.FCT_2pass:
+            fields.tracer[config.store_all_timesteps*it+1] = lim.FCT_2pass(config, fields, it, flxfc_HO, flxcf_HO)     
+        elif config.FCT:
+            fields.tracer[config.store_all_timesteps*it+1] = lim.FCT(config, fields, it, flxfc_HO, flxcf_HO)
+        else:
+            fields.tracer[config.store_all_timesteps*it+1] = field_k.copy() 
+    else:     
+        if config.FCT_2pass or config.FCT:
+            raise ValueError('FCT is not implemented for periodic BCs.')
+        else:
+            fields.tracer[config.store_all_timesteps*it+1] = field_k.copy() 
 
 
 ################# RK4CN quinticEx-cubicIm SCHEME #################
