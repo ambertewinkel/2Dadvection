@@ -504,7 +504,7 @@ def adhimex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
 
     for ik in range(nstages):
         # Calculate the field at stage k      
-        if ik == 1 or ik == 2:
+        if ik == 0 or ik == 1 or ik == 2 or ik == 3: # for the first four stages, use the constancy-preserving fluxes (necessary only for ik = 1 and 2)
             rhs_k = field_prev + config.dt*(np.dot(np.rollaxis(fEx_c[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_c[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
         else: 
             rhs_k = field_prev + config.dt*(np.dot(np.rollaxis(fEx_f[:ik,:],0,3), AEx[ik,:ik]) + np.dot(np.rollaxis(fIm_f[:ik,:],0,3), AIm[ik,:ik])) # at [i,j]
@@ -517,7 +517,7 @@ def adhimex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
             #guess = rhs_k.copy() #field_k.copy()
             #print('guess norm: ', np.linalg.norm(guess))
             #guess = field_prev.copy()
-            field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
+            field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-9, iterations_convergence=iterations_convergence, it=it)
             #field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-15, iterations_convergence=iterations_convergence, it=it)
             #field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=20, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
             #field_k = solver(matrix, rhs_k, guess, no_restarts=1, m=1, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
