@@ -30,7 +30,8 @@ class Config():
     starttime: float
 
     initial_tracer: str
-    thirdordermatrix: bool = False
+    thirdordermatrix: bool = False # also used for AdHImEx
+    adhimex_cubicIm: bool = False # full implicit (CN) scheme with cubic in space
     FCT_2pass: bool = False
     FCT: bool = False
     tracermin: float = None
@@ -77,6 +78,11 @@ class Config():
             self.factordiv = 1.
         elif self.nondivergent is None:
             print('Abort: nondivergent is not set - please specify whether the winds are nondivergent (True) or not (False).')
+
+        if self.adhimex_cubicIm:
+            if self.thirdordermatrix != True: 
+                print('Abort: adhimex_cubicIm is set to True, but thirdordermatrix is not set to True. Please set thirdordermatrix to True for adhimex_cubicIm.')
+                exit()
 
     @classmethod
     def from_file(cls, file):

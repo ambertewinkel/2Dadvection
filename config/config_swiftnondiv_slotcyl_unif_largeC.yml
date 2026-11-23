@@ -25,5 +25,9 @@ u0: 10. # m/s
 nondivergent: True
 
 solver: gmresm
+tolerance_solver_scheme: 1e-6
 
-outputdir: swiftnondiv_slotcyl_unif_largeC_adhimex
+thirdordermatrix: True
+adhimex_cubicIm: True
+
+outputdir: swiftnondiv_slotcyl_unif_largeC_adhimex_cubicIm #_matrix3

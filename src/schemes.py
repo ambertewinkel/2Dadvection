@@ -529,16 +529,21 @@ def adhimex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
             field_k = rhs_k.copy()
 
         # Calculate the velocity times the fifth-order field approximation at faces
-        flxkfc, flxkcf = fifth_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
+        if config.adhimex_cubicIm:
+            flxkfc_Ex, flxkcf_Ex = fifth_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
+            flxkfc_Im, flxkcf_Im = third_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
+        else:
+            flxkfc_Ex, flxkcf_Ex = fifth_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
+            flxkfc_Im, flxkcf_Im = flxkfc_Ex.copy(), flxkcf_Ex.copy() # at [i-1/2,j] and [i,j-1/2]
 
-        fEx_c[ik,:] = (1.-fields.thetacc[config.store_all_timesteps*it])*fluxdiv(fields, flxkfc, flxkcf, 1., 1.)
-        fIm_c[ik,:] = fields.thetacc[config.store_all_timesteps*it]*fluxdiv(fields, flxkfc, flxkcf, 1., 1.)
-        fEx_f[ik,:] = fluxdiv(fields, flxkfc, flxkcf, 1.-fields.thetafc[config.store_all_timesteps*it], 1.-fields.thetacf[config.store_all_timesteps*it])
-        fIm_f[ik,:] = fluxdiv(fields, flxkfc, flxkcf, fields.thetafc[config.store_all_timesteps*it], fields.thetacf[config.store_all_timesteps*it])    
+        fEx_c[ik,:] = (1.-fields.thetacc[config.store_all_timesteps*it])*fluxdiv(fields, flxkfc_Ex, flxkcf_Ex, 1., 1.)
+        fIm_c[ik,:] = fields.thetacc[config.store_all_timesteps*it]*fluxdiv(fields, flxkfc_Im, flxkcf_Im, 1., 1.)
+        fEx_f[ik,:] = fluxdiv(fields, flxkfc_Ex, flxkcf_Ex, 1.-fields.thetafc[config.store_all_timesteps*it], 1.-fields.thetacf[config.store_all_timesteps*it])
+        fIm_f[ik,:] = fluxdiv(fields, flxkfc_Im, flxkcf_Im, fields.thetafc[config.store_all_timesteps*it], fields.thetacf[config.store_all_timesteps*it])    
         
         # Accumulate the flux contributions from the stages (needed for FCT)
-        flxfc_HO += AEx[-1,ik]*(1 - fields.thetafc[config.store_all_timesteps*it])*flxkfc + AIm[-1,ik]*fields.thetafc[config.store_all_timesteps*it]*flxkfc # at [i-1/2,j]
-        flxcf_HO += AEx[-1,ik]*(1 - fields.thetacf[config.store_all_timesteps*it])*flxkcf + AIm[-1,ik]*fields.thetacf[config.store_all_timesteps*it]*flxkcf # at [i,j-1/2]
+        flxfc_HO += AEx[-1,ik]*(1 - fields.thetafc[config.store_all_timesteps*it])*flxkfc_Ex + AIm[-1,ik]*fields.thetafc[config.store_all_timesteps*it]*flxkfc_Im # at [i-1/2,j]
+        flxcf_HO += AEx[-1,ik]*(1 - fields.thetacf[config.store_all_timesteps*it])*flxkcf_Ex + AIm[-1,ik]*fields.thetacf[config.store_all_timesteps*it]*flxkcf_Im # at [i,j-1/2]
 
     # Implement FCT if required
     if config.BC_x == 'periodic' and config.BC_y == 'periodic': # to avoid having to implement boundaries for Hadley nonperiodic BC. Not planning to implement FCT results for this for now (22-03-2026)
