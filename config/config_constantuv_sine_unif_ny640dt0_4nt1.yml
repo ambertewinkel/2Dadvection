@@ -1,4 +1,4 @@
-scheme: adhimex
+scheme: adlimhex #adhimex
 
 nx: 64 
 ny: 640 
@@ -28,4 +28,6 @@ nondivergent: True
 solver: gmresm
 theta_anisotropic: False
 
-outputdir: constantuv_sine_unif_ny640dt0_4nt1
+adlimhex_RK: RK3
+
+outputdir: adlimhexrk3_constantuv_sine_unif_ny640dt0_4nt1

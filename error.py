@@ -41,7 +41,7 @@ def load_config(path) -> dict:
     return config
 
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 def error():
     if len(argv) < 2:
         print("Usage: python error.py <outputdir> <setting>")
@@ -141,7 +141,7 @@ def error():
         l2_error = l2norm(data['tracer'][-1], analytic, data['dxcc']*data['dycc'])
 
         # Output l2 norms to file
-        print(l2_error)
+        print('l2_error:  ', l2_error)
         with open(outputdir + 'l2norms.out', 'w') as f:
             f.write(f'l2 norm (final compared to analytic at time t={nt*dt})\n')
             f.write(f'{l2_error:.6e}\n')
@@ -150,7 +150,7 @@ def error():
         linf_error = linfnorm(data['tracer'][-1], analytic)
 
         # Output linf norms to file
-        print(linf_error)
+        print('linf_error:', linf_error)
         with open(outputdir + 'linfnorms.out', 'w') as f:
             f.write(f'linf norm (final compared to analytic at time t={nt*dt})\n')
             f.write(f'{linf_error:.6e}\n')
