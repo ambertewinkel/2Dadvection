@@ -517,7 +517,7 @@ def adhimex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
             #guess = rhs_k.copy() #field_k.copy()
             #print('guess norm: ', np.linalg.norm(guess))
             #guess = field_prev.copy()
-            field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-9, iterations_convergence=iterations_convergence, it=it)
+            field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-5, iterations_convergence=iterations_convergence, it=it)
             #field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=4, tolerance=1e-15, iterations_convergence=iterations_convergence, it=it)
             #field_k = solver(matrix, rhs_k, guess, no_restarts=200, m=20, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
             #field_k = solver(matrix, rhs_k, guess, no_restarts=1, m=1, tolerance=1e-6, iterations_convergence=iterations_convergence, it=it)
