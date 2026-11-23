@@ -197,7 +197,7 @@ def plot_timings(data_list):
     #figname = "output_1x_linfnormtest_20261106"
     #figname = "output_1x_gmresmscipytest_20261106"
     #figname = "output_comparing_gmresm-to-gmresmscipy_20261107"
-    figname = "output_adhimex_tol1em5_20261123"
+    figname = "output_adhimex_tol1em7_1x_20261123"
 
     plt.savefig(f"{figname}.pdf", dpi=300)
     plt.savefig(f"{figname}.svg", dpi=300)
@@ -233,7 +233,7 @@ def main():
     #filename = "output_1x_linfnormtest_20261106.txt"
     #filename = "output_1x_gmresmscipytest_20261106.txt"
     #filename = "output_comparing_gmresm-to-gmresmscipy_20261107.txt"
-    filename = "output_adhimex_tol1em5_20261123.txt"
+    filename = "output_adhimex_tol1em7_1x_20261123.txt"
 
     # Sub-runs to plot: (aniso, label, color, color of its SciPy GMRES(m) curve)
     groups = [(False, "iso", "blue", "darkorange")]
