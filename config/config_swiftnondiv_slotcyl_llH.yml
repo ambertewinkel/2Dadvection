@@ -1,4 +1,4 @@
-scheme: adhimex #RK438PR2_5Ex3Im #adhimex #RK4CN_5Ex3Im #RK438PR2_5Ex3Im
+scheme: adhimex #adhimex #adlimhex #adhimex #RK438PR2_5Ex3Im #adhimex #RK4CN_5Ex3Im #RK438PR2_5Ex3Im
 
 nx: 144 #142 #153 
 ny: 144 #142 #153 
@@ -24,8 +24,15 @@ u0: 10. # m/s
 
 nondivergent: True
 
+thirdordermatrix: True
+adhimex_cubicIm: True
+
+#adlimhex_RK: RK4 
+
 solver: gmresm
 #theta_anisotropic: True
 #adjust_theta: True
+timing: True
+print_error: True
 
-outputdir: adhimex_swiftnondiv_slotcyl_llH8_nt500
+outputdir: adhimexcubicIm_swiftnondiv_slotcyl_llH8_nt500 #adhimex_swiftnondiv_slotcyl_llH8_nt500 #adlimhexRK4_swiftnondiv_slotcyl_llH8_nt500 #adhimex_swiftnondiv_slotcyl_llH8_nt500 #adlimhexRK4_swiftnondiv_slotcyl_llH8_nt500 #24-11-2026 adhimex run I think now has ik=0 and 3 also cell-centered.
