@@ -427,8 +427,6 @@ def adhimex_matrix_func(phi, config, fields, it, thetafc, thetacf, alpha):
     """Matrix function for the implicit part of the AdHImEx scheme"""
 
     if config.thirdordermatrix: # Matrix with third-order spatial discretisation (unclear whether stable as of 01-03-2026)
-        if config.BC_x != 'periodic' or config.BC_y != 'periodic':
-            raise ValueError('Third-order SD is not implemented with nonperiodic BCs.')
         return phi - config.dt*alpha*fluxdiv(fields, *third_order(config, fields, it, phi), thetafc, thetacf) # at [i,j]
     elif config.firstordermatrix: # Matrix with first-order spatial discretisation (unclear whether stable as of 01-03-2026)
         return phi - config.dt*alpha*fluxdiv(fields, *first_order(config, fields, it, phi), thetafc, thetacf) # at [i,j]

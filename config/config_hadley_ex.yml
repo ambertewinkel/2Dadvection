@@ -1,4 +1,4 @@
-scheme: RK438PR2_5Ex3Im #adhimex #RK4CN_5Ex3Im #RK438PR2_5Ex3Im
+scheme: adhimex #adlimhex #RK438PR2_5Ex3Im #adhimex #RK4CN_5Ex3Im #RK438PR2_5Ex3Im
 
 nx: 180
 ny: 180
@@ -20,10 +20,18 @@ velocity_setting: hadley_HW
 initial_tracer: hadley_HW
 store_all_timesteps: True
 
+#adlimhex_RK: RK4
+
 solver: gmresm 
 
 nondivergent: True
 theta_anisotropic: True
 adjust_theta: True
 
-outputdir: hadley_ex
+#thirdordermatrix: True
+#adhimex_cubicIm: True
+
+firstordermatrix: True
+adhimex_upwindIm: True
+
+outputdir: hadley_ex_adhimex_upwindIm #_cubicIm #_adlimhexRK4

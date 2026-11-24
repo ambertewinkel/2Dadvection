@@ -1,4 +1,4 @@
-scheme: adhimex #RK438PR2_5Ex3Im #RK4CN_5Ex3Im #adhimex
+scheme: adhimex #adlimhex #adhimex #RK438PR2_5Ex3Im #RK4CN_5Ex3Im #adhimex
 
 nx: 128 
 ny: 128 
@@ -27,7 +27,12 @@ nondivergent: True
 solver: gmresm
 tolerance_solver_scheme: 1e-6
 
-thirdordermatrix: True
-adhimex_cubicIm: True
+#adlimhex_RK: RK4
 
-outputdir: swiftnondiv_slotcyl_unif_largeC_adhimex_cubicIm #_matrix3
+#thirdordermatrix: True
+#adhimex_cubicIm: True
+
+firstordermatrix: True
+#adhimex_upwindIm: True
+
+outputdir: swiftnondiv_slotcyl_unif_largeC_adhimex_matrix1 #_adlimhexRK4 #adhimex_cubicIm #_matrix3
