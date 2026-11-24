@@ -430,6 +430,8 @@ def adhimex_matrix_func(phi, config, fields, it, thetafc, thetacf, alpha):
         if config.BC_x != 'periodic' or config.BC_y != 'periodic':
             raise ValueError('Third-order SD is not implemented with nonperiodic BCs.')
         return phi - config.dt*alpha*fluxdiv(fields, *third_order(config, fields, it, phi), thetafc, thetacf) # at [i,j]
+    elif config.firstordermatrix: # Matrix with first-order spatial discretisation (unclear whether stable as of 01-03-2026)
+        return phi - config.dt*alpha*fluxdiv(fields, *first_order(config, fields, it, phi), thetafc, thetacf) # at [i,j]
     else: # Default fifth-order spatial discretisation
         return phi - config.dt*alpha*fluxdiv(fields, *fifth_order(config, fields, it, phi), thetafc, thetacf) # at [i,j]
 
@@ -533,6 +535,9 @@ def adhimex(config, fields, it, iterations_convergence=np.zeros(10), **kwargs):
         if config.adhimex_cubicIm:
             flxkfc_Ex, flxkcf_Ex = fifth_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
             flxkfc_Im, flxkcf_Im = third_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
+        elif config.adhimex_upwindIm:
+            flxkfc_Ex, flxkcf_Ex = fifth_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
+            flxkfc_Im, flxkcf_Im = first_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
         else:
             flxkfc_Ex, flxkcf_Ex = fifth_order(config, fields, it, field_k) # at [i-1/2,j] and [i,j-1/2]
             flxkfc_Im, flxkcf_Im = flxkfc_Ex.copy(), flxkcf_Ex.copy() # at [i-1/2,j] and [i,j-1/2]

@@ -32,6 +32,8 @@ class Config():
     initial_tracer: str
     thirdordermatrix: bool = False # also used for AdHImEx
     adhimex_cubicIm: bool = False # full implicit (CN) scheme with cubic in space
+    firstordermatrix: bool = False # also used for AdHImEx
+    adhimex_upwindIm: bool = False # full implicit (CN) scheme with upwind in space
     FCT_2pass: bool = False
     FCT: bool = False
     tracermin: float = None
@@ -82,7 +84,16 @@ class Config():
         if self.adhimex_cubicIm:
             if self.thirdordermatrix != True: 
                 print('Abort: adhimex_cubicIm is set to True, but thirdordermatrix is not set to True. Please set thirdordermatrix to True for adhimex_cubicIm.')
+                exit()        
+        
+        if self.adhimex_upwindIm:
+            if self.firstordermatrix != True: 
+                print('Abort: adhimex_upwindIm is set to True, but firstordermatrix is not set to True. Please set firstordermatrix to True for adhimex_upwindIm.')
                 exit()
+
+        if self.adhimex_cubicIm and self.adhimex_upwindIm:
+            print('Abort: adhimex_cubicIm and adhimex_upwindIm are both set to True. Please set only one of them to True.')
+            exit()
 
     @classmethod
     def from_file(cls, file):
