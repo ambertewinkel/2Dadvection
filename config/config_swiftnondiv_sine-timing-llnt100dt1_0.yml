@@ -1,4 +1,4 @@
-scheme: adlimhex
+scheme: adhimex
 
 nx: 153 
 ny: 153
@@ -25,10 +25,8 @@ u0: 10. # m/s
 #FCT: True
 nondivergent: True
 
-adlimhex_RK: RK4
-
 solver: gmresm 
 
 timing: True
 print_error: True
-outputdir: timingerror_swiftnondiv_sine_adlimhexRK4_ll_nt100dt1_0
+outputdir: timingerror_swiftnondiv_sine_adhimex_ll_nt100dt1_0
