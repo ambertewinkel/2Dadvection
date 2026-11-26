@@ -4,14 +4,18 @@ from collections import defaultdict
 import numpy as np
 import matplotlib.pyplot as plt
 
-def parse_file(filename, aniso=False, scipy=None):
+def parse_file(filename, aniso=False, scipy=None, adlimhex=None):
     # scipy: None keeps every run whatever its linear solver (the behaviour without
     # --gmresmscipy); True keeps only the SciPy GMRES(m) runs, False only the other ones.
+    # adlimhex: the same for the scheme. None keeps every run whatever its scheme (the
+    # behaviour without --adlimhex); True keeps only the AdLImHEx runs, False only the
+    # other (AdHImEx) ones.
     data = defaultdict(lambda: defaultdict(list))
 
     current_nt = None
     current_is_aniso = None  # which sub-run (sub-block) the following lines belong to
     current_is_scipy = None  # whether that sub-run used the SciPy GMRES(m)
+    current_is_adlimhex = None  # whether that sub-run used AdLImHEx (rather than AdHImEx)
 
     # Strict nt pattern: must start with dashes and end with dashes
     nt_pattern = re.compile(r"^-{14}\s*nt\s+(\d+)")
@@ -43,24 +47,29 @@ def parse_file(filename, aniso=False, scipy=None):
                 current_nt = int(nt_match.group(1))
                 current_is_aniso = None
                 current_is_scipy = None
+                current_is_adlimhex = None
                 continue
 
             if current_nt is None:
                 continue
 
             # Figure out which sub-run we just entered. Recognise both the
-            # '_anis_' and '_aniso_' filename spellings as the aniso sub-run, and
-            # a 'gmresmscipy' tag in the filename as a SciPy GMRES(m) run.
+            # '_anis_' and '_aniso_' filename spellings as the aniso sub-run,
+            # a 'gmresmscipy' tag in the filename as a SciPy GMRES(m) run, and
+            # an 'adlimhex' tag (e.g. '_adlimhexRK4_') as an AdLImHEx run.
             outputfile_match = outputfile_pattern.search(line)
             if outputfile_match:
                 current_is_aniso = "_anis_" in outputfile_match.group(1) or "_aniso_" in outputfile_match.group(1)
                 current_is_scipy = "gmresmscipy" in outputfile_match.group(1)
+                current_is_adlimhex = "adlimhex" in outputfile_match.group(1)
                 continue
 
             # Only keep lines belonging to the sub-run we were asked for
             if current_is_aniso != aniso:
                 continue
             if scipy is not None and current_is_scipy != scipy:
+                continue
+            if adlimhex is not None and current_is_adlimhex != adlimhex:
                 continue
 
             # Scalar variables
@@ -156,8 +165,10 @@ def plot_timings(data_list):
         axs[3].plot(dt, time_per_step, marker=marker, color=color, label=label)
         axs[3].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
 
-        # 5) iterations per step
-        axs[4].plot(dt[:-4], iterations_per_step[:-4], marker=marker, color=color, label=label)
+        # 5) iterations per step. A zero count (no implicit solve at that dt, e.g. AdLImHEx at
+        # dt = 0.05) can't go on the log axis, so it is left out rather than dropping off the panel.
+        positive = iterations_per_step > 0
+        axs[4].plot(dt[positive], iterations_per_step[positive], marker=marker, color=color, label=label)
         axs[4].axvline(1.4/meanCmaxoverdt, color='r', linestyle='--')
 
     axs[0].set_ylabel("$l_2$ norm")
@@ -198,15 +209,16 @@ def plot_timings(data_list):
     #figname = "output_1x_gmresmscipytest_20261106"
     #figname = "output_comparing_gmresm-to-gmresmscipy_20261107"
     #figname = "output_adhimex_tol1em7_1x_20261123"
-    figname = "output_adlimhexrk4_20261124"
+    #figname = "output_adlimhexrk4_20261124"
+    figname = "output_comparing_adhimex_and_adlimhexrk4_20261125"
 
     plt.savefig(f"{figname}.pdf", dpi=300)
     plt.savefig(f"{figname}.svg", dpi=300)
     #plt.show()
 
 
-def load_dataset(filename, aniso, scipy=None):
-    data = parse_file(filename, aniso=aniso, scipy=scipy)
+def load_dataset(filename, aniso, scipy=None, adlimhex=None):
+    data = parse_file(filename, aniso=aniso, scipy=scipy, adlimhex=adlimhex)
     if not data:
         return None
     data = turn_into_np_arrays(data)
@@ -226,6 +238,9 @@ def main():
     parser.add_argument("--gmresmscipy", action="store_true",
                          help="Plot the GMRES(m) runs (x markers) and the SciPy GMRES(m) runs "
                               "(+ markers; 'gmresmscipy' in their output file name) as separate curves.")
+    parser.add_argument("--adlimhex", action="store_true",
+                         help="Plot the AdHImEx runs and the AdLImHEx runs ('adlimhex' in their output "
+                              "file name) as separate curves, in different colors.")
     args = parser.parse_args()
 
     #filename = "timing_output_anis_20260916and17.txt"
@@ -235,12 +250,14 @@ def main():
     #filename = "output_1x_gmresmscipytest_20261106.txt"
     #filename = "output_comparing_gmresm-to-gmresmscipy_20261107.txt"
     #filename = "output_adhimex_tol1em7_1x_20261123.txt"
-    filename = "output_adlimhexrk4_20261124.txt"
+    #filename = "output_adlimhexrk4_20261124.txt"
+    filename = "output_comparing_adhimex_and_adlimhexrk4_20261125.txt"  # use with --adlimhex
 
-    # Sub-runs to plot: (aniso, label, color, color of its SciPy GMRES(m) curve)
-    groups = [(False, "iso", "blue", "darkorange")]
+    # Sub-runs to plot: (aniso, label, color, color of its SciPy GMRES(m) curve,
+    #                    color of its AdLImHEx curve, color of its AdLImHEx SciPy GMRES(m) curve)
+    groups = [(False, "iso", "blue", "darkorange", "black", "saddlebrown")]
     if args.bothanisoandiso:
-        groups.append((True, "aniso", "green", "mediumvioletred"))
+        groups.append((True, "aniso", "green", "mediumvioletred", "purple", "olive"))
 
     # Linear solvers to split each sub-run into, one marker each: (scipy, label, marker).
     # Without --gmresmscipy, scipy=None keeps all runs together in one curve, as before.
@@ -249,24 +266,41 @@ def main():
     else:
         solvers = [(None, None, "x")]
 
+    # Schemes to split each sub-run into, one color each: (adlimhex, label).
+    # Without --adlimhex, adlimhex=None keeps all runs together in one curve, as before.
+    if args.adlimhex:
+        schemes = [(False, "AdHImEx"), (True, "AdLImHEx RK4")]
+    else:
+        schemes = [(None, None)]
+
     data_list = []
-    for aniso, group_label, color, scipy_color in groups:
+    for aniso, group_label, color, scipy_color, adlimhex_color, adlimhex_scipy_color in groups:
         for scipy, solver_label, marker in solvers:
-            if solver_label is None:                  # no --gmresmscipy: the old labels, "iso" / "aniso"
-                label = group_label
-            elif len(groups) == 1:                    # --gmresmscipy, iso only: "iso" adds nothing, (the order matters: elif needs to come after if here)
-                label = solver_label                  #   so just "GMRES(m)" / "SciPy GMRES(m)"
-            else:                                     # both flags: 4 curves, so both names are needed
-                label = f"{group_label} {solver_label}"
+            for adlimhex, scheme_label in schemes:
+                # Name each curve by what tells it apart. Without any split this is the old
+                # "iso" / "aniso". With a split but iso runs only, "iso" adds nothing and is left
+                # out (e.g. "GMRES(m)" / "SciPy GMRES(m)", or "AdHImEx" / "AdLImHEx RK4").
+                parts = []
+                if len(groups) > 1 or (solver_label is None and scheme_label is None):
+                    parts.append(group_label)
+                if scheme_label is not None:
+                    parts.append(scheme_label)
+                if solver_label is not None:
+                    parts.append(solver_label)
+                label = " ".join(parts)
 
-            data = load_dataset(filename, aniso=aniso, scipy=scipy)
-            if data is None:
-                print(f"Warning: no {label} runs found in the file; not plotting them.")
-                continue
+                data = load_dataset(filename, aniso=aniso, scipy=scipy, adlimhex=adlimhex)
+                if data is None:
+                    print(f"Warning: no {label} runs found in the file; not plotting them.")
+                    continue
 
-            for nt, values in data.items():
-                print(f"[{label}] nt: {nt}, dt: {values['dt']:.2e}, C_min: {values['C_min']:.2e}, C_max: {values['C_max']:.2e}, l2norm: {values['l2norm']:.2e}, linfnorm: {values['linfnorm']:.2e}, time_scheme_mean: {values['time_scheme_mean']:.2f}s, total_iters: {values['total_iters']}")
-            data_list.append((data, label, scipy_color if scipy else color, marker))
+                for nt, values in data.items():
+                    print(f"[{label}] nt: {nt}, dt: {values['dt']:.2e}, C_min: {values['C_min']:.2e}, C_max: {values['C_max']:.2e}, l2norm: {values['l2norm']:.2e}, linfnorm: {values['linfnorm']:.2e}, time_scheme_mean: {values['time_scheme_mean']:.2f}s, total_iters: {values['total_iters']}")
+                if adlimhex:
+                    curve_color = adlimhex_scipy_color if scipy else adlimhex_color
+                else:
+                    curve_color = scipy_color if scipy else color
+                data_list.append((data, label, curve_color, marker))
 
     plot_timings(data_list)
 
